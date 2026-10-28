@@ -1,10 +1,16 @@
 import login from "../assets/login.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { cadastrarUsuaria, salvarSessao } from "../services/auth";
+import { formatarCPF, formatarTelefone, validarCPF } from "../utils/documentos";
 
 function Cadastro() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [carregando, setCarregando] = useState(false);
+  const navigate = useNavigate();
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
@@ -12,8 +18,8 @@ function Cadastro() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
   
-  function cadastrar() {
-    if (!nome || !email || !senha || !confirmarSenha) {
+  async function cadastrar() {
+    if (!nome || !email || !cpf || !senha || !confirmarSenha) {
       setMensagem("Preencha todos os campos!");
       setTipoMensagem("erro");
       return;
@@ -25,14 +31,44 @@ function Cadastro() {
       return;
     }
 
+    if (!validarCPF(cpf)) {
+      setMensagem("Digite um CPF válido!");
+      setTipoMensagem("erro");
+      return;
+    }
+
+    if (senha.length < 8) {
+      setMensagem("A senha deve ter pelo menos 8 caracteres!");
+      setTipoMensagem("erro");
+      return;
+    }
+
     if (senha !== confirmarSenha) {
       setMensagem("As senhas não são iguais!");
       setTipoMensagem("erro");
       return;
     }
 
-    setMensagem("Cadastro preenchido corretamente!");
-    setTipoMensagem("sucesso");
+    setCarregando(true);
+    setMensagem("");
+
+    try {
+      const sessao = await cadastrarUsuaria({
+        nome,
+        email,
+        cpf,
+        telefone,
+        senha,
+        confirmarSenha,
+      });
+      salvarSessao(sessao);
+      navigate("/home");
+    } catch (erro) {
+      setMensagem(erro.message);
+      setTipoMensagem("erro");
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -57,6 +93,22 @@ function Cadastro() {
             placeholder="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
+            type="text"
+            placeholder="CPF"
+            inputMode="numeric"
+            value={cpf}
+            onChange={(e) => setCpf(formatarCPF(e.target.value))}
+          />
+
+          <input
+            type="text"
+            placeholder="telefone (opcional)"
+            inputMode="tel"
+            value={telefone}
+            onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
           />
 
           <div className="senha-container">
@@ -94,7 +146,15 @@ function Cadastro() {
     👁
   </button>
 </div>
-          <button onClick={cadastrar}>cadastrar</button>
+          {mensagem && (
+            <p className={`mensagem ${tipoMensagem}`}>
+              {mensagem}
+            </p>
+          )}
+
+          <button onClick={cadastrar} disabled={carregando}>
+            {carregando ? "cadastrando..." : "cadastrar"}
+          </button>
 
           <Link to="/">Já tenho uma conta</Link>
         </div>

@@ -1,6 +1,7 @@
 import login from "../assets/login.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { entrarUsuaria, salvarSessao } from "../services/auth";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -8,8 +9,10 @@ function Login() {
   const [mensagem, setMensagem] = useState("");
   const [tipoMensagem, setTipoMensagem] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [carregando, setCarregando] = useState(false);
+  const navigate = useNavigate();
 
-  function entrar() {
+  async function entrar() {
     if (!email || !senha) {
       setMensagem("Preencha todos os campos!");
       setTipoMensagem("erro");
@@ -22,8 +25,19 @@ function Login() {
       return;
     }
 
-    setMensagem("Login preenchido corretamente!");
-    setTipoMensagem("sucesso");
+    setCarregando(true);
+    setMensagem("");
+
+    try {
+      const sessao = await entrarUsuaria({ email, senha });
+      salvarSessao(sessao);
+      navigate("/home");
+    } catch (erro) {
+      setMensagem(erro.message);
+      setTipoMensagem("erro");
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -38,7 +52,7 @@ function Login() {
 
           <input
             type="text"
-            placeholder="email ou telefone"
+            placeholder="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -70,7 +84,9 @@ function Login() {
             </p>
           )}
 
-          <button onClick={entrar}>entrar</button>
+          <button onClick={entrar} disabled={carregando}>
+            {carregando ? "entrando..." : "entrar"}
+          </button>
 
           <Link to="/cadastro">cadastre-se</Link>
           

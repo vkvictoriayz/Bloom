@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import MenuLateral from "../components/MenuLateral";
 
 function MinhasCandidaturas() {
   const candidaturas = [
@@ -27,26 +27,7 @@ function MinhasCandidaturas() {
 
   return (
     <div className="perfil-pagina">
-      <aside className="perfil-menu">
-        <h1>Bloom</h1>
-
-        <nav>
-          <Link to="/perfil">
-            Meu Perfil
-          </Link>
-
-          <Link
-            to="/candidaturas"
-            className="menu-ativo"
-          >
-            Minhas candidaturas
-          </Link>
-
-          <Link to="/vagas-salvas">
-            Vagas salvas
-          </Link>
-        </nav>
-      </aside>
+      <MenuLateral ativo="candidaturas" />
 
       <main className="perfil-conteudo">
         <div className="perfil-titulo">

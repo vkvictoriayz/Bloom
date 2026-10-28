@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import MenuLateral from "../components/MenuLateral";
 import { useState } from "react";
 
 function DetalhesVaga() {
@@ -11,27 +12,7 @@ function DetalhesVaga() {
 
   return (
     <div className="perfil-pagina">
-      <aside className="perfil-menu">
-        <h1>Bloom</h1>
-
-        <nav>
-          <Link to="/home">
-            Início
-          </Link>
-
-          <Link to="/perfil">
-            Meu Perfil
-          </Link>
-
-          <Link to="/minhas-candidaturas">
-            Minhas candidaturas
-          </Link>
-
-          <Link to="/vagas-salvas">
-            Vagas salvas
-          </Link>
-        </nav>
-      </aside>
+      <MenuLateral ativo="inicio" />
 
       <main className="perfil-conteudo">
         <div className="perfil-titulo">

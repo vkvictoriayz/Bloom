@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import MenuLateral from "../components/MenuLateral";
 import { useState } from "react";
 
 function EditarPerfil() {
@@ -72,29 +73,7 @@ function EditarPerfil() {
 
   return (
     <div className="perfil-pagina">
-      <aside className="perfil-menu">
-        <h1>Bloom</h1>
-
-        <nav>
-          <Link to="/perfil">Meu Perfil</Link>
-
-          <Link to="#">
-            Minhas candidaturas
-          </Link>
-
-          <Link to="#">
-            Competências
-          </Link>
-
-          <Link to="#">
-            Currículo
-          </Link>
-
-          <Link to="#">
-            Vagas salvas
-          </Link>
-        </nav>
-      </aside>
+      <MenuLateral ativo="perfil" />
 
       <main className="perfil-conteudo">
         <div className="perfil-titulo">

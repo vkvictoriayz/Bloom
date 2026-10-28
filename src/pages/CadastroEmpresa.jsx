@@ -1,11 +1,14 @@
 import login from "../assets/login.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { cadastrarEmpresa, salvarSessao } from "../services/auth";
 
 function CadastroEmpresa() {
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [email, setEmail] = useState("");
   const [cnpj, setCnpj] = useState("");
+  const [carregando, setCarregando] = useState(false);
+  const navigate = useNavigate();
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
@@ -59,7 +62,7 @@ function CadastroEmpresa() {
     return formatado;
   }
 
-  function cadastrarEmpresa() {
+  async function enviarCadastro() {
     if (!nomeEmpresa || !email || !cnpj || !senha || !confirmarSenha) {
       setMensagem("Preencha todos os campos!");
       setTipoMensagem("erro");
@@ -80,14 +83,37 @@ function CadastroEmpresa() {
       return;
     }
 
+    if (senha.length < 8) {
+      setMensagem("A senha deve ter pelo menos 8 caracteres!");
+      setTipoMensagem("erro");
+      return;
+    }
+
     if (senha !== confirmarSenha) {
       setMensagem("As senhas não são iguais!");
       setTipoMensagem("erro");
       return;
     }
 
-    setMensagem("Cadastro preenchido corretamente!");
-    setTipoMensagem("sucesso");
+    setCarregando(true);
+    setMensagem("");
+
+    try {
+      const sessao = await cadastrarEmpresa({
+        nome: nomeEmpresa,
+        email,
+        cnpj,
+        senha,
+        confirmarSenha,
+      });
+      salvarSessao(sessao);
+      navigate("/empresa/painel");
+    } catch (erro) {
+      setMensagem(erro.message);
+      setTipoMensagem("erro");
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -163,7 +189,9 @@ function CadastroEmpresa() {
             </p>
           )}
 
-          <button onClick={cadastrarEmpresa}>cadastrar</button>
+          <button onClick={enviarCadastro} disabled={carregando}>
+            {carregando ? "cadastrando..." : "cadastrar"}
+          </button>
 
           <Link to="/empresa">Já tenho uma conta</Link>
         </div>

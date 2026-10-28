@@ -1,6 +1,7 @@
 import login from "../assets/login.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { entrarEmpresa, salvarSessao } from "../services/auth";
 
 function LoginEmpresa() {
   const [email, setEmail] = useState("");
@@ -8,8 +9,10 @@ function LoginEmpresa() {
   const [mensagem, setMensagem] = useState("");
   const [tipoMensagem, setTipoMensagem] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [carregando, setCarregando] = useState(false);
+  const navigate = useNavigate();
 
-  function entrar() {
+  async function entrar() {
     if (!email || !senha) {
       setMensagem("Preencha todos os campos!");
       setTipoMensagem("erro");
@@ -22,8 +25,19 @@ function LoginEmpresa() {
       return;
     }
 
-    setMensagem("Login preenchido corretamente!");
-    setTipoMensagem("sucesso");
+    setCarregando(true);
+    setMensagem("");
+
+    try {
+      const sessao = await entrarEmpresa({ email, senha });
+      salvarSessao(sessao);
+      navigate("/empresa/painel");
+    } catch (erro) {
+      setMensagem(erro.message);
+      setTipoMensagem("erro");
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -70,7 +84,9 @@ function LoginEmpresa() {
             </p>
           )}
 
-          <button onClick={entrar}>entrar</button>
+          <button onClick={entrar} disabled={carregando}>
+            {carregando ? "entrando..." : "entrar"}
+          </button>
 
           <Link to="/empresa/cadastro">Cadastre sua empresa</Link>
         
