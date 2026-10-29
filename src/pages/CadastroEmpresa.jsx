@@ -83,8 +83,8 @@ function CadastroEmpresa() {
       return;
     }
 
-    if (senha.length < 8) {
-      setMensagem("A senha deve ter pelo menos 8 caracteres!");
+    if (senha.length < 6) {
+      setMensagem("A senha deve ter pelo menos 6 caracteres!");
       setTipoMensagem("erro");
       return;
     }

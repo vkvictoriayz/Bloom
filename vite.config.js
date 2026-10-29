@@ -5,9 +5,9 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
-    // Repassa as chamadas /api para o backend (npm run dev dentro de /backend)
+    // Repassa as chamadas /api para o backend (npm run server)
     proxy: {
-      '/api': 'http://localhost:3001',
+      '/api': 'http://127.0.0.1:3001',
     },
   },
 })

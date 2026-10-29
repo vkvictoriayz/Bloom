@@ -1,33 +1,30 @@
-import { criarApp } from "./app.js";
-import { criarDb } from "./db.js";
-import { criarAuthService } from "./services/auth.service.js";
+import app from "./app.js";
+import { sequelize } from "./config/database.js";
 
-const jwtSecret = process.env.JWT_SECRET;
-
-if (!jwtSecret || jwtSecret.length < 16) {
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16) {
   console.error("Defina JWT_SECRET (mínimo 16 caracteres) no arquivo .env");
   process.exit(1);
 }
 
-const db = criarDb({
-  host: process.env.DB_HOST ?? "localhost",
-  port: Number(process.env.DB_PORT ?? 3306),
-  user: process.env.DB_USER ?? "root",
-  password: process.env.DB_PASSWORD ?? "",
-  database: process.env.DB_NAME ?? "BLOOM",
-});
-
-const auth = criarAuthService({
-  db,
-  jwtSecret,
-  jwtExpiresHours: Number(process.env.JWT_EXPIRES_HOURS ?? 8),
-});
-
-const app = criarApp({
-  auth,
-  jwtSecret,
-  frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:5173",
-});
+try {
+  await sequelize.authenticate();
+  console.log("Conectado ao MySQL.");
+} catch (e) {
+  console.error("Não foi possível conectar ao MySQL. Confira o .env e se o banco BLOOM existe.");
+  console.error(e.message);
+  process.exit(1);
+}
 
 const porta = Number(process.env.PORT ?? 3001);
-app.listen(porta, () => console.log(`API da Bloom rodando em http://localhost:${porta}`));
+const servidor = app.listen(porta, () =>
+  console.log(`API da Bloom rodando em http://localhost:${porta}`)
+);
+
+servidor.on("error", (e) => {
+  console.error(
+    e.code === "EADDRINUSE"
+      ? `A porta ${porta} já está em uso. Feche o outro programa ou mude PORT no .env (e o proxy no vite.config.js).`
+      : e.message
+  );
+  process.exit(1);
+});

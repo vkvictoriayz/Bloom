@@ -1,18 +1,24 @@
 {
-  "name": "bloom-front",
+  "name": "bloom",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "node --env-file=.env backend/src/server.js",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "mysql2": "^3.11.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.4",
+    "sequelize": "^6.37.5"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",

@@ -2,7 +2,7 @@ import login from "../assets/login.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cadastrarUsuaria, salvarSessao } from "../services/auth";
-import { formatarCPF, formatarTelefone, validarCPF } from "../utils/documentos";
+import { formatarCPF, formatarTelefone } from "../utils/documentos";
 
 function Cadastro() {
   const [nome, setNome] = useState("");
@@ -31,14 +31,8 @@ function Cadastro() {
       return;
     }
 
-    if (!validarCPF(cpf)) {
-      setMensagem("Digite um CPF válido!");
-      setTipoMensagem("erro");
-      return;
-    }
-
-    if (senha.length < 8) {
-      setMensagem("A senha deve ter pelo menos 8 caracteres!");
+    if (senha.length < 6) {
+      setMensagem("A senha deve ter pelo menos 6 caracteres!");
       setTipoMensagem("erro");
       return;
     }
