@@ -1,14 +1,14 @@
-import login from "../assets/login.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { entrarUsuaria, salvarSessao } from "../services/auth";
+import TelaAcesso from "../components/TelaAcesso";
+import CampoSenha from "../components/CampoSenha";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [tipoMensagem, setTipoMensagem] = useState("");
-  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
 
@@ -41,63 +41,48 @@ function Login() {
   }
 
   return (
-    <div className="login">
-      <div className="formulario">
-        <div className="conteudo">
-          <h1>Bloom</h1>
+    <TelaAcesso
+      titulo="Entre na sua conta"
+      subtitulo="Florescer é voltar para você."
+      aoEnviar={entrar}
+      rodape={
+        <>
+          <p>
+            Ainda não tem conta? <Link to="/cadastro">Cadastre-se</Link>
+          </p>
+          <p>
+            <Link to="/empresa" className="link-discreto">Sou uma empresa</Link>
+          </p>
+        </>
+      }
+    >
+      <label className="campo">
+        <span className="campo-rotulo">E-mail</span>
+        <input
+          type="email"
+          placeholder="voce@email.com"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </label>
 
-          <h2>Login</h2>
+      <CampoSenha rotulo="Senha" valor={senha} aoMudar={setSenha} placeholder="Sua senha" />
 
-          <h3>Entre na sua conta</h3>
+      <Link className="esqueci" to="/recuperar-senha">
+        Esqueci minha senha
+      </Link>
 
-          <input
-            type="text"
-            placeholder="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+      {mensagem && (
+        <p className={`mensagem ${tipoMensagem}`} role="alert">
+          {mensagem}
+        </p>
+      )}
 
-          <div className="senha-container">
-  <input
-    type={mostrarSenha ? "text" : "password"}
-    placeholder="senha"
-    value={senha}
-    onChange={(e) => setSenha(e.target.value)}
-  />
-
-  <button
-    type="button"
-    className="mostrar-senha"
-    onClick={() => setMostrarSenha(!mostrarSenha)}
-  >
-    👁
-  </button>
-</div>
-
-          <Link className="esqueci" to="/recuperar-senha">
-  Esqueci minha senha
-</Link>
-
-          {mensagem && (
-            <p className={`mensagem ${tipoMensagem}`}>
-              {mensagem}
-            </p>
-          )}
-
-          <button onClick={entrar} disabled={carregando}>
-            {carregando ? "entrando..." : "entrar"}
-          </button>
-
-          <Link to="/cadastro">cadastre-se</Link>
-          
-          <Link to="/empresa">Sou uma empresa</Link>
-        </div>
-      </div>
-
-      <div className="imagem">
-        <img src={login} />
-      </div>
-    </div>
+      <button type="submit" className="botao" disabled={carregando}>
+        {carregando ? "Entrando..." : "Entrar"}
+      </button>
+    </TelaAcesso>
   );
 }
 

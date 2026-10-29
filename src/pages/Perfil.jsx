@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import MenuLateral from "../components/MenuLateral";
+import Icone from "../components/Icone";
 import { useState } from "react";
 
 function Perfil() {
@@ -61,102 +62,103 @@ function Perfil() {
     leitor.readAsDataURL(arquivo);
   }
 
+  const competencias = dadosPerfil.competencias
+    ? dadosPerfil.competencias
+        .split(",")
+        .map((competencia) => competencia.trim())
+        .filter(Boolean)
+    : [];
+
   return (
     <div className="perfil-pagina">
       <MenuLateral ativo="perfil" />
 
       <main className="perfil-conteudo">
-        <div className="perfil-titulo">
-          <h2>Perfil</h2>
-        </div>
+        <header className="perfil-titulo">
+          <h2>Meu perfil</h2>
+          <p className="subtitulo">É assim que as empresas conhecem você.</p>
+        </header>
 
         <section className="perfil-card perfil-principal">
           <div className="foto-perfil">
             {foto ? (
-              <img
-                src={foto}
-                alt="Foto de perfil"
-              />
+              <img src={foto} alt="Foto de perfil" />
             ) : (
-              <span>👤</span>
+              <Icone nome="perfil" tamanho={44} />
             )}
           </div>
 
           <div className="dados-principais">
             <h3>{dadosPerfil.nome}</h3>
 
-            <p>📍 {dadosPerfil.localizacao}</p>
-            <p>✉️ {dadosPerfil.email}</p>
-            <p>📞 {dadosPerfil.telefone}</p>
+            <ul className="vaga-meta">
+              <li>
+                <Icone nome="local" tamanho={16} />
+                {dadosPerfil.localizacao}
+              </li>
+              <li>
+                <Icone nome="email" tamanho={16} />
+                {dadosPerfil.email}
+              </li>
+              <li>
+                <Icone nome="telefone" tamanho={16} />
+                {dadosPerfil.telefone}
+              </li>
+            </ul>
           </div>
 
-          <div>
-            <label className="botao-editar">
-              Alterar foto
+          <div className="perfil-principal-acoes">
+            <Link to="/editar-perfil" className="botao-editar">
+              Editar perfil
+            </Link>
 
+            <label className="botao-secundario">
+              <Icone nome="camera" tamanho={16} />
+              Alterar foto
               <input
                 type="file"
                 accept="image/*"
-                style={{ display: "none" }}
+                className="visualmente-oculto"
                 onChange={escolherFoto}
               />
             </label>
-
-            <Link
-              to="/editar-perfil"
-              className="botao-editar"
-            >
-              Editar perfil
-            </Link>
           </div>
         </section>
 
         <section className="perfil-card">
           <h3>Sobre mim</h3>
-
           <p>{dadosPerfil.sobreMim}</p>
         </section>
 
         <section className="perfil-card">
           <h3>Objetivo de carreira</h3>
-
           <p>{dadosPerfil.objetivo}</p>
         </section>
 
         <div className="perfil-duplo">
           <section className="perfil-card">
-            <h3>🎓 Formação acadêmica</h3>
-
+            <h3>Formação acadêmica</h3>
             <h4>{dadosPerfil.curso}</h4>
-
             <p>{dadosPerfil.instituicao}</p>
-
-            <p>{dadosPerfil.nivel}</p>
+            <p className="texto-secundario">{dadosPerfil.nivel}</p>
           </section>
 
           <section className="perfil-card">
-            <h3>💼 Experiência profissional</h3>
-
+            <h3>Experiência profissional</h3>
             <h4>{dadosPerfil.cargo}</h4>
-
             <p>{dadosPerfil.empresa}</p>
-
-            <p>{dadosPerfil.descricaoExperiencia}</p>
+            <p className="texto-secundario">{dadosPerfil.descricaoExperiencia}</p>
           </section>
         </div>
 
         <section className="perfil-card">
-          <h3>⚙️ Competências</h3>
+          <h3>Competências</h3>
 
           <div className="competencias">
-            {dadosPerfil.competencias ? (
-              dadosPerfil.competencias
-                .split(",")
-                .map((competencia, index) => (
-                  <span key={index}>
-                    {competencia.trim()}
-                  </span>
-                ))
+            {competencias.length > 0 ? (
+              competencias.map((competencia, index) => (
+                <span key={index}>{competencia}</span>
+              ))
             ) : (
               <p>Nenhuma competência adicionada.</p>
             )}
@@ -164,12 +166,15 @@ function Perfil() {
         </section>
 
         <section className="perfil-card">
-          <h3>📄 Currículo</h3>
+          <h3>Currículo</h3>
 
           <div className="curriculo">
+            <span className="curriculo-icone">
+              <Icone nome="documento" />
+            </span>
             <p>Nenhum currículo enviado.</p>
 
-            <button className="botao-editar">
+            <button type="button" className="botao-secundario">
               Adicionar currículo
             </button>
           </div>

@@ -1,4 +1,5 @@
 import MenuLateral from "../components/MenuLateral";
+import CartaoVaga from "../components/CartaoVaga";
 
 function VagasSalvas() {
   const vagas = [
@@ -30,48 +31,14 @@ function VagasSalvas() {
       <MenuLateral ativo="salvas" />
 
       <main className="perfil-conteudo">
-        <div className="perfil-titulo">
+        <header className="perfil-titulo">
           <h2>Vagas salvas</h2>
-        </div>
+          <p className="subtitulo">As oportunidades que você guardou para ver com calma.</p>
+        </header>
 
-        <div className="vagas-salvas">
+        <div className="lista-vagas vagas-salvas">
           {vagas.map((vaga, index) => (
-            <section
-              className="perfil-card vaga-salva-card"
-              key={index}
-            >
-              <div className="vaga-salva-info">
-                <h3>{vaga.titulo}</h3>
-
-                <p>
-                  <strong>Empresa:</strong>{" "}
-                  {vaga.empresa}
-                </p>
-
-                <p>
-                  📍 {vaga.localizacao}
-                </p>
-
-                <p>
-                  💰 {vaga.salario}
-                </p>
-
-                <p>
-                  <strong>Área:</strong>{" "}
-                  {vaga.area}
-                </p>
-              </div>
-
-              <div className="vaga-salva-acoes">
-                <span className="vaga-salva-icone">
-                  ♡
-                </span>
-
-                <button className="botao-editar">
-                  Ver vaga
-                </button>
-              </div>
-            </section>
+            <CartaoVaga key={index} vaga={vaga} salva />
           ))}
         </div>
       </main>

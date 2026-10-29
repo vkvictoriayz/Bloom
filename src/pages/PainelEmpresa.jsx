@@ -1,5 +1,9 @@
-import { Link } from "react-router-dom";
-import { obterSessao, sair } from "../services/auth";
+import MenuLateral from "../components/MenuLateral";
+import { obterSessao } from "../services/auth";
+
+const ITENS_EMPRESA = [
+  { id: "inicio", rotulo: "Início", rota: "/empresa/painel", icone: "inicio" },
+];
 
 // Página provisória: a área da empresa (publicar vagas etc.) ainda não existe.
 function PainelEmpresa() {
@@ -7,25 +11,21 @@ function PainelEmpresa() {
 
   return (
     <div className="perfil-pagina">
-      <aside className="perfil-menu">
-        <h1>Bloom</h1>
-
-        <nav>
-          <Link to="/empresa/painel" className="menu-ativo">
-            Início
-          </Link>
-
-          <Link to="/empresa" onClick={sair}>
-            Sair
-          </Link>
-        </nav>
-      </aside>
+      <MenuLateral ativo="inicio" itens={ITENS_EMPRESA} rotaSair="/empresa" />
 
       <main className="perfil-conteudo">
-        <div className="perfil-titulo">
-          <h2>Olá, {sessao?.usuario.nome}! 👋</h2>
-          <p>Em breve você poderá publicar vagas e acompanhar candidaturas por aqui.</p>
-        </div>
+        <header className="perfil-titulo">
+          <h2>Olá, {sessao?.usuario.nome}</h2>
+          <p className="subtitulo">Que bom ter você por aqui.</p>
+        </header>
+
+        <section className="perfil-card estado-vazio">
+          <h3>Suas vagas</h3>
+          <p>
+            Em breve você poderá publicar vagas e acompanhar as candidaturas
+            por aqui.
+          </p>
+        </section>
       </main>
     </div>
   );

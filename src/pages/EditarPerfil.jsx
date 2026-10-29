@@ -76,130 +76,169 @@ function EditarPerfil() {
       <MenuLateral ativo="perfil" />
 
       <main className="perfil-conteudo">
-        <div className="perfil-titulo">
+        <header className="perfil-titulo">
           <h2>Editar perfil</h2>
-        </div>
+          <p className="subtitulo">Mantenha suas informações sempre atualizadas.</p>
+        </header>
 
-        <section className="perfil-card">
+        <section className="perfil-card formulario-perfil">
           <h3>Informações pessoais</h3>
+          <div className="campos-grade">
+            <label className="campo">
+              <span className="campo-rotulo">Nome completo</span>
+              <input
+                type="text"
+                placeholder="Como você se chama"
+                autoComplete="name"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+              />
+            </label>
+            <label className="campo">
+              <span className="campo-rotulo">E-mail</span>
+              <input
+                type="email"
+                placeholder="voce@email.com"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </label>
+            <label className="campo">
+              <span className="campo-rotulo">Telefone</span>
+              <input
+                type="text"
+                placeholder="(00) 00000-0000"
+                autoComplete="tel"
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value)}
+              />
+            </label>
+            <label className="campo">
+              <span className="campo-rotulo">Localização</span>
+              <input
+                type="text"
+                placeholder="Cidade, estado"
+                value={localizacao}
+                onChange={(e) => setLocalizacao(e.target.value)}
+              />
+            </label>
+          </div>
+        </section>
 
-          <input
-            type="text"
-            placeholder="Nome completo"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-          />
+        <section className="perfil-card formulario-perfil">
+          <h3>Sobre você</h3>
+          <label className="campo">
+            <span className="campo-rotulo">Sobre mim</span>
+            <textarea
+              placeholder="Conte um pouco sobre você, sua trajetória e o que te move."
+              value={sobreMim}
+              onChange={(e) => setSobreMim(e.target.value)}
+            />
+          </label>
+          <label className="campo">
+            <span className="campo-rotulo">Objetivo de carreira</span>
+            <textarea
+              placeholder="Que tipo de oportunidade você procura?"
+              value={objetivo}
+              onChange={(e) => setObjetivo(e.target.value)}
+            />
+          </label>
+        </section>
 
-          <input
-            type="email"
-            placeholder="E-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <input
-            type="text"
-            placeholder="Telefone"
-            value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
-          />
-
-          <input
-            type="text"
-            placeholder="Localização"
-            value={localizacao}
-            onChange={(e) => setLocalizacao(e.target.value)}
-          />
-
-          <h3>Sobre mim</h3>
-
-          <textarea
-            placeholder="Conte um pouco sobre você..."
-            value={sobreMim}
-            onChange={(e) => setSobreMim(e.target.value)}
-          />
-
-          <h3>Objetivo de carreira</h3>
-
-          <textarea
-            placeholder="Conte seus objetivos profissionais..."
-            value={objetivo}
-            onChange={(e) => setObjetivo(e.target.value)}
-          />
-
+        <section className="perfil-card formulario-perfil">
           <h3>Formação acadêmica</h3>
+          <div className="campos-grade">
+            <label className="campo">
+              <span className="campo-rotulo">Curso</span>
+              <input
+                type="text"
+                placeholder="Ex: Desenvolvimento de Sistemas"
+                value={curso}
+                onChange={(e) => setCurso(e.target.value)}
+              />
+            </label>
+            <label className="campo">
+              <span className="campo-rotulo">Instituição</span>
+              <input
+                type="text"
+                placeholder="Nome da instituição"
+                value={instituicao}
+                onChange={(e) => setInstituicao(e.target.value)}
+              />
+            </label>
+            <label className="campo">
+              <span className="campo-rotulo">Nível da formação</span>
+              <input
+                type="text"
+                placeholder="Ex: Técnico, graduação"
+                value={nivel}
+                onChange={(e) => setNivel(e.target.value)}
+              />
+            </label>
+          </div>
+        </section>
 
-          <input
-            type="text"
-            placeholder="Curso"
-            value={curso}
-            onChange={(e) => setCurso(e.target.value)}
-          />
-
-          <input
-            type="text"
-            placeholder="Instituição"
-            value={instituicao}
-            onChange={(e) => setInstituicao(e.target.value)}
-          />
-
-          <input
-            type="text"
-            placeholder="Nível da formação"
-            value={nivel}
-            onChange={(e) => setNivel(e.target.value)}
-          />
-
+        <section className="perfil-card formulario-perfil">
           <h3>Experiência profissional</h3>
+          <div className="campos-grade">
+            <label className="campo">
+              <span className="campo-rotulo">Cargo</span>
+              <input
+                type="text"
+                placeholder="Ex: Assistente administrativa"
+                value={cargo}
+                onChange={(e) => setCargo(e.target.value)}
+              />
+            </label>
+            <label className="campo">
+              <span className="campo-rotulo">Empresa</span>
+              <input
+                type="text"
+                placeholder="Nome da empresa"
+                value={empresa}
+                onChange={(e) => setEmpresa(e.target.value)}
+              />
+            </label>
+          </div>
+          <label className="campo">
+            <span className="campo-rotulo">Descrição da experiência</span>
+            <textarea
+              placeholder="Suas principais atividades e conquistas"
+              value={descricaoExperiencia}
+              onChange={(e) => setDescricaoExperiencia(e.target.value)}
+            />
+          </label>
+        </section>
 
-          <input
-            type="text"
-            placeholder="Cargo"
-            value={cargo}
-            onChange={(e) => setCargo(e.target.value)}
-          />
-
-          <input
-            type="text"
-            placeholder="Nome da empresa"
-            value={empresa}
-            onChange={(e) => setEmpresa(e.target.value)}
-          />
-
-          <textarea
-            placeholder="Descrição da experiência"
-            value={descricaoExperiencia}
-            onChange={(e) =>
-              setDescricaoExperiencia(e.target.value)
-            }
-          />
-
+        <section className="perfil-card formulario-perfil">
           <h3>Competências</h3>
+          <label className="campo">
+            <span className="campo-rotulo">Separe cada competência por vírgula</span>
+            <input
+              type="text"
+              placeholder="Ex: JavaScript, React, HTML, CSS"
+              value={competencias}
+              onChange={(e) => setCompetencias(e.target.value)}
+            />
+          </label>
+        </section>
 
-          <input
-            type="text"
-            placeholder="Ex: JavaScript, React, HTML, CSS"
-            value={competencias}
-            onChange={(e) => setCompetencias(e.target.value)}
-          />
-
-          <button
-            className="botao-editar"
-            onClick={salvarAlteracoes}
-          >
+        <div className="formulario-acoes">
+          <button type="button" className="botao-editar" onClick={salvarAlteracoes}>
             Salvar alterações
           </button>
 
+          <Link to="/perfil" className="botao-secundario">
+            Cancelar
+          </Link>
+
           {mensagem && (
-            <p className="mensagem sucesso">
+            <p className="mensagem sucesso" role="status">
               {mensagem}
             </p>
           )}
-
-          <Link to="/perfil">
-            Cancelar
-          </Link>
-        </section>
+        </div>
       </main>
     </div>
   );

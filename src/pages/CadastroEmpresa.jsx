@@ -1,7 +1,8 @@
-import login from "../assets/login.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cadastrarEmpresa, salvarSessao } from "../services/auth";
+import TelaAcesso from "../components/TelaAcesso";
+import CampoSenha from "../components/CampoSenha";
 
 function CadastroEmpresa() {
   const [nomeEmpresa, setNomeEmpresa] = useState("");
@@ -13,8 +14,6 @@ function CadastroEmpresa() {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [tipoMensagem, setTipoMensagem] = useState("");
-  const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
 
   function formatarCNPJ(valor) {
     const numeros = valor.replace(/\D/g, "").slice(0, 14);
@@ -117,90 +116,77 @@ function CadastroEmpresa() {
   }
 
   return (
-    <div className="login">
-      <div className="formulario">
-        <div className="conteudo">
-          <h1>Bloom</h1>
+    <TelaAcesso
+      titulo="Cadastre sua empresa"
+      subtitulo="Encontre mulheres prontas para crescer com você."
+      aoEnviar={enviarCadastro}
+      rodape={
+        <p>
+          Já tem uma conta? <Link to="/empresa">Entrar</Link>
+        </p>
+      }
+    >
+      <label className="campo">
+        <span className="campo-rotulo">Nome da empresa</span>
+        <input
+          type="text"
+          placeholder="Razão social ou nome fantasia"
+          autoComplete="organization"
+          value={nomeEmpresa}
+          onChange={(e) => setNomeEmpresa(e.target.value)}
+        />
+      </label>
 
-          <h2>Cadastro Empresa</h2>
-
-          <h3>Cadastre sua empresa</h3>
-
+      <div className="campos-linha">
+        <label className="campo">
+          <span className="campo-rotulo">E-mail corporativo</span>
           <input
-            type="text"
-            placeholder="nome da empresa"
-            value={nomeEmpresa}
-            onChange={(e) => setNomeEmpresa(e.target.value)}
-          />
-
-          <input
-            type="text"
-            placeholder="email"
+            type="email"
+            placeholder="contato@empresa.com"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+        </label>
 
+        <label className="campo">
+          <span className="campo-rotulo">CNPJ</span>
           <input
             type="text"
-            placeholder="CNPJ"
+            placeholder="00.000.000/0000-00"
+            inputMode="numeric"
             value={cnpj}
             onChange={(e) => setCnpj(formatarCNPJ(e.target.value))}
           />
-
-          <div className="senha-container">
-            <input
-              type={mostrarSenha ? "text" : "password"}
-              placeholder="senha"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-            />
-
-            <button
-              type="button"
-              className="mostrar-senha"
-              onClick={() => setMostrarSenha(!mostrarSenha)}
-            >
-              👁
-            </button>
-          </div>
-
-          <div className="senha-container">
-            <input
-              type={mostrarConfirmarSenha ? "text" : "password"}
-              placeholder="confirme sua senha"
-              value={confirmarSenha}
-              onChange={(e) => setConfirmarSenha(e.target.value)}
-            />
-
-            <button
-              type="button"
-              className="mostrar-senha"
-              onClick={() =>
-                setMostrarConfirmarSenha(!mostrarConfirmarSenha)
-              }
-            >
-              👁️
-            </button>
-          </div>
-
-          {mensagem && (
-            <p className={`mensagem ${tipoMensagem}`}>
-              {mensagem}
-            </p>
-          )}
-
-          <button onClick={enviarCadastro} disabled={carregando}>
-            {carregando ? "cadastrando..." : "cadastrar"}
-          </button>
-
-          <Link to="/empresa">Já tenho uma conta</Link>
-        </div>
+        </label>
       </div>
 
-      <div className="imagem">
-        <img src={login} />
-      </div>
-    </div>
+      <CampoSenha
+        rotulo="Senha"
+        valor={senha}
+        aoMudar={setSenha}
+        placeholder="Mínimo de 6 caracteres"
+        autoComplete="new-password"
+      />
+
+      <CampoSenha
+        rotulo="Confirme sua senha"
+        valor={confirmarSenha}
+        aoMudar={setConfirmarSenha}
+        placeholder="Digite a senha novamente"
+        autoComplete="new-password"
+      />
+
+      {mensagem && (
+        <p className={`mensagem ${tipoMensagem}`} role="alert">
+          {mensagem}
+        </p>
+      )}
+
+      <button type="submit" className="botao" disabled={carregando}>
+        {carregando ? "Cadastrando..." : "Cadastrar empresa"}
+      </button>
+    </TelaAcesso>
   );
 }
 

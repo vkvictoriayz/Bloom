@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
 import MenuLateral from "../components/MenuLateral";
+import CartaoVaga from "../components/CartaoVaga";
+import { useState } from "react";
 
 function Vagas() {
   const vagas = [
@@ -26,57 +27,37 @@ function Vagas() {
     },
   ];
 
+  // Só visual por enquanto: marca quais cards foram salvos nesta tela.
+  const [salvas, setSalvas] = useState([]);
+
+  function alternarSalva(index) {
+    setSalvas((atuais) =>
+      atuais.includes(index) ? atuais.filter((i) => i !== index) : [...atuais, index]
+    );
+  }
+
   return (
     <div className="perfil-pagina">
       <MenuLateral ativo="inicio" />
 
       <main className="perfil-conteudo">
-        <div className="perfil-titulo">
+        <header className="perfil-titulo">
           <h2>Vagas</h2>
-          <p>Encontre oportunidades que combinam com você.</p>
-        </div>
+          <p className="subtitulo">Encontre oportunidades que combinam com você.</p>
+        </header>
+
+        <p className="lista-contagem">
+          {vagas.length} {vagas.length === 1 ? "vaga encontrada" : "vagas encontradas"}
+        </p>
 
         <div className="lista-vagas">
           {vagas.map((vaga, index) => (
-            <section
-              className="perfil-card vaga-card"
+            <CartaoVaga
               key={index}
-            >
-              <div className="vaga-info">
-                <h3>{vaga.titulo}</h3>
-
-                <p>
-                  <strong>Empresa:</strong>{" "}
-                  {vaga.empresa}
-                </p>
-
-                <p>
-                  📍 {vaga.localizacao}
-                </p>
-
-                <p>
-                  💰 {vaga.salario}
-                </p>
-
-                <p>
-                  <strong>Área:</strong>{" "}
-                  {vaga.area}
-                </p>
-              </div>
-
-              <div className="vaga-acoes">
-                <button className="botao-salvar">
-                  ♡
-                </button>
-
-                <Link
-                  to="/vaga"
-                  className="botao-editar"
-                >
-                  Ver vaga
-                </Link>
-              </div>
-            </section>
+              vaga={vaga}
+              salva={salvas.includes(index)}
+              aoSalvar={() => alternarSalva(index)}
+            />
           ))}
         </div>
       </main>

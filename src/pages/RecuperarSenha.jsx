@@ -1,6 +1,6 @@
-import login from "../assets/login.png";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import TelaAcesso from "../components/TelaAcesso";
 
 function RecuperarSenha() {
   const [email, setEmail] = useState("");
@@ -27,42 +27,37 @@ function RecuperarSenha() {
   }
 
   return (
-    <div className="login">
-      <div className="formulario">
-        <div className="conteudo">
-          <h1>Bloom</h1>
+    <TelaAcesso
+      titulo="Recuperar senha"
+      subtitulo="Enviaremos as instruções para o seu e-mail."
+      aoEnviar={recuperarSenha}
+      rodape={
+        <p>
+          Lembrou a senha? <Link to="/">Voltar para o login</Link>
+        </p>
+      }
+    >
+      <label className="campo">
+        <span className="campo-rotulo">E-mail</span>
+        <input
+          type="email"
+          placeholder="voce@email.com"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </label>
 
-          <h2>Recuperar senha</h2>
+      {mensagem && (
+        <p className={`mensagem ${tipoMensagem}`} role={tipoMensagem === "erro" ? "alert" : "status"}>
+          {mensagem}
+        </p>
+      )}
 
-          <h3>
-            Digite seu e-mail para receber as instruções
-          </h3>
-
-          <input
-            type="text"
-            placeholder="e-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          {mensagem && (
-            <p className={`mensagem ${tipoMensagem}`}>
-              {mensagem}
-            </p>
-          )}
-
-          <button onClick={recuperarSenha}>
-            enviar
-          </button>
-
-          <Link to="/">Voltar para o login</Link>
-        </div>
-      </div>
-
-      <div className="imagem">
-        <img src={login} />
-      </div>
-    </div>
+      <button type="submit" className="botao">
+        Enviar instruções
+      </button>
+    </TelaAcesso>
   );
 }
 

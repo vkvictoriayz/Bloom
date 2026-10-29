@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import MenuLateral from "../components/MenuLateral";
+import Icone from "../components/Icone";
+import { MonogramaEmpresa } from "../components/CartaoVaga";
 import { useState } from "react";
 
 function DetalhesVaga() {
@@ -15,81 +17,84 @@ function DetalhesVaga() {
       <MenuLateral ativo="inicio" />
 
       <main className="perfil-conteudo">
-        <div className="perfil-titulo">
-          <h2>Desenvolvedora Front-end</h2>
-          <p>Bloom Tech</p>
-        </div>
+        <Link to="/vagas" className="botao-voltar">
+          <Icone nome="voltar" tamanho={16} />
+          Voltar para vagas
+        </Link>
 
-        <section className="perfil-card detalhes-vaga">
-          <div className="vaga-detalhes-topo">
-            <div>
-              <h3>Desenvolvedora Front-end</h3>
+        <article className="perfil-card detalhes-vaga">
+          <header className="vaga-detalhes-topo">
+            <MonogramaEmpresa empresa="Bloom Tech" grande />
 
-              <p>
-                <strong>Empresa:</strong> Bloom Tech
-              </p>
+            <div className="vaga-detalhes-titulo">
+              <h2>Desenvolvedora Front-end</h2>
+              <p className="vaga-empresa">Bloom Tech</p>
 
-              <p>
-                📍 São Paulo • Híbrido
-              </p>
+              <ul className="vaga-meta">
+                <li>
+                  <Icone nome="local" tamanho={16} />
+                  São Paulo
+                </li>
+                <li>
+                  <Icone nome="salario" tamanho={16} />
+                  R$ 2.500 - R$ 3.500
+                </li>
+              </ul>
 
-              <p>
-                💰 R$ 2.500 - R$ 3.500
-              </p>
-
-              <p>
-                <strong>Área:</strong> Tecnologia
-              </p>
+              <div className="etiquetas">
+                <span>Híbrido</span>
+                <span>Tecnologia</span>
+              </div>
             </div>
+          </header>
+
+          <div className="detalhes-acoes">
+            <button
+              type="button"
+              className={`botao-principal ${candidatou ? "enviado" : ""}`}
+              onClick={() => setCandidatou(true)}
+              aria-live="polite"
+            >
+              {candidatou ? (
+                <>
+                  <Icone nome="check" />
+                  Candidatura enviada
+                </>
+              ) : (
+                "Candidatar-se"
+              )}
+            </button>
 
             <button
-              className="botao-salvar"
+              type="button"
+              className={`botao-secundario botao-salvar-texto ${salvou ? "ativo" : ""}`}
               onClick={salvarVaga}
+              aria-pressed={salvou}
             >
-              {salvou ? "♥" : "♡"}
+              <Icone nome="coracao" preenchido={salvou} />
+              {salvou ? "Salva" : "Salvar"}
             </button>
           </div>
 
-          <div className="detalhes-secao">
+          <section className="detalhes-secao">
             <h3>Sobre a vaga</h3>
-
             <p>
-              Estamos buscando uma pessoa desenvolvedora
-              Front-end para fazer parte da nossa equipe.
-              Você irá trabalhar no desenvolvimento e
+              Estamos buscando uma pessoa desenvolvedora Front-end para fazer
+              parte da nossa equipe. Você irá trabalhar no desenvolvimento e
               manutenção de interfaces web.
             </p>
-          </div>
+          </section>
 
-          <div className="detalhes-secao">
+          <section className="detalhes-secao">
             <h3>Requisitos</h3>
-
             <ul>
               <li>Conhecimento em HTML, CSS e JavaScript</li>
               <li>Conhecimento em React</li>
               <li>Git e GitHub</li>
               <li>Boa comunicação e trabalho em equipe</li>
             </ul>
-          </div>
-
-          <div className="detalhes-acoes">
-            <button
-              className="botao-principal"
-              onClick={() => setCandidatou(true)}
-            >
-              {candidatou
-                ? "Candidatura enviada ✓"
-                : "Candidatar-se"}
-            </button>
-
-            <Link
-              to="/vagas"
-              className="botao-voltar"
-            >
-              Voltar para vagas
-            </Link>
-          </div>
-        </section>
+          </section>
+        </article>
       </main>
     </div>
   );
