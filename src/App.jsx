@@ -1,64 +1,53 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
-import RotaPrivada from "./components/RotaPrivada";
+import RotaPrivada from './components/RotaPrivada'
 
-import Login from "./pages/Login";
-import Cadastro from "./pages/Cadastro";
-import LoginEmpresa from "./pages/LoginEmpresa";
-import CadastroEmpresa from "./pages/CadastroEmpresa";
-import RecuperarSenha from "./pages/RecuperarSenha";
-import PainelEmpresa from "./pages/PainelEmpresa";
-import Perfil from "./pages/Perfil";
-import EditarPerfil from "./pages/EditarPerfil";
-import MinhasCandidaturas from "./pages/MinhasCandidaturas";
-import VagasSalvas from "./pages/VagasSalvas";
-import Home from "./pages/Home";
-import Vagas from "./pages/Vagas";
-import DetalhesVaga from "./pages/DetalhesVaga";
+import Login from './pages/Login'
+import Cadastro from './pages/Cadastro'
+import RecuperarSenha from './pages/RecuperarSenha'
+import Home from './pages/Home'
+import Perfil from './pages/Perfil'
+import Vagas from './pages/Vagas'
+import DetalhesVaga from './pages/DetalhesVaga'
 
-// Páginas da usuária: só abrem com login. Sem login, vai para "/".
-function PrivadaUsuaria({ children }) {
-  return <RotaPrivada tipo="usuaria">{children}</RotaPrivada>;
+import LoginEmpresa from './pages/LoginEmpresa'
+import CadastroEmpresa from './pages/CadastroEmpresa'
+import PainelEmpresa from './pages/PainelEmpresa'
+
+// Páginas internas: só abrem para quem fez login ou cadastro.
+// Sem sessão, a pessoa volta para a tela inicial (login).
+function Protegida({ children }) {
+  return <RotaPrivada tipo="usuaria">{children}</RotaPrivada>
 }
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Públicas */}
+        {/* Telas iniciais */}
         <Route path="/" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
 
-        {/* Empresa */}
-        <Route path="/empresa" element={<LoginEmpresa />} />
-        <Route path="/empresa/cadastro" element={<CadastroEmpresa />} />
-        <Route
-          path="/empresa/painel"
-          element={
-            <RotaPrivada tipo="empresa">
-              <PainelEmpresa />
-            </RotaPrivada>
-          }
-        />
+        {/* Compatibilidade: o antigo endereço /login agora é a tela inicial */}
+        <Route path="/login" element={<Navigate to="/" replace />} />
 
-        {/* Usuária logada */}
-        <Route path="/home" element={<PrivadaUsuaria><Home /></PrivadaUsuaria>} />
-        <Route path="/vagas" element={<PrivadaUsuaria><Vagas /></PrivadaUsuaria>} />
-        <Route path="/vaga" element={<PrivadaUsuaria><DetalhesVaga /></PrivadaUsuaria>} />
-        <Route path="/perfil" element={<PrivadaUsuaria><Perfil /></PrivadaUsuaria>} />
-        <Route path="/editar-perfil" element={<PrivadaUsuaria><EditarPerfil /></PrivadaUsuaria>} />
-        <Route
-          path="/minhas-candidaturas"
-          element={<PrivadaUsuaria><MinhasCandidaturas /></PrivadaUsuaria>}
-        />
-        <Route path="/vagas-salvas" element={<PrivadaUsuaria><VagasSalvas /></PrivadaUsuaria>} />
+        {/* Área da candidata (exige login) */}
+        <Route path="/home" element={<Protegida><Home /></Protegida>} />
+        <Route path="/vagas" element={<Protegida><Vagas /></Protegida>} />
+        <Route path="/vagas/:id" element={<Protegida><DetalhesVaga /></Protegida>} />
+        <Route path="/perfil" element={<Protegida><Perfil /></Protegida>} />
+
+        {/* Acesso das empresas */}
+        <Route path="/empresa/login" element={<LoginEmpresa />} />
+        <Route path="/empresa/cadastro" element={<CadastroEmpresa />} />
+        <Route path="/empresa/painel" element={<PainelEmpresa />} />
 
         {/* Qualquer outro endereço volta para o login */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
-  );
+  )
 }
 
-export default App;
+export default App

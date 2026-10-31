@@ -1,3 +1,4 @@
+import "./TelaAcesso.css";
 import login from "../assets/login.png";
 import Logo from "./Logo";
 

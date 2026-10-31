@@ -1,187 +1,615 @@
-import { Link } from "react-router-dom";
-import MenuLateral from "../components/MenuLateral";
-import Icone from "../components/Icone";
-import { useState } from "react";
 
-function Perfil() {
-  const dadosSalvos = localStorage.getItem("perfil");
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { sair } from '../services/auth'
+import logoBloom from '../assets/logo-bloom.png'
+import './Perfil.css'
 
-  const dadosPerfil = dadosSalvos
-    ? JSON.parse(dadosSalvos)
-    : {
-        nome: "Seu nome",
-        email: "seuemail@email.com",
-        telefone: "(00) 00000-0000",
-        localizacao: "Sua localização",
-        sobreMim:
-          "Adicione uma descrição sobre você, sua experiência e seus objetivos.",
-        objetivo:
-          "Conte um pouco sobre seus objetivos profissionais e o que você busca no mercado de trabalho.",
-        curso: "Seu curso",
-        instituicao: "Nome da instituição",
-        nivel: "Nível da formação",
-        cargo: "Seu cargo",
-        empresa: "Nome da empresa",
-        descricaoExperiencia: "Descrição da experiência",
-        competencias: "",
-        foto: "",
-      };
-
-  const [foto, setFoto] = useState(dadosPerfil.foto || "");
-
-  function escolherFoto(evento) {
-    const arquivo = evento.target.files[0];
-
-    if (!arquivo) {
-      return;
-    }
-
-    if (!arquivo.type.startsWith("image/")) {
-      alert("Escolha uma imagem válida.");
-      return;
-    }
-
-    const leitor = new FileReader();
-
-    leitor.onload = () => {
-      const novaFoto = leitor.result;
-
-      setFoto(novaFoto);
-
-      const dadosAtualizados = {
-        ...dadosPerfil,
-        foto: novaFoto,
-      };
-
-      localStorage.setItem(
-        "perfil",
-        JSON.stringify(dadosAtualizados)
-      );
-    };
-
-    leitor.readAsDataURL(arquivo);
-  }
-
-  const competencias = dadosPerfil.competencias
-    ? dadosPerfil.competencias
-        .split(",")
-        .map((competencia) => competencia.trim())
-        .filter(Boolean)
-    : [];
-
-  return (
-    <div className="perfil-pagina">
-      <MenuLateral ativo="perfil" />
-
-      <main className="perfil-conteudo">
-        <header className="perfil-titulo">
-          <h2>Meu perfil</h2>
-          <p className="subtitulo">É assim que as empresas conhecem você.</p>
-        </header>
-
-        <section className="perfil-card perfil-principal">
-          <div className="foto-perfil">
-            {foto ? (
-              <img src={foto} alt="Foto de perfil" />
-            ) : (
-              <Icone nome="perfil" tamanho={44} />
-            )}
-          </div>
-
-          <div className="dados-principais">
-            <h3>{dadosPerfil.nome}</h3>
-
-            <ul className="vaga-meta">
-              <li>
-                <Icone nome="local" tamanho={16} />
-                {dadosPerfil.localizacao}
-              </li>
-              <li>
-                <Icone nome="email" tamanho={16} />
-                {dadosPerfil.email}
-              </li>
-              <li>
-                <Icone nome="telefone" tamanho={16} />
-                {dadosPerfil.telefone}
-              </li>
-            </ul>
-          </div>
-
-          <div className="perfil-principal-acoes">
-            <Link to="/editar-perfil" className="botao-editar">
-              Editar perfil
-            </Link>
-
-            <label className="botao-secundario">
-              <Icone nome="camera" tamanho={16} />
-              Alterar foto
-              <input
-                type="file"
-                accept="image/*"
-                className="visualmente-oculto"
-                onChange={escolherFoto}
-              />
-            </label>
-          </div>
-        </section>
-
-        <section className="perfil-card">
-          <h3>Sobre mim</h3>
-          <p>{dadosPerfil.sobreMim}</p>
-        </section>
-
-        <section className="perfil-card">
-          <h3>Objetivo de carreira</h3>
-          <p>{dadosPerfil.objetivo}</p>
-        </section>
-
-        <div className="perfil-duplo">
-          <section className="perfil-card">
-            <h3>Formação acadêmica</h3>
-            <h4>{dadosPerfil.curso}</h4>
-            <p>{dadosPerfil.instituicao}</p>
-            <p className="texto-secundario">{dadosPerfil.nivel}</p>
-          </section>
-
-          <section className="perfil-card">
-            <h3>Experiência profissional</h3>
-            <h4>{dadosPerfil.cargo}</h4>
-            <p>{dadosPerfil.empresa}</p>
-            <p className="texto-secundario">{dadosPerfil.descricaoExperiencia}</p>
-          </section>
-        </div>
-
-        <section className="perfil-card">
-          <h3>Competências</h3>
-
-          <div className="competencias">
-            {competencias.length > 0 ? (
-              competencias.map((competencia, index) => (
-                <span key={index}>{competencia}</span>
-              ))
-            ) : (
-              <p>Nenhuma competência adicionada.</p>
-            )}
-          </div>
-        </section>
-
-        <section className="perfil-card">
-          <h3>Currículo</h3>
-
-          <div className="curriculo">
-            <span className="curriculo-icone">
-              <Icone nome="documento" />
-            </span>
-            <p>Nenhum currículo enviado.</p>
-
-            <button type="button" className="botao-secundario">
-              Adicionar currículo
-            </button>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+const perfilInicial = {
+  nome: 'Juliana Silva',
+  cargo: 'Desenvolvedora Front-end',
+  local: 'São Paulo, SP',
+  email: 'juliana.silva@email.com',
+  telefone: '(11) 99999-8888',
+  sobre:
+    'Desenvolvedora Front-end apaixonada por criar experiências digitais acessíveis e intuitivas. Busco oportunidades para aprender, colaborar e crescer em projetos desafiadores.',
+  objetivo:
+    'Atuar como desenvolvedora em um ambiente colaborativo, aprimorando minhas habilidades e contribuindo para soluções inovadoras.',
 }
 
-export default Perfil;
+const vagasDisponiveis = [
+  {
+    id: 1,
+    cargo: 'Engenheira de Software Pleno - JAVA',
+    empresa: 'Itaú',
+    local: 'São Paulo, SP',
+    modalidade: 'Híbrido',
+  },
+  {
+    id: 2,
+    cargo: 'Engenheira de Software Sênior - Data Owner',
+    empresa: 'BTG Pactual',
+    local: 'Botucatu, SP',
+    modalidade: 'Presencial',
+  },
+  {
+    id: 3,
+    cargo: 'Analista de Inteligência de Dados Sênior',
+    empresa: 'Porto Seguro',
+    local: 'Bragança Paulista, SP',
+    modalidade: 'Híbrido',
+  },
+  {
+    id: 4,
+    cargo: 'Analista DevOps Júnior',
+    empresa: 'Banco do Brasil',
+    local: 'Mogi das Cruzes, SP',
+    modalidade: 'Remoto',
+  },
+  {
+    id: 5,
+    cargo: 'Desenvolvedora Mobile',
+    empresa: 'Ipiranga',
+    local: 'Mauá, SP',
+    modalidade: 'Remoto',
+  },
+  {
+    id: 6,
+    cargo: 'Assistente de Tecnologia da Informação',
+    empresa: 'Unimed',
+    local: 'Campinas, SP',
+    modalidade: 'Presencial',
+  },
+]
+
+function lerVagasSalvas() {
+  try {
+    const dados = JSON.parse(
+      localStorage.getItem('bloom-vagas-salvas') || '[]'
+    )
+
+    return Array.isArray(dados) ? dados : []
+  } catch {
+    return []
+  }
+}
+
+
+function lerCandidaturas() {
+  try {
+    const dados = JSON.parse(
+      localStorage.getItem('bloom-candidaturas') || '[]'
+    )
+
+    return Array.isArray(dados) ? dados : []
+  } catch {
+    return []
+  }
+}
+
+
+function Perfil() {
+  const [perfil, setPerfil] = useState(() => {
+  const [candidaturas, setCandidaturas] = useState(lerCandidaturas)
+    try {
+      const dados = JSON.parse(
+        localStorage.getItem('bloom-perfil') || 'null'
+      )
+
+      return dados && typeof dados === 'object'
+        ? { ...perfilInicial, ...dados }
+        : perfilInicial
+    } catch {
+      return perfilInicial
+    }
+  })
+
+  const [formulario, setFormulario] = useState(perfil)
+  const [editando, setEditando] = useState(false)
+  const [curriculo, setCurriculo] = useState(null)
+  const [mensagem, setMensagem] = useState('')
+  const [vagasSalvas, setVagasSalvas] = useState(lerVagasSalvas)
+
+  const arquivoRef = useRef(null)
+
+  useEffect(() => {
+    function atualizarVagasSalvas() {
+      setVagasSalvas(lerVagasSalvas())
+    }
+
+    window.addEventListener('storage', atualizarVagasSalvas)
+
+    return () => {
+      window.removeEventListener('storage', atualizarVagasSalvas)
+    }
+  }, [])
+
+  function abrirEdicao() {
+    setFormulario({ ...perfil })
+    setMensagem('')
+    setEditando(true)
+  }
+
+  function atualizarCampo(event) {
+    const { name, value } = event.target
+
+    setFormulario((atual) => ({
+      ...atual,
+      [name]: value,
+    }))
+  }
+
+  function salvarPerfil(event) {
+    event.preventDefault()
+
+    try {
+      localStorage.setItem('bloom-perfil', JSON.stringify(formulario))
+      setPerfil({ ...formulario })
+      setEditando(false)
+      setMensagem('Perfil atualizado com sucesso!')
+    } catch {
+      setMensagem('Não foi possível salvar o perfil no navegador.')
+    }
+  }
+
+  function cancelarEdicao() {
+    setFormulario({ ...perfil })
+    setEditando(false)
+    setMensagem('')
+  }
+
+  function selecionarCurriculo(event) {
+    const arquivo = event.target.files?.[0]
+
+    if (!arquivo) return
+
+    const extensaoValida = /\.(pdf|doc|docx)$/i.test(arquivo.name)
+
+    if (!extensaoValida) {
+      setMensagem('Selecione um arquivo PDF, DOC ou DOCX.')
+      event.target.value = ''
+      return
+    }
+
+    setCurriculo(arquivo)
+    setMensagem('Currículo selecionado nesta sessão.')
+  }
+
+  function removerVaga(id) {
+    const novasVagas = vagasSalvas.filter(
+      (vagaId) => vagaId !== id
+    )
+
+    try {
+      localStorage.setItem(
+        'bloom-vagas-salvas',
+        JSON.stringify(novasVagas)
+      )
+
+      setVagasSalvas(novasVagas)
+      setMensagem('Vaga removida das favoritas.')
+    } catch {
+      setMensagem('Não foi possível atualizar as vagas salvas.')
+    }
+  }
+
+  const vagasSalvasDetalhes = vagasDisponiveis.filter(
+    (vaga) => vagasSalvas.includes(vaga.id)
+  )
+
+  return (
+    <div className="perfil-page">
+      <header className="perfil-header">
+        <Link to="/home" className="perfil-logo">
+          <img src={logoBloom} alt="BLOOM" />
+          <span>BLOOM</span>
+        </Link>
+
+        <nav className="perfil-nav">
+          <Link to="/home">Início</Link>
+          <Link to="/vagas">Vagas</Link>
+          <a href="#contatos">Contato</a>
+          <Link to="/" onClick={sair}>Sair</Link>
+        </nav>
+
+        <div className="perfil-header-icons">
+          <button
+            type="button"
+            aria-label="Ir para minhas candidaturas"
+            onClick={() =>
+              document
+                .getElementById('candidaturas')
+                ?.scrollIntoView({ behavior: 'smooth' })
+            }
+          >
+            ♧
+          </button>
+
+          <button
+            type="button"
+            aria-label="Ir para meu perfil"
+            onClick={() =>
+              document
+                .getElementById('meu-perfil')
+                ?.scrollIntoView({ behavior: 'smooth' })
+            }
+          >
+            ●
+          </button>
+        </div>
+      </header>
+
+      <div className="perfil-layout">
+        <aside className="perfil-sidebar">
+          <a className="perfil-menu-item ativo" href="#meu-perfil">
+            <span>♙</span> Meu perfil
+          </a>
+
+          <a className="perfil-menu-item" href="#candidaturas">
+            <span>▣</span> Minhas candidaturas
+          </a>
+
+          <a className="perfil-menu-item" href="#competencias">
+            <span>✧</span> Competências
+          </a>
+
+          <a className="perfil-menu-item" href="#curriculo">
+            <span>♧</span> Currículo
+          </a>
+
+          <a className="perfil-menu-item" href="#vagas-salvas">
+            <span>♡</span> Vagas salvas
+          </a>
+        </aside>
+
+        <main className="perfil-conteudo">
+          <div className="perfil-titulo-linha">
+            <div>
+              <span className="perfil-subtitulo">
+                SUA JORNADA PROFISSIONAL
+              </span>
+
+              <h1>MEU PERFIL</h1>
+
+              <p>
+                Apresente sua trajetória e seus objetivos profissionais.
+              </p>
+            </div>
+
+            {!editando && (
+              <button
+                className="perfil-botao-editar"
+                type="button"
+                onClick={abrirEdicao}
+              >
+                Editar perfil
+              </button>
+            )}
+          </div>
+
+          {mensagem && (
+            <p className="perfil-mensagem" role="status">
+              {mensagem}
+            </p>
+          )}
+
+          {editando && (
+            <section className="perfil-card perfil-formulario-card">
+              <h2>Editar informações</h2>
+              <p>Atualize seus dados profissionais abaixo.</p>
+
+              <form
+                onSubmit={salvarPerfil}
+                className="perfil-formulario"
+              >
+                <label>
+                  Nome completo
+                  <input
+                    name="nome"
+                    value={formulario.nome}
+                    onChange={atualizarCampo}
+                    required
+                    maxLength={100}
+                  />
+                </label>
+
+                <label>
+                  Cargo ou área profissional
+                  <input
+                    name="cargo"
+                    value={formulario.cargo}
+                    onChange={atualizarCampo}
+                    required
+                    maxLength={100}
+                  />
+                </label>
+
+                <label>
+                  Localização
+                  <input
+                    name="local"
+                    value={formulario.local}
+                    onChange={atualizarCampo}
+                    maxLength={100}
+                  />
+                </label>
+
+                <label>
+                  E-mail
+                  <input
+                    name="email"
+                    type="email"
+                    value={formulario.email}
+                    onChange={atualizarCampo}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Telefone
+                  <input
+                    name="telefone"
+                    type="tel"
+                    value={formulario.telefone}
+                    onChange={atualizarCampo}
+                  />
+                </label>
+
+                <label className="perfil-campo-completo">
+                  Sobre mim
+                  <textarea
+                    name="sobre"
+                    value={formulario.sobre}
+                    onChange={atualizarCampo}
+                    rows={4}
+                    maxLength={1000}
+                  />
+                </label>
+
+                <label className="perfil-campo-completo">
+                  Objetivo profissional
+                  <textarea
+                    name="objetivo"
+                    value={formulario.objetivo}
+                    onChange={atualizarCampo}
+                    rows={3}
+                    maxLength={1000}
+                  />
+                </label>
+
+                <div className="perfil-formulario-acoes perfil-campo-completo">
+                  <button className="perfil-botao" type="submit">
+                    Salvar alterações
+                  </button>
+
+                  <button
+                    className="perfil-botao-cancelar"
+                    type="button"
+                    onClick={cancelarEdicao}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </section>
+          )}
+
+          <section
+            className="perfil-card identificacao"
+            id="meu-perfil"
+          >
+            <div className="perfil-avatar">
+              {perfil.nome
+                .trim()
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((parte) => parte.charAt(0).toUpperCase())
+                .join('')}
+            </div>
+
+            <div className="perfil-dados">
+              <h2>{perfil.nome}</h2>
+              <p className="perfil-cargo">{perfil.cargo}</p>
+              <p>{perfil.local} · {perfil.email}</p>
+              <p>
+                Telefone: {perfil.telefone || 'Não informado'}
+              </p>
+            </div>
+
+            {!editando && (
+              <button
+                className="perfil-botao-editar"
+                type="button"
+                onClick={abrirEdicao}
+              >
+                Editar
+              </button>
+            )}
+          </section>
+
+          <section className="perfil-card" id="sobre-mim">
+            <h3>Sobre mim</h3>
+            <p>
+              {perfil.sobre || 'Adicione uma apresentação profissional.'}
+            </p>
+
+            <h3>Objetivo de carreira</h3>
+            <p>
+              {perfil.objetivo || 'Adicione seu objetivo profissional.'}
+            </p>
+          </section>
+
+          <div className="perfil-duas-colunas">
+            <section className="perfil-card">
+              <h3>Formação acadêmica</h3>
+              <h4>Análise e Desenvolvimento de Sistemas</h4>
+              <p>Instituição de ensino</p>
+              <span className="perfil-etiqueta">Cursando</span>
+            </section>
+
+            <section className="perfil-card">
+              <h3>Experiência profissional</h3>
+              <h4>Estagiária Front-end</h4>
+              <p>Empresa de tecnologia</p>
+              <p>
+                Desenvolvimento de interfaces e manutenção de aplicações.
+              </p>
+            </section>
+          </div>
+
+          <section className="perfil-card" id="competencias">
+            <h3>Competências</h3>
+
+            <div className="perfil-habilidades">
+              <span>HTML</span>
+              <span>CSS</span>
+              <span>JavaScript</span>
+              <span>React</span>
+              <span>Git</span>
+              <span>Figma</span>
+              <span>Trabalho em equipe</span>
+              <span>Comunicação</span>
+            </div>
+          </section>
+
+          <section className="perfil-card" id="curriculo">
+            <h3>Currículo</h3>
+
+            <p>
+              {curriculo
+                ? `Arquivo selecionado: ${curriculo.name}`
+                : 'Você ainda não selecionou um currículo.'}
+            </p>
+
+            <input
+              ref={arquivoRef}
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={selecionarCurriculo}
+              hidden
+            />
+
+            <button
+              type="button"
+              className="perfil-botao"
+              onClick={() => arquivoRef.current?.click()}
+            >
+              {curriculo ? 'Trocar currículo' : 'Adicionar currículo'}
+            </button>
+
+            {curriculo && (
+              <button
+                type="button"
+                className="perfil-botao-cancelar"
+                onClick={() => {
+                  setCurriculo(null)
+
+                  if (arquivoRef.current) {
+                    arquivoRef.current.value = ''
+                  }
+
+                  setMensagem('Currículo removido desta sessão.')
+                }}
+              >
+                Remover arquivo
+              </button>
+            )}
+          </section>
+
+          <section className="perfil-card" id="candidaturas">
+            <h3>Minhas candidaturas</h3>
+            <p>
+              Suas candidaturas aparecerão aqui quando o sistema de
+              candidaturas estiver integrado.
+            </p>
+          </section>
+
+          <section className="perfil-card" id="vagas-salvas">
+            <div className="vagas-salvas-cabecalho">
+              <div>
+                <h3>Vagas salvas</h3>
+                <p>
+                  Suas oportunidades favoritas ficam reunidas aqui.
+                </p>
+              </div>
+
+              <span className="vagas-salvas-contador">
+                {vagasSalvasDetalhes.length}
+              </span>
+            </div>
+
+            {vagasSalvasDetalhes.length > 0 ? (
+              <div className="perfil-vagas-salvas-lista">
+                {vagasSalvasDetalhes.map((vaga) => (
+                  <article
+                    className="perfil-vaga-salva"
+                    key={vaga.id}
+                  >
+                    <div className="perfil-vaga-salva-info">
+                      <span>{vaga.empresa}</span>
+                      <h4>{vaga.cargo}</h4>
+                      <p>
+                        {vaga.local} · {vaga.modalidade}
+                      </p>
+                    </div>
+
+                    <div className="perfil-vaga-salva-acoes">
+                      <Link
+                        to={`/vagas/${vaga.id}`}
+                        className="perfil-link-vagas"
+                      >
+                        Ver detalhes
+                      </Link>
+
+                      <button
+                        type="button"
+                        className="perfil-remover-vaga"
+                        onClick={() => removerVaga(vaga.id)}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="perfil-vagas-vazio">
+                <span className="perfil-vagas-coracao">♡</span>
+                <h4>Você ainda não salvou nenhuma vaga</h4>
+                <p>
+                  Explore as oportunidades e guarde as que combinam
+                  com seus objetivos profissionais.
+                </p>
+
+                <Link to="/vagas" className="perfil-link-vagas">
+                  Explorar vagas
+                </Link>
+              </div>
+            )}
+          </section>
+        </main>
+      </div>
+
+      <footer className="perfil-footer" id="contatos">
+        <div>
+          <strong>BLOOM</strong>
+          <p>Conectando mulheres a oportunidades na tecnologia.</p>
+        </div>
+
+        <div>
+          <strong>Navegue</strong>
+          <p><Link to="/home">Início</Link></p>
+          <p><Link to="/vagas">Vagas</Link></p>
+        </div>
+
+        <div>
+          <strong>Ajuda</strong>
+          <p>Central de ajuda</p>
+          <p>Política de privacidade</p>
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+export default Perfil

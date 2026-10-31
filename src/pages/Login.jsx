@@ -51,7 +51,7 @@ function Login() {
             Ainda não tem conta? <Link to="/cadastro">Cadastre-se</Link>
           </p>
           <p>
-            <Link to="/empresa" className="link-discreto">Sou uma empresa</Link>
+            <Link to="/empresa/login" className="link-discreto">Sou uma empresa</Link>
           </p>
         </>
       }

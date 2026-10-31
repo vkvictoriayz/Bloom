@@ -1,140 +1,326 @@
-import { Link, useNavigate } from "react-router-dom";
-import MenuLateral from "../components/MenuLateral";
-import Icone from "../components/Icone";
-import { obterSessao } from "../services/auth";
-import { useState } from "react";
+import { useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+
+import CarrosselAreas from '../components/CarrosselAreas'
+import { sair } from '../services/auth'
+
+import bannerBloom from '../assets/banner-bloom.png'
+import logoBloom from '../assets/logo-bloom.png'
+
+import '../App.css'
+
+const vagas = [
+  {
+    id: 1,
+    empresa: 'Itaú',
+    logo: 'itaú',
+    titulo: 'Engenheira de Software Pleno - JAVA',
+    local: 'São Paulo - SP',
+    modalidade: 'Híbrido',
+    tempo: 'Há 2 dias',
+  },
+  {
+    id: 2,
+    empresa: 'BTG Pactual',
+    logo: 'btg',
+    titulo: 'Engenheira de Software Sênior - Data Owner',
+    local: 'Botucatu - SP',
+    modalidade: 'Presencial',
+    tempo: 'Há 1 semana',
+  },
+  {
+    id: 3,
+    empresa: 'Porto Seguro',
+    logo: 'porto',
+    titulo: 'Analista de Inteligência de Dados Sênior',
+    local: 'Santos - SP',
+    modalidade: 'Híbrido',
+    tempo: 'Há 3 dias',
+  },
+  {
+    id: 4,
+    empresa: 'Banco do Brasil',
+    logo: 'bb',
+    titulo: 'Analista DevOps - Júnior',
+    local: 'São Paulo - SP',
+    modalidade: 'Remoto',
+    tempo: 'Há 5 dias',
+  },
+]
+
+const empresas = [
+  {
+    nome: 'Banco do Brasil',
+    logo: 'bb',
+    descricao:
+      'Uma das principais instituições financeiras do país, com uma trajetória de inovação e tecnologia.',
+  },
+  {
+    nome: 'Porto Seguro',
+    logo: 'porto',
+    descricao:
+      'Uma empresa reconhecida por suas soluções em seguros, tecnologia e atendimento.',
+  },
+  {
+    nome: 'Sebrae',
+    logo: 'sebrae',
+    descricao:
+      'Instituição que apoia o empreendedorismo e o desenvolvimento de pequenos negócios.',
+  },
+]
+
+// Áreas de T.I. do carrossel. "filtro" é o valor do filtro de área da página
+// de vagas (só as áreas que já existem lá levam o filtro; as demais abrem todas).
+const areasTI = [
+  {
+    nome: 'Desenvolvimento',
+    descricao: 'Front-end, back-end, mobile e full stack.',
+    filtro: 'Desenvolvimento',
+  },
+  {
+    nome: 'Dados',
+    descricao: 'Análise de dados, engenharia de dados, BI e ciência de dados.',
+    filtro: 'Dados',
+  },
+  {
+    nome: 'DevOps / Cloud',
+    descricao: 'Automação, infraestrutura como código e computação em nuvem.',
+    filtro: 'Infraestrutura',
+  },
+  {
+    nome: 'UX / UI Design',
+    descricao: 'Pesquisa com usuárias, design de interfaces e experiência digital.',
+  },
+  {
+    nome: 'Segurança da Informação',
+    descricao: 'Proteção de dados, redes, sistemas e conformidade.',
+  },
+  {
+    nome: 'QA / Testes',
+    descricao: 'Qualidade de software, testes manuais e automação de testes.',
+  },
+  {
+    nome: 'Infraestrutura e Redes',
+    descricao: 'Servidores, redes e sustentação de ambientes de tecnologia.',
+    filtro: 'Infraestrutura',
+  },
+  {
+    nome: 'Suporte Técnico',
+    descricao: 'Atendimento, help desk e suporte a sistemas e usuários.',
+    filtro: 'Suporte',
+  },
+  {
+    nome: 'Inteligência Artificial',
+    descricao: 'Machine learning, IA generativa e automação inteligente.',
+  },
+  {
+    nome: 'Produto e Agilidade',
+    descricao: 'Gestão de produto, Scrum e coordenação de projetos de tecnologia.',
+  },
+]
 
 function Home() {
-  const [busca, setBusca] = useState("");
-  const [mostrarFiltros, setMostrarFiltros] = useState(false);
-  const [aviso, setAviso] = useState("");
-  const navigate = useNavigate();
+  const { hash } = useLocation()
 
-  const primeiroNome = obterSessao()?.usuario?.nome?.split(" ")[0];
-
-  function pesquisar(evento) {
-    evento.preventDefault();
-
-    if (!busca.trim()) {
-      setAviso("Digite um cargo, área ou palavra-chave para buscar.");
-      return;
-    }
-
-    navigate("/vagas");
-  }
+  // Links como /home#contato (vindos de outras páginas) rolam até a seção.
+  useEffect(() => {
+    if (hash) document.querySelector(hash)?.scrollIntoView()
+  }, [hash])
 
   return (
-    <div className="perfil-pagina">
-      <MenuLateral ativo="inicio" />
+    <main className="bloom-home">
+      <header className="home-header">
+        <Link to="/home" className="home-logo">
+          <img src={logoBloom} alt="BLOOM" />
+        </Link>
 
-      <main className="perfil-conteudo">
-        <header className="perfil-titulo">
-          <h2>{primeiroNome ? `Olá, ${primeiroNome}` : "Olá"}</h2>
-          <p className="subtitulo">Encontre oportunidades que combinam com você.</p>
-        </header>
+        <nav className="home-nav">
+          <Link to="/home" className="home-nav-ativo">
+            Home
+          </Link>
+          <Link to="/vagas">Vagas</Link>
+          <a href="#empresas">Empresas</a>
+          <a href="#contato">Contatos</a>
+        </nav>
 
-        <section className="perfil-card busca-home">
-          <h3>Encontre sua próxima oportunidade</h3>
+        <div className="home-header-acoes">
+          <Link
+            to="/perfil"
+            className="home-perfil"
+            aria-label="Meu perfil"
+          >
+            ♙
+          </Link>
+          <Link to="/" className="home-login" onClick={sair}>
+            Sair
+          </Link>
+        </div>
+      </header>
 
-          <form className="busca-container" onSubmit={pesquisar} role="search">
-            <label className="busca-campo">
-              <Icone nome="busca" />
-              <input
-                type="search"
-                placeholder="Cargo, área ou palavra-chave"
-                aria-label="Buscar vagas"
-                value={busca}
-                onChange={(e) => {
-                  setBusca(e.target.value);
-                  setAviso("");
-                }}
-              />
-            </label>
+      <section className="home-hero">
+        <img
+          src={bannerBloom}
+          alt="Mulheres colaborando em um ambiente de tecnologia"
+          className="home-banner"
+        />
 
-            <button type="submit" className="botao">
-              Buscar
-            </button>
+        <div className="home-hero-conteudo">
+          <span className="home-etiqueta">
+            CARREIRAS · TECNOLOGIA · OPORTUNIDADES
+          </span>
 
-            <button
-              type="button"
-              className={`botao-secundario botao-filtro ${mostrarFiltros ? "ativo" : ""}`}
-              onClick={() => setMostrarFiltros(!mostrarFiltros)}
-              aria-expanded={mostrarFiltros}
-              aria-controls="filtros-busca"
-            >
-              <Icone nome="filtros" />
-              Filtros
-            </button>
-          </form>
+          <h1>
+            Conectando mulheres da tecnologia a{' '}
+            <span>oportunidades reais.</span>
+          </h1>
 
-          {aviso && <p className="aviso-busca">{aviso}</p>}
-
-          {mostrarFiltros && (
-            <div className="filtros" id="filtros-busca">
-              <label>
-                <span>Localização</span>
-                <select>
-                  <option value="">Todas</option>
-                  <option>São Paulo</option>
-                  <option>Rio de Janeiro</option>
-                  <option>Curitiba</option>
-                  <option>Remoto</option>
-                </select>
-              </label>
-
-              <label>
-                <span>Modalidade</span>
-                <select>
-                  <option value="">Todas</option>
-                  <option>Presencial</option>
-                  <option>Híbrido</option>
-                  <option>Remoto</option>
-                </select>
-              </label>
-
-              <label>
-                <span>Tipo de contrato</span>
-                <select>
-                  <option value="">Todos</option>
-                  <option>CLT</option>
-                  <option>Estágio</option>
-                  <option>Jovem Aprendiz</option>
-                  <option>Temporário</option>
-                </select>
-              </label>
-
-              <label>
-                <span>Área</span>
-                <select>
-                  <option value="">Todas</option>
-                  <option>Tecnologia</option>
-                  <option>Administração</option>
-                  <option>Marketing</option>
-                  <option>Design</option>
-                </select>
-              </label>
-            </div>
-          )}
-        </section>
-
-        <section className="perfil-card estado-vazio">
-          <h3>Vagas recomendadas</h3>
           <p>
-            Complete seu perfil para receber aqui vagas escolhidas para você.
-            Enquanto isso, veja as oportunidades abertas.
+            O BLOOM conecta talentos a oportunidades profissionais
+            e empresas que valorizam o potencial das mulheres na tecnologia.
           </p>
-          <div className="estado-vazio-acoes">
-            <Link to="/vagas" className="botao-secundario">
-              Ver todas as vagas
-            </Link>
-            <Link to="/editar-perfil" className="link-discreto">
-              Completar perfil
-            </Link>
+
+          <Link to="/vagas" className="home-botao-principal">
+            Buscar vagas <span>↗</span>
+          </Link>
+        </div>
+      </section>
+
+      <section className="home-categorias" id="areas">
+        <p className="home-legenda">EXPLORE SUAS POSSIBILIDADES</p>
+        <h2>Vagas em todas as áreas de T.I.</h2>
+
+        <CarrosselAreas areas={areasTI} />
+      </section>
+
+      <section className="home-vagas">
+        <div className="home-titulo-secao">
+          <div>
+            <p className="home-legenda">OPORTUNIDADES PARA VOCÊ</p>
+            <h2>Vagas recomendadas</h2>
           </div>
-        </section>
-      </main>
-    </div>
-  );
+
+          <Link to="/vagas" className="home-ver-todas">
+            Ver todas as vagas <span>→</span>
+          </Link>
+        </div>
+
+        <div className="home-vagas-grade">
+          {vagas.map((vaga) => (
+            <article className="home-vaga-card" key={vaga.id}>
+              <div className="home-vaga-empresa">
+                <div className={`home-empresa-logo ${vaga.logo}`}>
+                  {vaga.logo}
+                </div>
+                <span>{vaga.empresa}</span>
+                <span className="home-salvar" title="Salvar vaga">
+                  ♡
+                </span>
+              </div>
+
+              <h3>{vaga.titulo}</h3>
+              <p className="home-local">{vaga.local}</p>
+
+              <div className="home-vaga-info">
+                <span>{vaga.modalidade}</span>
+                <span>{vaga.tempo}</span>
+              </div>
+
+              <div className="home-vaga-acoes">
+                <Link
+                  to={`/vagas/${vaga.id}`}
+                  className="home-detalhes"
+                >
+                  Detalhes
+                </Link>
+                <Link
+                  to={`/vagas/${vaga.id}`}
+                  className="home-candidatar"
+                >
+                  Candidatar-se
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="home-empresas" id="empresas">
+        <div className="home-titulo-secao">
+          <div>
+            <p className="home-legenda">CONEXÕES QUE IMPULSIONAM</p>
+            <h2>
+              Empresas alinhadas <span>ao seu futuro.</span>
+            </h2>
+          </div>
+        </div>
+
+        <div className="home-empresas-lista">
+          {empresas.map((empresa) => (
+            <article className="home-empresa-card" key={empresa.nome}>
+              <div
+                className={`home-empresa-logo home-logo-${empresa.logo}`}
+              >
+                {empresa.logo}
+              </div>
+
+              <div className="home-empresa-texto">
+                <h3>{empresa.nome}</h3>
+                <p>{empresa.descricao}</p>
+              </div>
+
+              <Link to="/vagas" className="home-conhecer">
+                Conhecer
+              </Link>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="home-chamada">
+        <div>
+          <p className="home-legenda">SEU PRÓXIMO PASSO COMEÇA AQUI</p>
+          <h2>Seu talento merece espaço para florescer.</h2>
+          <p>
+            Descubra oportunidades e construa seu próximo capítulo
+            na área de tecnologia.
+          </p>
+        </div>
+
+        <Link to="/vagas" className="home-botao-claro">
+          Ver vagas <span>→</span>
+        </Link>
+      </section>
+
+      <footer className="home-footer" id="contato">
+        <div className="home-footer-marca">
+          <Link to="/home" className="home-footer-logo">
+            <img src={logoBloom} alt="BLOOM" />
+          </Link>
+          <p>
+            Uma plataforma que conecta mulheres a oportunidades,
+            empresas e novos caminhos na tecnologia.
+          </p>
+        </div>
+
+        <div className="home-footer-coluna">
+          <h3>Navegue</h3>
+          <Link to="/home">Home</Link>
+          <Link to="/vagas">Vagas</Link>
+          <Link to="/perfil">Meu perfil</Link>
+        </div>
+
+        <div className="home-footer-coluna">
+          <h3>Contato</h3>
+          <a href="mailto:contato@bloom.com.br">Fale com o BLOOM</a>
+          <a href="#contato">Central de ajuda</a>
+        </div>
+
+        <div className="home-footer-final">
+          © 2026 BLOOM · Florescendo oportunidades na tecnologia.
+        </div>
+      </footer>
+    </main>
+  )
 }
 
-export default Home;
+export default Home

@@ -1,0 +1,350 @@
+/* ==========================================================
+   Telas de login e cadastro das candidatas.
+   Tudo fica dentro de ".login" para não afetar as outras páginas.
+   ========================================================== */
+
+.login {
+  --vinho: #5a1825;
+  --bordo: #7b202e;
+  --carmim: #961e42;
+  --malva: #b86a7c;
+  --lilas: #efdbe4;
+  --lilas-claro: #f8eef2;
+  --creme: #fbf6f2;
+  --branco: #ffffff;
+  --tinta: #181516;
+  --texto: #3d3236;
+  --texto-suave: #76676d;
+  --borda: #ece1e5;
+  --borda-forte: #dcc8d0;
+  --fonte-marca: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --fonte-texto: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --raio-controle: 10px;
+
+  display: flex;
+  min-height: 100vh;
+  font-family: var(--fonte-texto);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--texto);
+  background-color: var(--creme);
+  -webkit-font-smoothing: antialiased;
+}
+
+.login *,
+.login *::before,
+.login *::after {
+  box-sizing: border-box;
+}
+
+.login h2,
+.login p {
+  margin: 0;
+}
+
+.login a {
+  color: var(--bordo);
+  font-weight: 600;
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+.login a:hover {
+  color: var(--vinho);
+  text-decoration: underline;
+}
+
+.login .link-discreto {
+  color: var(--texto-suave);
+  font-weight: 500;
+}
+
+.login .link-discreto:hover {
+  color: var(--bordo);
+}
+
+.login :focus-visible {
+  outline: 2px solid var(--carmim);
+  outline-offset: 2px;
+}
+
+.login .icone {
+  flex-shrink: 0;
+}
+
+/* Subtítulo da marca: Plus Jakarta Sans Medium 500 Italic */
+.login .subtitulo {
+  font-style: italic;
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--texto-suave);
+}
+
+/* ----- Logomarca ----- */
+
+.login .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1;
+}
+
+.login .logo-nome {
+  font-family: var(--fonte-marca);
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.login .logo-escura .borboleta,
+.login .logo-escura .logo-nome {
+  color: var(--carmim);
+}
+
+/* ----- Campos ----- */
+
+.login input {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--tinta);
+  background-color: var(--branco);
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-controle);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.login input::placeholder {
+  color: #a8969d;
+}
+
+.login input:hover {
+  border-color: var(--malva);
+}
+
+.login input:focus {
+  outline: none;
+  border-color: var(--carmim);
+  box-shadow: 0 0 0 3px rgba(150, 30, 66, 0.12);
+}
+
+.login .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.login .campo-rotulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.login .campo-opcional {
+  font-weight: 400;
+  color: var(--texto-suave);
+}
+
+.login .campos-linha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.login .senha-container {
+  position: relative;
+  display: block;
+}
+
+.login .senha-container input {
+  padding-right: 48px;
+}
+
+.login .mostrar-senha {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font: inherit;
+  color: var(--texto-suave);
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.login .mostrar-senha:hover {
+  color: var(--bordo);
+  background-color: var(--lilas-claro);
+}
+
+/* ----- Mensagens ----- */
+
+.login .mensagem {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: var(--raio-controle);
+}
+
+.login .mensagem.erro {
+  color: var(--carmim);
+  background-color: #fbeff2;
+  border: 1px solid #f1d3dc;
+}
+
+.login .mensagem.sucesso {
+  color: var(--bordo);
+  background-color: var(--lilas-claro);
+  border: 1px solid var(--lilas);
+}
+
+/* ----- Botão ----- */
+
+.login .botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--branco);
+  background-color: var(--bordo);
+  border: none;
+  border-radius: var(--raio-controle);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.login .botao:hover {
+  background-color: var(--vinho);
+}
+
+.login .botao:disabled {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+/* ----- Layout ----- */
+
+.login .formulario {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 56px 32px;
+}
+
+.login .conteudo {
+  width: 100%;
+  max-width: 420px;
+}
+
+.login .login-logo {
+  margin-bottom: 48px;
+}
+
+.login .login-cabecalho {
+  margin-bottom: 32px;
+}
+
+.login .login-cabecalho h2 {
+  margin-bottom: 10px;
+  font-family: var(--fonte-marca);
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--tinta);
+}
+
+.login .login-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login .login-campos .botao {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.login .esqueci {
+  align-self: flex-end;
+  margin-top: -8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.login .login-rodape {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 32px;
+  padding-top: 24px;
+  font-size: 14px;
+  color: var(--texto-suave);
+  border-top: 1px solid var(--borda);
+}
+
+.login .imagem {
+  width: 50%;
+  padding: 16px;
+}
+
+.login .imagem img {
+  position: sticky;
+  top: 16px;
+  display: block;
+  width: 100%;
+  height: calc(100vh - 32px);
+  object-fit: cover;
+  border-radius: 24px;
+}
+
+@media (max-width: 900px) {
+  .login .formulario {
+    width: 55%;
+  }
+
+  .login .imagem {
+    width: 45%;
+  }
+}
+
+@media (max-width: 768px) {
+  .login .imagem {
+    display: none;
+  }
+
+  .login .formulario {
+    width: 100%;
+    padding: 40px 24px;
+    align-items: flex-start;
+  }
+
+  .login .login-logo {
+    margin-bottom: 36px;
+  }
+
+  .login .login-cabecalho h2 {
+    font-size: 32px;
+  }
+
+  .login .campos-linha {
+    grid-template-columns: 1fr;
+  }
+}

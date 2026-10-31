@@ -1,34 +1,76 @@
-import MenuLateral from "../components/MenuLateral";
-import { obterSessao } from "../services/auth";
 
-const ITENS_EMPRESA = [
-  { id: "inicio", rotulo: "Início", rota: "/empresa/painel", icone: "inicio" },
-];
+import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import './Empresa.css'
+import logoBloom from '../assets/logo-bloom.png'
 
-// Página provisória: a área da empresa (publicar vagas etc.) ainda não existe.
 function PainelEmpresa() {
-  const sessao = obterSessao();
+  const navigate = useNavigate()
+  const [empresa, setEmpresa] = useState(null)
+
+  useEffect(() => {
+    try {
+      const dados = JSON.parse(
+        sessionStorage.getItem('bloom-empresa-logada-demo') || 'null'
+      )
+
+      setEmpresa(dados)
+    } catch {
+      setEmpresa(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (empresa === null) return
+
+    // O acesso é demonstrativo e não substitui uma proteção no backend.
+    if (!empresa) navigate('/empresa/login', { replace: true })
+  }, [empresa, navigate])
+
+  function sair() {
+    sessionStorage.removeItem('bloom-empresa-logada-demo')
+    navigate('/empresa/login')
+  }
+
+  if (!empresa) return null
 
   return (
-    <div className="perfil-pagina">
-      <MenuLateral ativo="inicio" itens={ITENS_EMPRESA} rotaSair="/empresa" />
+    <main className="empresa-auth-page">
+      <section className="empresa-auth-card empresa-auth-container">
+        <img className="empresa-auth-logo" src={logoBloom} alt="BLOOM" />
+        <p className="empresa-auth-etiqueta">ÁREA EMPRESARIAL</p>
+        <h1>Olá, {empresa.nome}!</h1>
+        <p className="empresa-auth-descricao">
+          Você entrou na área empresarial do BLOOM.
+        </p>
 
-      <main className="perfil-conteudo">
-        <header className="perfil-titulo">
-          <h2>Olá, {sessao?.usuario.nome}</h2>
-          <p className="subtitulo">Que bom ter você por aqui.</p>
-        </header>
+        <p><strong>E-mail:</strong> {empresa.email}</p>
 
-        <section className="perfil-card estado-vazio">
-          <h3>Suas vagas</h3>
-          <p>
-            Em breve você poderá publicar vagas e acompanhar as candidaturas
-            por aqui.
-          </p>
-        </section>
-      </main>
-    </div>
-  );
+        <p className="empresa-auth-descricao">
+          Em breve, você poderá gerenciar o perfil da empresa e publicar
+          oportunidades profissionais por aqui.
+        </p>
+
+        <div className="empresa-auth-form">
+          <Link className="empresa-auth-botao" to="/vagas">
+            Ver vagas do BLOOM
+          </Link>
+
+          <button
+            className="empresa-auth-botao"
+            type="button"
+            onClick={sair}
+          >
+            Sair da conta
+          </button>
+
+          <Link className="empresa-auth-voltar" to="/">
+            Voltar à página inicial
+          </Link>
+        </div>
+      </section>
+    </main>
+  )
 }
 
-export default PainelEmpresa;
+export default PainelEmpresa

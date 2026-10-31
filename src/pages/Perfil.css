@@ -1,0 +1,820 @@
+
+.perfil-page {
+  --vinho: #94104d;
+  --rosa: #a65370;
+  --rosa-claro: #f7eaf0;
+  --fundo: #f8f9fb;
+  --texto: #302832;
+
+  min-height: 100vh;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: "Plus Jakarta Sans", Arial, sans-serif;
+  font-size: 13px;
+}
+
+.perfil-page * {
+  box-sizing: border-box;
+}
+
+.perfil-header {
+  min-height: 78px;
+  padding: 16px 4%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: #fff;
+  border-bottom: 1px solid #eee7eb;
+}
+
+.perfil-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--vinho);
+  text-decoration: none;
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 21px;
+}
+
+.perfil-logo img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.perfil-nav {
+  display: flex;
+  align-items: center;
+  gap: 38px;
+}
+
+.perfil-nav a {
+  color: #514650;
+  text-decoration: none;
+}
+
+.perfil-nav a:hover {
+  color: var(--vinho);
+}
+
+.perfil-header-icons {
+  display: flex;
+  gap: 12px;
+}
+
+.perfil-header-icons button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #ead6df;
+  border-radius: 50%;
+  background: white;
+  color: var(--vinho);
+  cursor: pointer;
+}
+
+.perfil-layout {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 28px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px 4%;
+  align-items: stretch;
+}
+
+.perfil-sidebar {
+  background: linear-gradient(180deg, #a20e53, #85083e);
+  border-radius: 14px;
+  padding: 18px 0;
+  color: white;
+  min-height: 100%;
+}
+
+.perfil-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 18px;
+  color: white;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.perfil-menu-item span {
+  width: 18px;
+  text-align: center;
+  font-size: 17px;
+}
+
+.perfil-menu-item:hover,
+.perfil-menu-item.ativo {
+  background: rgb(255 255 255 / 13%);
+}
+
+.perfil-conteudo {
+  min-width: 0;
+}
+
+.perfil-conteudo > h1 {
+  margin: 0 0 18px;
+  color: var(--vinho);
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.perfil-card {
+  margin-bottom: 16px;
+  padding: 20px;
+  background: white;
+  border: 1px solid #eee8ec;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgb(65 24 44 / 3%);
+}
+
+.perfil-card h3 {
+  margin: 0 0 12px;
+  color: var(--vinho);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.perfil-card h3:not(:first-child) {
+  margin-top: 22px;
+}
+
+.perfil-card h4 {
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.perfil-card p {
+  margin: 7px 0;
+  line-height: 1.7;
+  color: #625760;
+}
+
+.identificacao {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.perfil-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 82px;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: var(--rosa-claro);
+  color: var(--vinho);
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 25px;
+}
+
+.perfil-dados {
+  flex: 1;
+  min-width: 0;
+}
+
+.perfil-dados h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+}
+
+.perfil-dados .perfil-cargo {
+  color: var(--vinho);
+  font-weight: 600;
+}
+
+.perfil-botao-editar,
+.perfil-botao {
+  padding: 10px 14px;
+  border: 1px solid var(--rosa);
+  border-radius: 6px;
+  background: white;
+  color: var(--vinho);
+  font: inherit;
+  cursor: pointer;
+}
+
+.perfil-botao:hover,
+.perfil-botao-editar:hover {
+  background: var(--rosa-claro);
+}
+
+.perfil-duas-colunas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.perfil-etiqueta {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: var(--rosa-claro);
+  color: var(--vinho);
+  font-size: 11px;
+}
+
+.perfil-habilidades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.perfil-habilidades span {
+  padding: 8px 12px;
+  border: 1px solid #ead6df;
+  border-radius: 20px;
+  background: #fff9fb;
+  color: #74304c;
+}
+
+.perfil-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 28px 6%;
+  background: var(--rosa);
+  color: white;
+}
+
+.perfil-footer strong {
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 16px;
+}
+
+.perfil-footer p {
+  margin: 7px 0;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .perfil-layout {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 18px;
+    padding: 20px;
+  }
+
+  .perfil-nav {
+    gap: 18px;
+  }
+
+  .perfil-duas-colunas {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .perfil-header {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .perfil-nav {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .perfil-layout {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .perfil-sidebar {
+    min-height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    border-radius: 10px;
+  }
+
+  .perfil-menu-item {
+    padding: 11px;
+  }
+
+  .perfil-menu-item span {
+    display: none;
+  }
+
+  .perfil-conteudo > h1 {
+    font-size: 26px;
+  }
+
+  .perfil-card {
+    padding: 16px;
+  }
+
+  .identificacao {
+    flex-wrap: wrap;
+  }
+
+  .perfil-avatar {
+    flex-basis: 64px;
+    width: 64px;
+    height: 64px;
+  }
+
+  .perfil-botao-editar {
+    width: 100%;
+  }
+
+  .perfil-footer {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+
+
+/* Título e apresentação do perfil */
+.perfil-titulo-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.perfil-titulo-linha h1 {
+  margin: 5px 0 8px;
+  color: var(--vinho);
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.perfil-subtitulo {
+  color: var(--rosa);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.perfil-titulo-linha p {
+  margin: 0;
+  color: #625760;
+  line-height: 1.7;
+}
+
+/* Mensagens de confirmação */
+.perfil-mensagem {
+  margin: 0 0 16px;
+  padding: 12px 15px;
+  border: 1px solid #ead6df;
+  border-radius: 8px;
+  background: #fff9fb;
+  color: var(--vinho);
+  line-height: 1.6;
+}
+
+/* Formulário de edição */
+.perfil-formulario-card > h2 {
+  margin: 0 0 8px;
+  color: var(--vinho);
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 23px;
+}
+
+.perfil-formulario-card > p {
+  margin-bottom: 22px;
+}
+
+.perfil-formulario {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.perfil-formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #514650;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.perfil-formulario input,
+.perfil-formulario textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e5d6dd;
+  border-radius: 7px;
+  outline: none;
+  background: #fff;
+  color: var(--texto);
+  font: inherit;
+  font-weight: 400;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.perfil-formulario input:focus,
+.perfil-formulario textarea:focus {
+  border-color: var(--rosa);
+  box-shadow: 0 0 0 3px rgb(166 83 112 / 12%);
+}
+
+.perfil-formulario textarea {
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.perfil-campo-completo {
+  grid-column: 1 / -1;
+}
+
+.perfil-formulario-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.perfil-formulario-acoes button {
+  min-height: 40px;
+}
+
+.perfil-formulario-acoes .perfil-botao {
+  background: var(--vinho);
+  color: white;
+  border-color: var(--vinho);
+}
+
+.perfil-formulario-acoes .perfil-botao:hover {
+  background: #790b3e;
+}
+
+.perfil-botao-cancelar {
+  padding: 10px 14px;
+  border: 1px solid #e5d6dd;
+  border-radius: 6px;
+  background: white;
+  color: #625760;
+  font: inherit;
+  cursor: pointer;
+}
+
+.perfil-botao-cancelar:hover {
+  background: #f8f3f5;
+}
+
+/* Links e currículo */
+.perfil-link-vagas,
+.perfil-footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.perfil-link-vagas {
+  display: inline-block;
+  margin-top: 10px;
+  color: var(--vinho);
+  font-weight: 700;
+}
+
+.perfil-link-vagas:hover,
+.perfil-footer a:hover {
+  text-decoration: underline;
+}
+
+#curriculo .perfil-botao,
+#curriculo .perfil-botao-cancelar {
+  margin: 8px 8px 0 0;
+}
+
+/* Melhorias para celular e tablet */
+@media (max-width: 650px) {
+  .perfil-titulo-linha {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .perfil-titulo-linha h1 {
+    font-size: 26px;
+  }
+
+  .perfil-titulo-linha > button {
+    width: auto;
+  }
+
+  .perfil-formulario {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .perfil-campo-completo {
+    grid-column: auto;
+  }
+
+  .perfil-formulario-acoes {
+    flex-direction: column;
+  }
+
+  .perfil-formulario-acoes button {
+    width: 100%;
+  }
+
+  .perfil-header-icons {
+    margin-left: auto;
+  }
+
+  .perfil-sidebar {
+    gap: 2px;
+  }
+
+  .perfil-menu-item {
+    flex: 1 1 auto;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .perfil-footer {
+    overflow-wrap: anywhere;
+  }
+}
+
+
+/* Vagas salvas no perfil */
+
+.vagas-salvas-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.vagas-salvas-cabecalho h3 {
+  margin-bottom: 8px;
+}
+
+.vagas-salvas-cabecalho p {
+  color: #746b73;
+  font-size: 14px;
+}
+
+.vagas-salvas-contador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 50%;
+  background: #f7eaf0;
+  color: #94104d;
+  font-weight: 700;
+}
+
+.perfil-vagas-salvas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.perfil-vaga-salva {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  border: 1px solid #eee2e8;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.perfil-vaga-salva-info {
+  min-width: 0;
+}
+
+.perfil-vaga-salva-info > span {
+  color: #94104d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.perfil-vaga-salva-info h4 {
+  margin: 8px 0;
+  color: #302832;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.perfil-vaga-salva-info p {
+  color: #746b73;
+  font-size: 13px;
+}
+
+.perfil-vaga-salva-acoes {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.perfil-remover-vaga {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #94104d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.perfil-remover-vaga:hover {
+  text-decoration: underline;
+}
+
+.perfil-vagas-vazio {
+  padding: 30px 15px;
+  text-align: center;
+  border: 1px dashed #e5cbd7;
+  border-radius: 12px;
+  background: #fdf9fb;
+}
+
+.perfil-vagas-coracao {
+  color: #94104d;
+  font-size: 36px;
+}
+
+.perfil-vagas-vazio h4 {
+  margin: 12px 0 8px;
+  color: #302832;
+}
+
+.perfil-vagas-vazio p {
+  max-width: 420px;
+  margin: 0 auto 20px;
+  color: #746b73;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.perfil-vagas-vazio .perfil-link-vagas {
+  display: inline-block;
+}
+
+@media (max-width: 600px) {
+  .perfil-vaga-salva {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .perfil-vaga-salva-acoes {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}
+
+
+/* Vagas salvas no perfil */
+
+.vagas-salvas-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.vagas-salvas-cabecalho h3 {
+  margin-bottom: 8px;
+}
+
+.vagas-salvas-cabecalho p {
+  color: #746b73;
+  font-size: 14px;
+}
+
+.vagas-salvas-contador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 50%;
+  background: #f7eaf0;
+  color: #94104d;
+  font-weight: 700;
+}
+
+.perfil-vagas-salvas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.perfil-vaga-salva {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  border: 1px solid #eee2e8;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.perfil-vaga-salva-info {
+  min-width: 0;
+}
+
+.perfil-vaga-salva-info > span {
+  color: #94104d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.perfil-vaga-salva-info h4 {
+  margin: 8px 0;
+  color: #302832;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.perfil-vaga-salva-info p {
+  color: #746b73;
+  font-size: 13px;
+}
+
+.perfil-vaga-salva-acoes {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.perfil-remover-vaga {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #94104d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.perfil-remover-vaga:hover {
+  text-decoration: underline;
+}
+
+.perfil-vagas-vazio {
+  padding: 30px 15px;
+  text-align: center;
+  border: 1px dashed #e5cbd7;
+  border-radius: 12px;
+  background: #fdf9fb;
+}
+
+.perfil-vagas-coracao {
+  color: #94104d;
+  font-size: 36px;
+}
+
+.perfil-vagas-vazio h4 {
+  margin: 12px 0 8px;
+  color: #302832;
+}
+
+.perfil-vagas-vazio p {
+  max-width: 420px;
+  margin: 0 auto 20px;
+  color: #746b73;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.perfil-vagas-vazio .perfil-link-vagas {
+  display: inline-block;
+}
+
+@media (max-width: 600px) {
+  .perfil-vaga-salva {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .perfil-vaga-salva-acoes {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}

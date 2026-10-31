@@ -1,0 +1,156 @@
+
+.empresa-auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #fff9fb, #f5e7ee);
+  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+}
+
+.empresa-auth-container {
+  width: 100%;
+  max-width: 480px;
+}
+
+.empresa-auth-voltar {
+  display: inline-block;
+  margin-bottom: 22px;
+  color: #94104d;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.empresa-auth-card {
+  padding: 38px;
+  border: 1px solid #f0dce6;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 15px 45px rgba(91, 32, 60, 0.08);
+}
+
+.empresa-auth-logo {
+  display: block;
+  width: 125px;
+  max-height: 65px;
+  object-fit: contain;
+  margin: 0 auto 24px;
+}
+
+.empresa-auth-etiqueta {
+  margin-bottom: 10px;
+  color: #94104d;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-align: center;
+}
+
+.empresa-auth-card h1 {
+  margin: 0 0 12px;
+  color: #302832;
+  font-size: 27px;
+  text-align: center;
+}
+
+.empresa-auth-descricao {
+  margin: 0 0 26px;
+  color: #746b73;
+  font-size: 14px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.empresa-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.empresa-auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #40343d;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.empresa-auth-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 14px;
+  border: 1px solid #e7d9e0;
+  border-radius: 9px;
+  background: #fff;
+  color: #302832;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.empresa-auth-form input:focus {
+  border-color: #94104d;
+  box-shadow: 0 0 0 3px rgba(148, 16, 77, 0.09);
+}
+
+.empresa-auth-botao {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 9px;
+  background: #94104d;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.empresa-auth-botao:hover {
+  background: #750b3c;
+}
+
+.empresa-auth-mensagem {
+  margin: 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f9edf2;
+  color: #7c1747;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.empresa-auth-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 23px;
+  color: #746b73;
+  font-size: 13px;
+  text-align: center;
+}
+
+.empresa-auth-links a {
+  color: #94104d;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.empresa-auth-links a:hover,
+.empresa-auth-voltar:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .empresa-auth-card {
+    padding: 26px 20px;
+  }
+
+  .empresa-auth-card h1 {
+    font-size: 23px;
+  }
+}

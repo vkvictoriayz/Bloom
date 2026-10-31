@@ -16,7 +16,7 @@ backend/src/
 ├── app.js                          # configura o Express
 └── server.js                       # conecta no banco e sobe o servidor
 ```
-A **View** é o front em React (`src/`).
+A **View** é o front em React (`src/`). As telas de login (`/`) e cadastro (`/cadastro`) chamam esta API; as páginas internas só abrem depois do login.
 
 ## Como rodar
 
