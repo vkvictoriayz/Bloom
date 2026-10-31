@@ -89,8 +89,9 @@ function lerCandidaturas() {
 
 
 function Perfil() {
-  const [perfil, setPerfil] = useState(() => {
   const [candidaturas, setCandidaturas] = useState(lerCandidaturas)
+  const [perfil, setPerfil] = useState(() => {
+
     try {
       const dados = JSON.parse(
         localStorage.getItem('bloom-perfil') || 'null'
@@ -117,10 +118,18 @@ function Perfil() {
       setVagasSalvas(lerVagasSalvas())
     }
 
+    function atualizarCandidaturas() {
+      setCandidaturas(lerCandidaturas())
+    }
+
     window.addEventListener('storage', atualizarVagasSalvas)
+    window.addEventListener('storage', atualizarCandidaturas)
+    window.addEventListener('bloom-candidaturas-atualizadas', atualizarCandidaturas)
 
     return () => {
       window.removeEventListener('storage', atualizarVagasSalvas)
+      window.removeEventListener('storage', atualizarCandidaturas)
+      window.removeEventListener('bloom-candidaturas-atualizadas', atualizarCandidaturas)
     }
   }, [])
 
@@ -200,13 +209,13 @@ function Perfil() {
   return (
     <div className="perfil-page">
       <header className="perfil-header">
-        <Link to="/home" className="perfil-logo">
+        <Link to="/" className="perfil-logo">
           <img src={logoBloom} alt="BLOOM" />
           <span>BLOOM</span>
         </Link>
 
         <nav className="perfil-nav">
-          <Link to="/home">Início</Link>
+          <Link to="/">Início</Link>
           <Link to="/vagas">Vagas</Link>
           <a href="#contatos">Contato</a>
           <Link to="/" onClick={sair}>Sair</Link>
@@ -517,11 +526,65 @@ function Perfil() {
           </section>
 
           <section className="perfil-card" id="candidaturas">
-            <h3>Minhas candidaturas</h3>
-            <p>
-              Suas candidaturas aparecerão aqui quando o sistema de
-              candidaturas estiver integrado.
-            </p>
+            <div className="vagas-salvas-cabecalho">
+              <div>
+                <h3>Minhas candidaturas</h3>
+                <p>Acompanhe o status dos seus processos seletivos.</p>
+              </div>
+              <span className="perfil-contador-vagas">
+                {candidaturas.length}
+              </span>
+            </div>
+
+            {candidaturas.length > 0 ? (
+              <div className="perfil-vagas-salvas-lista">
+                {candidaturas.map((c) => (
+                  <article className="perfil-vaga-salva" key={c.id}>
+                    <div className="perfil-vaga-salva-info">
+                      <span>{c.empresa} · {c.data || 'Recente'}</span>
+                      <h4>{c.cargo}</h4>
+                      <p>
+                        {c.local} · {c.modalidade}
+                      </p>
+                    </div>
+
+                    <div className="perfil-vaga-salva-acoes">
+                      <span
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '16px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          backgroundColor: '#f3e8ee',
+                          color: '#85243d',
+                        }}
+                      >
+                        {c.status || 'Em análise'}
+                      </span>
+                      {c.vagaId && (
+                        <Link
+                          to={`/vagas/${c.vagaId}`}
+                          className="perfil-link-vagas"
+                        >
+                          Ver detalhes
+                        </Link>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="perfil-vagas-vazio">
+                <span className="perfil-vagas-coracao">♧</span>
+                <h4>Você ainda não se candidatou a nenhuma vaga</h4>
+                <p>
+                  Explore as vagas disponíveis e encontre a oportunidade ideal para o seu momento.
+                </p>
+                <Link to="/vagas" className="perfil-link-vagas">
+                  Buscar vagas
+                </Link>
+              </div>
+            )}
           </section>
 
           <section className="perfil-card" id="vagas-salvas">

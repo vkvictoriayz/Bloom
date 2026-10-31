@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import "./TelaAcesso.css";
 import login from "../assets/login.png";
 import Logo from "./Logo";
@@ -14,7 +15,9 @@ function TelaAcesso({ titulo, subtitulo, aoEnviar, children, rodape }) {
     <div className="login">
       <div className="formulario">
         <div className="conteudo">
-          <Logo className="login-logo" />
+          <Link to="/" className="login-logo-link" title="Voltar para a página inicial">
+            <Logo className="login-logo" />
+          </Link>
 
           <header className="login-cabecalho">
             <h2>{titulo}</h2>
@@ -30,7 +33,7 @@ function TelaAcesso({ titulo, subtitulo, aoEnviar, children, rodape }) {
       </div>
 
       <div className="imagem">
-        <img src={login} alt="" />
+        <img src={login} alt="Mulheres na tecnologia - BLOOM" />
       </div>
     </div>
   );

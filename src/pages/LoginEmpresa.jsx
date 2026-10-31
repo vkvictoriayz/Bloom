@@ -112,7 +112,7 @@ function LoginEmpresa() {
           <div className="empresa-auth-links">
             <Link to="/empresa/cadastro">Cadastrar uma empresa</Link>
             <span>
-              É candidata? <Link to="/">Acesse sua conta</Link>
+              É candidata? <Link to="/login">Acesse sua conta</Link>
             </span>
             <Link to="/">Voltar à página inicial</Link>
           </div>

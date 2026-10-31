@@ -1,6 +1,6 @@
 // Em desenvolvimento o Vite repassa "/api" para o backend (ver vite.config.js).
 // Em produção, defina VITE_API_URL (ex.: https://api.seusite.com/api).
-const API_URL = import.meta.env.VITE_API_URL ?? "/api";
+const API_URL = import.meta.env?.VITE_API_URL ?? "/api";
 
 export async function api(caminho, { method = "GET", corpo, token } = {}) {
   let resposta;

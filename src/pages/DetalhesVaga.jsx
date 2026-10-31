@@ -1,7 +1,8 @@
-
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import './Auth.css'
+import { sair } from '../services/auth'
+import logoBloom from '../assets/logo-bloom.png'
+import './Vagas.css'
 import './DetalhesVaga.css'
 
 const vagasExemplo = [
@@ -14,18 +15,19 @@ const vagasExemplo = [
     tipo: 'CLT',
     area: 'Desenvolvimento',
     salario: 'A combinar',
-    descricao: 'Oportunidade para atuar no desenvolvimento de soluções de software.',
+    descricao:
+      'Oportunidade para atuar no desenvolvimento de soluções de software inovadoras e escaláveis para o setor financeiro.',
     responsabilidades: [
-      'Desenvolver e manter aplicações.',
-      'Trabalhar em conjunto com a equipe de tecnologia.',
-      'Contribuir para a qualidade do código.',
+      'Desenvolver e manter microsserviços em Java e Spring Boot.',
+      'Trabalhar em conjunto com a equipe multidisciplinar de tecnologia e produto.',
+      'Contribuir para a qualidade do código por meio de testes automatizados e code review.',
     ],
     requisitos: [
-      'Conhecimentos em programação.',
-      'Interesse em desenvolvimento de software.',
-      'Boa comunicação e trabalho em equipe.',
+      'Experiência consolidada em desenvolvimento backend com Java.',
+      'Conhecimento em bancos de dados relacionais e SQL.',
+      'Boa comunicação, colaboração e vontade de crescer.',
     ],
-    competencias: ['Java', 'Programação', 'Desenvolvimento'],
+    competencias: ['Java', 'Spring Boot', 'SQL', 'Microsserviços'],
   },
   {
     id: 2,
@@ -36,10 +38,19 @@ const vagasExemplo = [
     tipo: 'CLT',
     area: 'Dados',
     salario: 'A combinar',
-    descricao: 'Oportunidade para trabalhar com dados e soluções tecnológicas.',
-    responsabilidades: ['Atuar com dados e informações.', 'Colaborar com equipes técnicas.'],
-    requisitos: ['Experiência na área de dados.', 'Conhecimentos em tecnologia.'],
-    competencias: ['Dados', 'Análise', 'Tecnologia'],
+    descricao:
+      'Liderança técnica em governança e arquitetura de dados para produtos de alta criticidade.',
+    responsabilidades: [
+      'Garantir a integridade, governança e disponibilidade dos pipelines de dados.',
+      'Colaborar com times de engenharia e ciência de dados para estruturar bases analíticas.',
+      'Propor melhorias contínuas na arquitetura de dados da instituição.',
+    ],
+    requisitos: [
+      'Forte experiência na área de engenharia de dados e governança.',
+      'Domínio de SQL, Python e ecossistemas de Big Data.',
+      'Capacidade de liderar iniciativas técnicas e orientar desenvolvedoras mais jovens.',
+    ],
+    competencias: ['Dados', 'SQL', 'Python', 'Governança'],
   },
   {
     id: 3,
@@ -50,10 +61,19 @@ const vagasExemplo = [
     tipo: 'CLT',
     area: 'Dados',
     salario: 'A combinar',
-    descricao: 'Atuação com análise de dados e geração de informações para o negócio.',
-    responsabilidades: ['Analisar dados.', 'Apoiar decisões com informações.'],
-    requisitos: ['Conhecimentos em análise de dados.', 'Raciocínio analítico.'],
-    competencias: ['SQL', 'Dados', 'Análise'],
+    descricao:
+      'Atuação analítica transformando grandes volumes de dados em insights estratégicos para seguros e serviços.',
+    responsabilidades: [
+      'Construir dashboards gerenciais, relatórios e modelos de BI.',
+      'Apoiar áreas de negócio na tomada de decisões com embasamento estatístico.',
+      'Monitorar indicadores de desempenho e KPIs estratégicos.',
+    ],
+    requisitos: [
+      'Experiência em ferramentas de visualização (Power BI, Tableau ou similar).',
+      'Conhecimento avançado em SQL e manipulação de bases.',
+      'Raciocínio lógico, analítico e visão de negócios.',
+    ],
+    competencias: ['Power BI', 'SQL', 'BI', 'Análise de Dados'],
   },
   {
     id: 4,
@@ -64,10 +84,19 @@ const vagasExemplo = [
     tipo: 'CLT',
     area: 'Infraestrutura',
     salario: 'A combinar',
-    descricao: 'Oportunidade para iniciar ou desenvolver a carreira em DevOps.',
-    responsabilidades: ['Apoiar processos de implantação.', 'Colaborar com a equipe de infraestrutura.'],
-    requisitos: ['Conhecimentos básicos em tecnologia.', 'Interesse em DevOps.'],
-    competencias: ['DevOps', 'Git', 'Infraestrutura'],
+    descricao:
+      'Oportunidade para iniciar carreira em DevOps, apoiando automação de esteiras e sustentação em nuvem.',
+    responsabilidades: [
+      'Apoiar a criação e manutenção de pipelines de CI/CD.',
+      'Auxiliar na monitoração de aplicações e servidores em nuvem.',
+      'Contribuir na automação de processos operacionais e deploys.',
+    ],
+    requisitos: [
+      'Conhecimentos básicos em Linux, Git e conceitos de nuvem.',
+      'Interesse genuíno em cultura DevOps e automação.',
+      'Disposição para aprender e trabalhar em equipe.',
+    ],
+    competencias: ['DevOps', 'Git', 'Linux', 'Cloud'],
   },
   {
     id: 5,
@@ -78,10 +107,19 @@ const vagasExemplo = [
     tipo: 'CLT',
     area: 'Desenvolvimento',
     salario: 'A combinar',
-    descricao: 'Desenvolvimento e manutenção de aplicações para dispositivos móveis.',
-    responsabilidades: ['Desenvolver funcionalidades mobile.', 'Corrigir e testar aplicações.'],
-    requisitos: ['Conhecimentos em programação.', 'Interesse em desenvolvimento mobile.'],
-    competencias: ['Mobile', 'Programação', 'Aplicativos'],
+    descricao:
+      'Criação de soluções digitais móveis que facilitam o dia a dia de milhões de clientes em todo o Brasil.',
+    responsabilidades: [
+      'Desenvolver novos recursos em aplicativos React Native / Flutter.',
+      'Garantir a melhor experiência de uso, performance e fluidez nas interfaces.',
+      'Trabalhar alinhada com times de design e produto.',
+    ],
+    requisitos: [
+      'Experiência com desenvolvimento mobile (iOS / Android).',
+      'Bons fundamentos de JavaScript, TypeScript e arquitetura mobile.',
+      'Atenção aos detalhes de usabilidade e interface.',
+    ],
+    competencias: ['React Native', 'Mobile', 'JavaScript', 'TypeScript'],
   },
   {
     id: 6,
@@ -92,17 +130,26 @@ const vagasExemplo = [
     tipo: 'CLT',
     area: 'Suporte',
     salario: 'A combinar',
-    descricao: 'Apoio às atividades de tecnologia da informação e suporte técnico.',
-    responsabilidades: ['Apoiar usuários.', 'Auxiliar na resolução de problemas técnicos.'],
-    requisitos: ['Conhecimentos básicos em informática.', 'Organização e comunicação.'],
-    competencias: ['Suporte', 'Informática', 'Tecnologia'],
+    descricao:
+      'Suporte técnico a colaboradores, equipamentos, rede e sistemas corporativos de saúde.',
+    responsabilidades: [
+      'Prestar suporte presencial e remoto às usuárias e usuários internos.',
+      'Configurar estações de trabalho, softwares e periféricos.',
+      'Acompanhar chamados e manter o parque tecnológico funcionando com qualidade.',
+    ],
+    requisitos: [
+      'Conhecimentos gerais em hardware, sistemas operacionais e redes.',
+      'Boa comunicação, empatia e proatividade no atendimento.',
+      'Organização e foco na resolução ágil de chamados.',
+    ],
+    competencias: ['Suporte', 'Hardware', 'Redes', 'Atendimento'],
   },
 ]
 
 function lerCandidaturas() {
   try {
     const dados = JSON.parse(
-      localStorage.getItem('bloom-candidaturas') || '[]',
+      localStorage.getItem('bloom-candidaturas') || '[]'
     )
     return Array.isArray(dados) ? dados : []
   } catch {
@@ -119,10 +166,10 @@ function DetalhesVaga() {
   const [mensagem, setMensagem] = useState('')
 
   const jaCandidatou = candidaturas.some(
-    (item) => Number(item.vagaId) === Number(id),
+    (item) => Number(item.vagaId) === Number(id)
   )
 
-  function candidatar() {
+  const candidatar = useCallback(() => {
     if (!vaga) {
       setMensagem('Não foi possível encontrar esta vaga.')
       return
@@ -132,7 +179,7 @@ function DetalhesVaga() {
 
     if (
       candidaturasAtuais.some(
-        (item) => Number(item.vagaId) === vaga.id,
+        (item) => Number(item.vagaId) === vaga.id
       )
     ) {
       setCandidaturas(candidaturasAtuais)
@@ -140,112 +187,204 @@ function DetalhesVaga() {
       return
     }
 
+    const agora = Date.now()
+    const dataFormatada = new Date(agora).toLocaleDateString('pt-BR')
+
     const novaCandidatura = {
-      id: `${vaga.id}-${Date.now()}`,
+      id: `${vaga.id}-${agora}`,
       vagaId: vaga.id,
       cargo: vaga.titulo,
       empresa: vaga.empresa,
       local: vaga.local,
       modalidade: vaga.modalidade,
-      data: new Date().toLocaleDateString('pt-BR'),
+      data: dataFormatada,
       status: 'Em análise',
     }
 
     const atualizadas = [...candidaturasAtuais, novaCandidatura]
 
     try {
-      localStorage.setItem(
-        'bloom-candidaturas',
-        JSON.stringify(atualizadas),
-      )
-
+      localStorage.setItem('bloom-candidaturas', JSON.stringify(atualizadas))
       setCandidaturas(atualizadas)
       setMensagem(
-        'Candidatura registrada com sucesso! Você já pode acompanhá-la no seu perfil.',
+        'Candidatura registrada com sucesso! Você já pode acompanhá-la no seu perfil.'
       )
-
       window.dispatchEvent(new Event('bloom-candidaturas-atualizadas'))
     } catch {
       setMensagem(
-        'Não foi possível salvar sua candidatura. Verifique o armazenamento do navegador.',
+        'Não foi possível salvar sua candidatura. Verifique o armazenamento do navegador.'
       )
     }
-  }
-
-  if (!vaga) {
-    return (
-      <main className="detalhes-vaga-page">
-        <h1>Vaga não encontrada</h1>
-        <p>Não encontramos uma vaga com esse endereço.</p>
-        <Link to="/vagas">Voltar para vagas</Link>
-      </main>
-    )
-  }
+  }, [vaga])
 
   return (
-    <main className="detalhes-vaga-page">
-      <Link to="/vagas">← Voltar para vagas</Link>
+    <div className="vagas-page">
+      <header className="vagas-header">
+        <Link to="/" className="vagas-logo">
+          <img src={logoBloom} alt="BLOOM" />
+        </Link>
 
-      <section className="detalhes-vaga-card">
-        <p>{vaga.empresa}</p>
-        <h1>{vaga.titulo}</h1>
+        <nav className="vagas-nav">
+          <Link to="/">Início</Link>
+          <Link to="/vagas" className="active">
+            Vagas
+          </Link>
+          <Link to="/#contato">Contatos</Link>
+        </nav>
 
-        <p>
-          {vaga.local} · {vaga.modalidade} · {vaga.tipo}
-        </p>
+        <div className="vagas-acoes">
+          <Link to="/perfil" className="vagas-profile-link">
+            Meu perfil
+          </Link>
 
-        <p>Área: {vaga.area}</p>
-        <p>Salário: {vaga.salario}</p>
+          <Link to="/" className="vagas-profile-link" onClick={sair}>
+            Sair
+          </Link>
+        </div>
+      </header>
 
-        <h2>Sobre a vaga</h2>
-        <p>{vaga.descricao}</p>
-
-        <h2>Responsabilidades</h2>
-        <ul>
-          {vaga.responsabilidades.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-
-        <h2>Requisitos</h2>
-        <ul>
-          {vaga.requisitos.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-
-        <h2>Competências</h2>
-        <ul>
-          {vaga.competencias.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-
-        {mensagem && (
-          <p role="status" className="mensagem-candidatura">
-            {mensagem}
-          </p>
-        )}
-
+      <main className="detalhes-container">
         <button
           type="button"
-          onClick={candidatar}
-          disabled={jaCandidatou}
+          className="detalhes-voltar"
+          onClick={() => navigate('/vagas')}
         >
-          {jaCandidatou ? 'Você já se candidatou' : 'Candidatar-se'}
+          ← Voltar para vagas
         </button>
 
-        {jaCandidatou && (
-          <p>
-            <Link to="/perfil">Acompanhar candidatura no meu perfil</Link>
-          </p>
+        {!vaga ? (
+          <section className="detalhes-cabecalho">
+            <div className="detalhes-titulo">
+              <h1>Vaga não encontrada</h1>
+              <p>Não encontramos uma oportunidade com este identificador.</p>
+              <Link to="/vagas" className="detalhes-candidatar" style={{ display: 'inline-block', marginTop: '16px' }}>
+                Ver todas as vagas
+              </Link>
+            </div>
+          </section>
+        ) : (
+          <>
+            <section className="detalhes-cabecalho">
+              <div className="detalhes-logo-empresa">
+                {vaga.empresa.slice(0, 2).toUpperCase()}
+              </div>
+
+              <div className="detalhes-titulo">
+                <span className="detalhes-area">{vaga.area}</span>
+                <h1>{vaga.titulo}</h1>
+                <p className="detalhes-empresa">{vaga.empresa}</p>
+                <p className="detalhes-local">
+                  {vaga.local} · {vaga.modalidade} · {vaga.tipo}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="detalhes-candidatar"
+                onClick={candidatar}
+                disabled={jaCandidatou}
+              >
+                {jaCandidatou ? 'Candidatura enviada' : 'Candidatar-se'}
+              </button>
+            </section>
+
+            <div className="detalhes-informacoes">
+              <div className="detalhes-info-item">
+                <span>Modalidade</span>
+                <strong>{vaga.modalidade}</strong>
+              </div>
+              <div className="detalhes-info-item">
+                <span>Contrato</span>
+                <strong>{vaga.tipo}</strong>
+              </div>
+              <div className="detalhes-info-item">
+                <span>Remuneração</span>
+                <strong>{vaga.salario}</strong>
+              </div>
+            </div>
+
+            <section className="detalhes-conteudo">
+              {mensagem && (
+                <div
+                  className="detalhes-secao"
+                  style={{
+                    padding: '14px 18px',
+                    borderRadius: '10px',
+                    backgroundColor: '#faf2f5',
+                    border: '1px solid #eadde2',
+                    color: '#873c57',
+                    fontWeight: 600,
+                  }}
+                  role="status"
+                >
+                  <p style={{ margin: 0 }}>{mensagem}</p>
+                  {jaCandidatou && (
+                    <Link
+                      to="/perfil"
+                      style={{
+                        display: 'inline-block',
+                        marginTop: '8px',
+                        color: '#94104d',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Ver no meu perfil →
+                    </Link>
+                  )}
+                </div>
+              )}
+
+              <div className="detalhes-secao">
+                <h2>Sobre a vaga</h2>
+                <p>{vaga.descricao}</p>
+              </div>
+
+              <div className="detalhes-secao">
+                <h2>Responsabilidades e atribuições</h2>
+                <ul>
+                  {vaga.responsabilidades.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="detalhes-secao">
+                <h2>Requisitos e qualificações</h2>
+                <ul>
+                  {vaga.requisitos.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="detalhes-secao">
+                <h2>Competências valorizadas</h2>
+                <ul>
+                  {vaga.competencias.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="detalhes-final">
+                <div>
+                  <h2>Pronta para dar esse passo?</h2>
+                  <p>Envie sua candidatura e acompanhe o processo no seu perfil.</p>
+                </div>
+                <button
+                  type="button"
+                  className="detalhes-candidatar"
+                  onClick={candidatar}
+                  disabled={jaCandidatou}
+                >
+                  {jaCandidatou ? 'Candidatura enviada' : 'Candidatar-se agora'}
+                </button>
+              </div>
+            </section>
+          </>
         )}
-
-        <button type="button" onClick={() => navigate('/perfil')}>
-          Ir para meu perfil
-        </button>
-      </section>
-    </main>
+      </main>
+    </div>
   )
 }
 

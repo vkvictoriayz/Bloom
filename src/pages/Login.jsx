@@ -31,7 +31,7 @@ function Login() {
     try {
       const sessao = await entrarUsuaria({ email, senha });
       salvarSessao(sessao);
-      navigate("/home");
+      navigate("/");
     } catch (erro) {
       setMensagem(erro.message);
       setTipoMensagem("erro");

@@ -253,8 +253,18 @@
   max-width: 420px;
 }
 
-.login .login-logo {
+.login .login-logo-link {
+  display: inline-block;
+  text-decoration: none;
   margin-bottom: 48px;
+}
+
+.login .login-logo-link:hover .logo-nome {
+  color: var(--vinho);
+}
+
+.login .login-logo {
+  margin-bottom: 0;
 }
 
 .login .login-cabecalho {

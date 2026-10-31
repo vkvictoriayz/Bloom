@@ -55,7 +55,7 @@ function Cadastro() {
         confirmarSenha,
       });
       salvarSessao(sessao);
-      navigate("/home");
+      navigate("/");
     } catch (erro) {
       setMensagem(erro.message);
       setTipoMensagem("erro");
@@ -70,9 +70,14 @@ function Cadastro() {
       subtitulo="Seu próximo capítulo começa aqui."
       aoEnviar={cadastrar}
       rodape={
-        <p>
-          Já tem uma conta? <Link to="/">Entrar</Link>
-        </p>
+        <>
+          <p>
+            Já tem uma conta? <Link to="/login">Entrar</Link>
+          </p>
+          <p>
+            <Link to="/empresa/cadastro" className="link-discreto">Sou uma empresa</Link>
+          </p>
+        </>
       }
     >
       <label className="campo">

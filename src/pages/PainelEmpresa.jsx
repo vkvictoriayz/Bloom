@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import './Empresa.css'
@@ -6,25 +5,21 @@ import logoBloom from '../assets/logo-bloom.png'
 
 function PainelEmpresa() {
   const navigate = useNavigate()
-  const [empresa, setEmpresa] = useState(null)
-
-  useEffect(() => {
+  const [empresa] = useState(() => {
     try {
-      const dados = JSON.parse(
+      return JSON.parse(
         sessionStorage.getItem('bloom-empresa-logada-demo') || 'null'
       )
-
-      setEmpresa(dados)
     } catch {
-      setEmpresa(null)
+      return null
     }
-  }, [])
+  })
 
   useEffect(() => {
-    if (empresa === null) return
-
     // O acesso é demonstrativo e não substitui uma proteção no backend.
-    if (!empresa) navigate('/empresa/login', { replace: true })
+    if (!empresa) {
+      navigate('/empresa/login', { replace: true })
+    }
   }, [empresa, navigate])
 
   function sair() {

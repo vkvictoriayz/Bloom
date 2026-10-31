@@ -1,73 +1,57 @@
-
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import imagemLogin from '../assets/login.png'
-import logoBloom from '../assets/logo-bloom.png'
-import './Auth.css'
+import TelaAcesso from '../components/TelaAcesso'
 
 function RecuperarSenha() {
   const [email, setEmail] = useState('')
+  const [mensagem, setMensagem] = useState('')
+  const [tipoMensagem, setTipoMensagem] = useState('')
 
-  function handleSubmit(e) {
-    e.preventDefault()
-
-    if (!email.trim()) {
-      alert('Digite seu e-mail.')
+  function handleSubmit() {
+    if (!email.trim() || !email.includes('@') || !email.includes('.')) {
+      setMensagem('Digite um e-mail válido!')
+      setTipoMensagem('erro')
       return
     }
 
-    alert('Solicitação recebida! A recuperação por e-mail será ativada quando conectarmos o backend.')
+    setMensagem(
+      'Se o e-mail estiver cadastrado, você receberá as instruções para redefinir sua senha.'
+    )
+    setTipoMensagem('sucesso')
   }
 
   return (
-    <main className="auth-page recovery-page">
-      <section className="auth-form-side">
-        <div className="auth-form-container recovery-container">
-          <Link to="/" className="auth-brand">
-            <img
-              src={logoBloom}
-              alt="Logo BLOOM"
-              className="auth-logo"
-            />
-          </Link>
+    <TelaAcesso
+      titulo="Recuperar senha"
+      subtitulo="Não se preocupe! Informe seu e-mail para recuperar o acesso."
+      aoEnviar={handleSubmit}
+      rodape={
+        <p>
+          Lembrou sua senha? <Link to="/login">Voltar ao login</Link>
+        </p>
+      }
+    >
+      <label className="campo">
+        <span className="campo-rotulo">E-mail</span>
+        <input
+          type="email"
+          placeholder="voce@email.com"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </label>
 
-          <div className="auth-heading">
-            <h1>Recuperar senha</h1>
-            <p>
-              Não se preocupe! Informe o e-mail da sua conta
-              para iniciar a recuperação de acesso.
-            </p>
-          </div>
+      {mensagem && (
+        <p className={`mensagem ${tipoMensagem}`} role="alert">
+          {mensagem}
+        </p>
+      )}
 
-          <form onSubmit={handleSubmit} className="auth-form">
-            <div className="auth-field">
-              <label htmlFor="email">E-mail</label>
-              <input
-                id="email"
-                type="email"
-                placeholder="Digite seu e-mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <button type="submit" className="auth-submit">
-              Recuperar senha
-            </button>
-          </form>
-
-          <p className="auth-switch">
-            Lembrou sua senha?{' '}
-            <Link to="/">Voltar ao login</Link>
-          </p>
-        </div>
-      </section>
-
-      <aside className="auth-image-side">
-        <img src={imagemLogin} alt="Mulheres que florescem na tecnologia" />
-      </aside>
-    </main>
+      <button type="submit" className="botao">
+        Recuperar senha
+      </button>
+    </TelaAcesso>
   )
 }
 

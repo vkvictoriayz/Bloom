@@ -248,16 +248,16 @@ function Vagas() {
   return (
     <div className="vagas-page">
       <header className="vagas-header">
-        <Link to="/home" className="vagas-logo">
+        <Link to="/" className="vagas-logo">
           <img src={logoBloom} alt="BLOOM" />
         </Link>
 
         <nav className="vagas-nav">
-          <Link to="/home">Início</Link>
+          <Link to="/">Início</Link>
           <Link to="/vagas" className="active">
             Vagas
           </Link>
-          <Link to="/home#contato">Contatos</Link>
+          <Link to="/#contato">Contatos</Link>
         </nav>
 
         <div className="vagas-acoes">

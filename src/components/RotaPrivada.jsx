@@ -6,8 +6,8 @@ import { obterSessao } from "../services/auth";
 function RotaPrivada({ tipo = "usuaria", children }) {
   const sessao = obterSessao();
 
-  if (!sessao || sessao.usuario.tipo !== tipo) {
-    return <Navigate to={tipo === "empresa" ? "/empresa" : "/"} replace />;
+  if (!sessao || sessao.usuario?.tipo !== tipo) {
+    return <Navigate to={tipo === "empresa" ? "/empresa/login" : "/login"} replace />;
   }
 
   return children;

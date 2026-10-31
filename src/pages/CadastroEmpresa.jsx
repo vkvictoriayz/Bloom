@@ -173,7 +173,7 @@ function CadastroEmpresa() {
               Já possui uma conta? <Link to="/empresa/login">Entrar</Link>
             </span>
             <span>
-              É candidata? <Link to="/">Acesse sua conta</Link>
+              É candidata? <Link to="/login">Acesse sua conta</Link>
             </span>
           </div>
         </section>
