@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  background: linear-gradient(135deg, #fff9fb, #f5e7ee);
+  background: var(--bloom-cream);
   font-family: 'Plus Jakarta Sans', Arial, sans-serif;
 }
 
@@ -27,7 +27,7 @@
   border: 1px solid #f0dce6;
   border-radius: 20px;
   background: #fff;
-  box-shadow: 0 15px 45px rgba(91, 32, 60, 0.08);
+  box-shadow: 0 1px 3px rgba(32, 28, 29, 0.08);
 }
 
 .empresa-auth-logo {
@@ -92,7 +92,7 @@
 
 .empresa-auth-form input:focus {
   border-color: #94104d;
-  box-shadow: 0 0 0 3px rgba(148, 16, 77, 0.09);
+  box-shadow: 0 1px 3px rgba(32, 28, 29, 0.08);
 }
 
 .empresa-auth-botao {

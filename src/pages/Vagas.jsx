@@ -1,8 +1,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { sair } from '../services/auth'
-import logoBloom from '../assets/logo-bloom.png'
+import Cabecalho from '../components/Cabecalho'
+import Rodape from '../components/Rodape'
 import './Vagas.css'
 
 const CHAVE_FAVORITOS = 'bloom-vagas-salvas'
@@ -102,10 +102,14 @@ const AREAS = ['Desenvolvimento', 'Dados', 'Infraestrutura', 'Suporte']
 
 function Vagas() {
   // O carrossel da Home abre esta página com /vagas?area=Dados
+  // A busca do cabeçalho abre esta página com /vagas?busca=termo
   const [parametros] = useSearchParams()
   const areaDaUrl = parametros.get('area')
+  const buscaDaUrl = parametros.get('busca') || ''
 
-  const [busca, setBusca] = useState('')
+  const [busca, setBusca] = useState(buscaDaUrl)
+
+  useEffect(() => setBusca(buscaDaUrl), [buscaDaUrl])
   const [modalidade, setModalidade] = useState('')
   const [area, setArea] = useState(AREAS.includes(areaDaUrl) ? areaDaUrl : '')
 
@@ -247,29 +251,7 @@ function Vagas() {
 
   return (
     <div className="vagas-page">
-      <header className="vagas-header">
-        <Link to="/" className="vagas-logo">
-          <img src={logoBloom} alt="BLOOM" />
-        </Link>
-
-        <nav className="vagas-nav">
-          <Link to="/">Início</Link>
-          <Link to="/vagas" className="active">
-            Vagas
-          </Link>
-          <Link to="/#contato">Contatos</Link>
-        </nav>
-
-        <div className="vagas-acoes">
-          <Link to="/perfil" className="vagas-profile-link">
-            Meu perfil
-          </Link>
-
-          <Link to="/" className="vagas-profile-link" onClick={sair}>
-            Sair
-          </Link>
-        </div>
-      </header>
+      <Cabecalho />
 
       <main className="vagas-content">
         <div className="vagas-heading">
@@ -440,20 +422,30 @@ function Vagas() {
                 })}
               </div>
             ) : (
-              <p className="vagas-empty">
-                Nenhuma vaga encontrada. Tente mudar a pesquisa ou
-                os filtros.
-              </p>
+              <div className="vagas-empty">
+                <p>
+                  Nenhuma vaga encontrada
+                  {busca.trim() ? ` para “${busca.trim()}”` : ''}. Tente
+                  outro cargo, tecnologia ou empresa, ou ajuste os filtros.
+                </p>
+                <button
+                  type="button"
+                  className="vaga-save-button"
+                  onClick={() => {
+                    setBusca('')
+                    setModalidade('')
+                    setArea('')
+                  }}
+                >
+                  Limpar pesquisa
+                </button>
+              </div>
             )}
           </section>
         </div>
       </main>
 
-      <footer className="vagas-footer" id="contato">
-        <p>
-          BLOOM — Conectando mulheres a oportunidades em tecnologia.
-        </p>
-      </footer>
+      <Rodape />
     </div>
   )
 }

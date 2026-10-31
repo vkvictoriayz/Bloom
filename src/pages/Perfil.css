@@ -1,7 +1,7 @@
 
 .perfil-page {
-  --vinho: #94104d;
-  --rosa: #a65370;
+  --vinho: #85243d;
+  --rosa: #b96f85;
   --rosa-claro: #f7eaf0;
   --fundo: #f8f9fb;
   --texto: #302832;
@@ -17,63 +17,6 @@
   box-sizing: border-box;
 }
 
-.perfil-header {
-  min-height: 78px;
-  padding: 16px 4%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  background: #fff;
-  border-bottom: 1px solid #eee7eb;
-}
-
-.perfil-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--vinho);
-  text-decoration: none;
-  font-family: "Bodoni Moda", Georgia, serif;
-  font-size: 21px;
-}
-
-.perfil-logo img {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-}
-
-.perfil-nav {
-  display: flex;
-  align-items: center;
-  gap: 38px;
-}
-
-.perfil-nav a {
-  color: #514650;
-  text-decoration: none;
-}
-
-.perfil-nav a:hover {
-  color: var(--vinho);
-}
-
-.perfil-header-icons {
-  display: flex;
-  gap: 12px;
-}
-
-.perfil-header-icons button {
-  width: 34px;
-  height: 34px;
-  border: 1px solid #ead6df;
-  border-radius: 50%;
-  background: white;
-  color: var(--vinho);
-  cursor: pointer;
-}
-
 .perfil-layout {
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr);
@@ -85,7 +28,7 @@
 }
 
 .perfil-sidebar {
-  background: linear-gradient(180deg, #a20e53, #85083e);
+  background: var(--bloom-wine);
   border-radius: 14px;
   padding: 18px 0;
   color: white;
@@ -131,7 +74,7 @@
   background: white;
   border: 1px solid #eee8ec;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgb(65 24 44 / 3%);
+  box-shadow: 0 1px 3px rgba(32, 28, 29, 0.08);
 }
 
 .perfil-card h3 {
@@ -237,35 +180,11 @@
   color: #74304c;
 }
 
-.perfil-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 28px;
-  padding: 28px 6%;
-  background: var(--rosa);
-  color: white;
-}
-
-.perfil-footer strong {
-  font-family: "Bodoni Moda", Georgia, serif;
-  font-size: 16px;
-}
-
-.perfil-footer p {
-  margin: 7px 0;
-  font-size: 11px;
-  line-height: 1.6;
-}
-
 @media (max-width: 900px) {
   .perfil-layout {
     grid-template-columns: 190px minmax(0, 1fr);
     gap: 18px;
     padding: 20px;
-  }
-
-  .perfil-nav {
-    gap: 18px;
   }
 
   .perfil-duas-colunas {
@@ -274,18 +193,6 @@
 }
 
 @media (max-width: 650px) {
-  .perfil-header {
-    flex-wrap: wrap;
-    gap: 14px;
-  }
-
-  .perfil-nav {
-    order: 3;
-    width: 100%;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
   .perfil-layout {
     display: flex;
     flex-direction: column;
@@ -329,10 +236,6 @@
     width: 100%;
   }
 
-  .perfil-footer {
-    flex-direction: column;
-    gap: 16px;
-  }
 }
 
 
@@ -423,7 +326,7 @@
 .perfil-formulario input:focus,
 .perfil-formulario textarea:focus {
   border-color: var(--rosa);
-  box-shadow: 0 0 0 3px rgb(166 83 112 / 12%);
+  box-shadow: 0 1px 3px rgba(32, 28, 29, 0.08);
 }
 
 .perfil-formulario textarea {
@@ -471,8 +374,7 @@
 }
 
 /* Links e currículo */
-.perfil-link-vagas,
-.perfil-footer a {
+.perfil-link-vagas {
   color: inherit;
   text-decoration: none;
 }
@@ -484,8 +386,7 @@
   font-weight: 700;
 }
 
-.perfil-link-vagas:hover,
-.perfil-footer a:hover {
+.perfil-link-vagas:hover {
   text-decoration: underline;
 }
 
@@ -526,10 +427,6 @@
     width: 100%;
   }
 
-  .perfil-header-icons {
-    margin-left: auto;
-  }
-
   .perfil-sidebar {
     gap: 2px;
   }
@@ -540,9 +437,6 @@
     text-align: center;
   }
 
-  .perfil-footer {
-    overflow-wrap: anywhere;
-  }
 }
 
 

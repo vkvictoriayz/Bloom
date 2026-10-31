@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { sair } from '../services/auth'
-import logoBloom from '../assets/logo-bloom.png'
+import Cabecalho from '../components/Cabecalho'
+import Rodape from '../components/Rodape'
 import './Vagas.css'
 import './DetalhesVaga.css'
 
@@ -219,29 +219,7 @@ function DetalhesVaga() {
 
   return (
     <div className="vagas-page">
-      <header className="vagas-header">
-        <Link to="/" className="vagas-logo">
-          <img src={logoBloom} alt="BLOOM" />
-        </Link>
-
-        <nav className="vagas-nav">
-          <Link to="/">Início</Link>
-          <Link to="/vagas" className="active">
-            Vagas
-          </Link>
-          <Link to="/#contato">Contatos</Link>
-        </nav>
-
-        <div className="vagas-acoes">
-          <Link to="/perfil" className="vagas-profile-link">
-            Meu perfil
-          </Link>
-
-          <Link to="/" className="vagas-profile-link" onClick={sair}>
-            Sair
-          </Link>
-        </div>
-      </header>
+      <Cabecalho />
 
       <main className="detalhes-container">
         <button
@@ -384,6 +362,8 @@ function DetalhesVaga() {
           </>
         )}
       </main>
+
+      <Rodape />
     </div>
   )
 }

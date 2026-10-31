@@ -117,7 +117,7 @@
 
 .auth-form > input:focus,
 .auth-password-wrap > input:focus {
-  box-shadow: 0 0 0 2px #a65370;
+  box-shadow: 0 1px 3px rgba(32, 28, 29, 0.08);
 }
 
 .auth-password-wrap {

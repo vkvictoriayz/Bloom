@@ -1,8 +1,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { sair } from '../services/auth'
-import logoBloom from '../assets/logo-bloom.png'
+import Cabecalho from '../components/Cabecalho'
+import Rodape from '../components/Rodape'
 import './Perfil.css'
 
 const perfilInicial = {
@@ -208,45 +208,7 @@ function Perfil() {
 
   return (
     <div className="perfil-page">
-      <header className="perfil-header">
-        <Link to="/" className="perfil-logo">
-          <img src={logoBloom} alt="BLOOM" />
-          <span>BLOOM</span>
-        </Link>
-
-        <nav className="perfil-nav">
-          <Link to="/">Início</Link>
-          <Link to="/vagas">Vagas</Link>
-          <a href="#contatos">Contato</a>
-          <Link to="/" onClick={sair}>Sair</Link>
-        </nav>
-
-        <div className="perfil-header-icons">
-          <button
-            type="button"
-            aria-label="Ir para minhas candidaturas"
-            onClick={() =>
-              document
-                .getElementById('candidaturas')
-                ?.scrollIntoView({ behavior: 'smooth' })
-            }
-          >
-            ♧
-          </button>
-
-          <button
-            type="button"
-            aria-label="Ir para meu perfil"
-            onClick={() =>
-              document
-                .getElementById('meu-perfil')
-                ?.scrollIntoView({ behavior: 'smooth' })
-            }
-          >
-            ●
-          </button>
-        </div>
-      </header>
+      <Cabecalho />
 
       <div className="perfil-layout">
         <aside className="perfil-sidebar">
@@ -653,24 +615,7 @@ function Perfil() {
         </main>
       </div>
 
-      <footer className="perfil-footer" id="contatos">
-        <div>
-          <strong>BLOOM</strong>
-          <p>Conectando mulheres a oportunidades na tecnologia.</p>
-        </div>
-
-        <div>
-          <strong>Navegue</strong>
-          <p><Link to="/home">Início</Link></p>
-          <p><Link to="/vagas">Vagas</Link></p>
-        </div>
-
-        <div>
-          <strong>Ajuda</strong>
-          <p>Central de ajuda</p>
-          <p>Política de privacidade</p>
-        </div>
-      </footer>
+      <Rodape />
     </div>
   )
 }

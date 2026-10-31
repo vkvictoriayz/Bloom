@@ -16,57 +16,6 @@
   text-decoration: none;
 }
 
-/* Cabeçalho */
-.vagas-header {
-  min-height: 76px;
-  padding: 12px 5%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
-  background: #fff;
-  border-bottom: 1px solid #f0e2e7;
-}
-
-.vagas-logo img {
-  display: block;
-  width: 112px;
-  max-height: 54px;
-  object-fit: contain;
-}
-
-.vagas-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 34px;
-}
-
-.vagas-nav a {
-  color: #65515a;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.vagas-nav a:hover,
-.vagas-nav a.active {
-  color: #85243d;
-}
-
-.vagas-acoes {
-  display: flex;
-  gap: 10px;
-}
-
-.vagas-profile-link {
-  padding: 10px 17px;
-  border: 1px solid #85243d;
-  border-radius: 7px;
-  color: #85243d;
-  font-size: 12px;
-  font-weight: 700;
-}
-
 /* Conteúdo */
 .vagas-content {
   max-width: 1450px;
@@ -93,7 +42,7 @@
   border: 1px solid #f0dfe5;
   border-radius: 10px;
   background: #fff;
-  box-shadow: 0 4px 16px rgb(91 20 39 / 4%);
+  box-shadow: 0 1px 3px rgba(32, 28, 29, 0.08);
 }
 
 .vagas-search > label {
@@ -228,13 +177,13 @@
   border: 1px solid #efdee4;
   border-radius: 9px;
   background: #fff;
-  box-shadow: 0 4px 15px rgb(91 20 39 / 3%);
+  box-shadow: 0 1px 3px rgba(32, 28, 29, 0.08);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .vaga-card:hover {
   border-color: #d7a7b6;
-  box-shadow: 0 7px 20px rgb(91 20 39 / 7%);
+  box-shadow: 0 1px 3px rgba(32, 28, 29, 0.08);
 }
 
 .vaga-card-top {
@@ -344,15 +293,8 @@
   line-height: 1.7;
 }
 
-/* Rodapé */
-.vagas-footer {
-  padding: 22px 20px;
-  border-top: 1px solid #ead9df;
-  background: #f9e9ee;
-  color: #806671;
-  text-align: center;
-  font-size: 11px;
-  line-height: 1.8;
+.vagas-empty p {
+  margin: 0 0 14px;
 }
 
 /* Responsividade */
@@ -371,38 +313,9 @@
     grid-template-columns: 1fr;
   }
 
-  .vagas-nav {
-    gap: 18px;
-  }
 }
 
 @media (max-width: 700px) {
-  .vagas-header {
-    flex-wrap: wrap;
-    gap: 14px;
-    padding: 15px 18px;
-  }
-
-  .vagas-logo img {
-    width: 95px;
-  }
-
-  .vagas-nav {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-    padding-top: 12px;
-    border-top: 1px solid #f2e6ea;
-  }
-
-  .vagas-acoes {
-    margin-left: auto;
-  }
-
-  .vagas-profile-link {
-    padding: 9px 12px;
-  }
-
   .vagas-content {
     padding: 28px 16px;
   }
