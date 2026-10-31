@@ -1,8 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { entrarUsuaria, salvarSessao } from "../services/auth";
-import TelaAcesso from "../components/TelaAcesso";
+import TelaAcesso, { LinkAcesso } from "../components/TelaAcesso";
 import CampoSenha from "../components/CampoSenha";
+import Botao from "../components/ui/Botao";
+import { Aviso, Campo, Entrada } from "../components/ui/Campo";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -42,46 +44,53 @@ function Login() {
 
   return (
     <TelaAcesso
+      etiqueta="Bem-vinda de volta"
       titulo="Entre na sua conta"
       subtitulo="Florescer é voltar para você."
       aoEnviar={entrar}
       rodape={
         <>
           <p>
-            Ainda não tem conta? <Link to="/cadastro">Cadastre-se</Link>
+            Ainda não tem conta? <LinkAcesso to="/cadastro">Cadastre-se</LinkAcesso>
           </p>
           <p>
-            <Link to="/empresa/login" className="link-discreto">Sou uma empresa</Link>
+            <Link to="/empresa/login" className="text-suave underline-offset-4 hover:text-tinta hover:underline">
+              Sou uma empresa
+            </Link>
           </p>
         </>
       }
     >
-      <label className="campo">
-        <span className="campo-rotulo">E-mail</span>
-        <input
-          type="email"
-          placeholder="voce@email.com"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </label>
+      <Campo rotulo="E-mail">
+        {(props) => (
+          <Entrada
+            {...props}
+            type="email"
+            placeholder="voce@email.com"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        )}
+      </Campo>
 
-      <CampoSenha rotulo="Senha" valor={senha} aoMudar={setSenha} placeholder="Sua senha" />
+      <CampoSenha
+        rotulo="Senha"
+        valor={senha}
+        aoMudar={setSenha}
+        placeholder="Sua senha"
+        acessorio={
+          <Link className="text-xs font-semibold text-vinho underline-offset-4 hover:underline" to="/recuperar-senha">
+            Esqueci minha senha
+          </Link>
+        }
+      />
 
-      <Link className="esqueci" to="/recuperar-senha">
-        Esqueci minha senha
-      </Link>
+      {mensagem && <Aviso tipo={tipoMensagem}>{mensagem}</Aviso>}
 
-      {mensagem && (
-        <p className={`mensagem ${tipoMensagem}`} role="alert">
-          {mensagem}
-        </p>
-      )}
-
-      <button type="submit" className="botao" disabled={carregando}>
+      <Botao type="submit" tamanho="lg" className="mt-2 w-full" disabled={carregando}>
         {carregando ? "Entrando..." : "Entrar"}
-      </button>
+      </Botao>
     </TelaAcesso>
   );
 }

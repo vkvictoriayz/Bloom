@@ -1,370 +1,240 @@
-import { useCallback, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import Cabecalho from '../components/Cabecalho'
-import Rodape from '../components/Rodape'
-import './Vagas.css'
-import './DetalhesVaga.css'
+import { useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 
-const vagasExemplo = [
-  {
-    id: 1,
-    titulo: 'Engenheira de Software Pleno - JAVA',
-    empresa: 'Itaú',
-    local: 'São Paulo, SP',
-    modalidade: 'Híbrido',
-    tipo: 'CLT',
-    area: 'Desenvolvimento',
-    salario: 'A combinar',
-    descricao:
-      'Oportunidade para atuar no desenvolvimento de soluções de software inovadoras e escaláveis para o setor financeiro.',
-    responsabilidades: [
-      'Desenvolver e manter microsserviços em Java e Spring Boot.',
-      'Trabalhar em conjunto com a equipe multidisciplinar de tecnologia e produto.',
-      'Contribuir para a qualidade do código por meio de testes automatizados e code review.',
-    ],
-    requisitos: [
-      'Experiência consolidada em desenvolvimento backend com Java.',
-      'Conhecimento em bancos de dados relacionais e SQL.',
-      'Boa comunicação, colaboração e vontade de crescer.',
-    ],
-    competencias: ['Java', 'Spring Boot', 'SQL', 'Microsserviços'],
-  },
-  {
-    id: 2,
-    titulo: 'Engenheira de Software Sênior - Data Owner',
-    empresa: 'BTG Pactual',
-    local: 'Botucatu, SP',
-    modalidade: 'Presencial',
-    tipo: 'CLT',
-    area: 'Dados',
-    salario: 'A combinar',
-    descricao:
-      'Liderança técnica em governança e arquitetura de dados para produtos de alta criticidade.',
-    responsabilidades: [
-      'Garantir a integridade, governança e disponibilidade dos pipelines de dados.',
-      'Colaborar com times de engenharia e ciência de dados para estruturar bases analíticas.',
-      'Propor melhorias contínuas na arquitetura de dados da instituição.',
-    ],
-    requisitos: [
-      'Forte experiência na área de engenharia de dados e governança.',
-      'Domínio de SQL, Python e ecossistemas de Big Data.',
-      'Capacidade de liderar iniciativas técnicas e orientar desenvolvedoras mais jovens.',
-    ],
-    competencias: ['Dados', 'SQL', 'Python', 'Governança'],
-  },
-  {
-    id: 3,
-    titulo: 'Analista de Inteligência de Dados Sênior',
-    empresa: 'Porto Seguro',
-    local: 'Bragança Paulista, SP',
-    modalidade: 'Híbrido',
-    tipo: 'CLT',
-    area: 'Dados',
-    salario: 'A combinar',
-    descricao:
-      'Atuação analítica transformando grandes volumes de dados em insights estratégicos para seguros e serviços.',
-    responsabilidades: [
-      'Construir dashboards gerenciais, relatórios e modelos de BI.',
-      'Apoiar áreas de negócio na tomada de decisões com embasamento estatístico.',
-      'Monitorar indicadores de desempenho e KPIs estratégicos.',
-    ],
-    requisitos: [
-      'Experiência em ferramentas de visualização (Power BI, Tableau ou similar).',
-      'Conhecimento avançado em SQL e manipulação de bases.',
-      'Raciocínio lógico, analítico e visão de negócios.',
-    ],
-    competencias: ['Power BI', 'SQL', 'BI', 'Análise de Dados'],
-  },
-  {
-    id: 4,
-    titulo: 'Analista DevOps Júnior',
-    empresa: 'Banco do Brasil',
-    local: 'Mogi das Cruzes, SP',
-    modalidade: 'Remoto',
-    tipo: 'CLT',
-    area: 'Infraestrutura',
-    salario: 'A combinar',
-    descricao:
-      'Oportunidade para iniciar carreira em DevOps, apoiando automação de esteiras e sustentação em nuvem.',
-    responsabilidades: [
-      'Apoiar a criação e manutenção de pipelines de CI/CD.',
-      'Auxiliar na monitoração de aplicações e servidores em nuvem.',
-      'Contribuir na automação de processos operacionais e deploys.',
-    ],
-    requisitos: [
-      'Conhecimentos básicos em Linux, Git e conceitos de nuvem.',
-      'Interesse genuíno em cultura DevOps e automação.',
-      'Disposição para aprender e trabalhar em equipe.',
-    ],
-    competencias: ['DevOps', 'Git', 'Linux', 'Cloud'],
-  },
-  {
-    id: 5,
-    titulo: 'Desenvolvedora Mobile',
-    empresa: 'Ipiranga',
-    local: 'Mauá, SP',
-    modalidade: 'Remoto',
-    tipo: 'CLT',
-    area: 'Desenvolvimento',
-    salario: 'A combinar',
-    descricao:
-      'Criação de soluções digitais móveis que facilitam o dia a dia de milhões de clientes em todo o Brasil.',
-    responsabilidades: [
-      'Desenvolver novos recursos em aplicativos React Native / Flutter.',
-      'Garantir a melhor experiência de uso, performance e fluidez nas interfaces.',
-      'Trabalhar alinhada com times de design e produto.',
-    ],
-    requisitos: [
-      'Experiência com desenvolvimento mobile (iOS / Android).',
-      'Bons fundamentos de JavaScript, TypeScript e arquitetura mobile.',
-      'Atenção aos detalhes de usabilidade e interface.',
-    ],
-    competencias: ['React Native', 'Mobile', 'JavaScript', 'TypeScript'],
-  },
-  {
-    id: 6,
-    titulo: 'Assistente de Tecnologia da Informação',
-    empresa: 'Unimed',
-    local: 'Campinas, SP',
-    modalidade: 'Presencial',
-    tipo: 'CLT',
-    area: 'Suporte',
-    salario: 'A combinar',
-    descricao:
-      'Suporte técnico a colaboradores, equipamentos, rede e sistemas corporativos de saúde.',
-    responsabilidades: [
-      'Prestar suporte presencial e remoto às usuárias e usuários internos.',
-      'Configurar estações de trabalho, softwares e periféricos.',
-      'Acompanhar chamados e manter o parque tecnológico funcionando com qualidade.',
-    ],
-    requisitos: [
-      'Conhecimentos gerais em hardware, sistemas operacionais e redes.',
-      'Boa comunicação, empatia e proatividade no atendimento.',
-      'Organização e foco na resolução ágil de chamados.',
-    ],
-    competencias: ['Suporte', 'Hardware', 'Redes', 'Atendimento'],
-  },
-]
+import BotaoSalvar from '../components/BotaoSalvar'
+import Icone from '../components/Icone'
+import LinhaDoTempo from '../components/LinhaDoTempo'
+import LinhaVaga from '../components/LinhaVaga'
+import MarcaEmpresa from '../components/MarcaEmpresa'
+import Pagina from '../components/layout/Pagina'
+import Botao from '../components/ui/Botao'
+import { Aviso } from '../components/ui/Campo'
+import Selo from '../components/ui/Selo'
+import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../components/ui/Vazio'
+import { buscarVaga, ehIniciante, formatarPublicacao, vagasDaEmpresa } from '../data/vagas'
+import { useDadosLocais } from '../hooks/useDadosLocais'
+import { candidatar, candidaturaDaVaga, EVENTO_CANDIDATURAS, lerCandidaturas, situacao } from '../services/candidaturas'
 
-function lerCandidaturas() {
-  try {
-    const dados = JSON.parse(
-      localStorage.getItem('bloom-candidaturas') || '[]'
-    )
-    return Array.isArray(dados) ? dados : []
-  } catch {
-    return []
-  }
+function Secao({ titulo, children }) {
+  return (
+    <section className="border-t border-linha py-8 first:border-t-0 first:pt-0">
+      <h2 className="font-display text-2xl text-tinta">{titulo}</h2>
+      <div className="mt-4 leading-relaxed text-tinta-2">{children}</div>
+    </section>
+  )
 }
 
 function DetalhesVaga() {
   const { id } = useParams()
-  const navigate = useNavigate()
-  const vaga = vagasExemplo.find((item) => item.id === Number(id))
+  const vaga = buscarVaga(id)
+  const candidaturas = useDadosLocais(lerCandidaturas, [EVENTO_CANDIDATURAS])
+  const candidatura = vaga ? candidaturaDaVaga(vaga.id, candidaturas) : null
+  const [mensagem, setMensagem] = useState(null)
 
-  const [candidaturas, setCandidaturas] = useState(lerCandidaturas)
-  const [mensagem, setMensagem] = useState('')
+  if (!vaga) {
+    return (
+      <Pagina titulo="Vaga não encontrada">
+        <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
+          <Vazio>
+            <VazioTitulo>Vaga não encontrada</VazioTitulo>
+            <VazioDescricao>Não encontramos uma oportunidade com este endereço. Ela pode ter sido encerrada.</VazioDescricao>
+            <VazioAcoes>
+              <Botao as={Link} to="/vagas">
+                Ver todas as vagas
+              </Botao>
+            </VazioAcoes>
+          </Vazio>
+        </div>
+      </Pagina>
+    )
+  }
 
-  const jaCandidatou = candidaturas.some(
-    (item) => Number(item.vagaId) === Number(id)
-  )
+  const empresa = vaga.dadosEmpresa
+  const outras = vagasDaEmpresa(vaga.empresa).filter((v) => v.id !== vaga.id)
 
-  const candidatar = useCallback(() => {
-    if (!vaga) {
-      setMensagem('Não foi possível encontrar esta vaga.')
-      return
+  function handleCandidatar() {
+    const resultado = candidatar(vaga)
+    if (!resultado.ok) {
+      setMensagem({ tipo: 'erro', texto: 'Não foi possível registrar a candidatura neste navegador. Verifique se o armazenamento está liberado.' })
+    } else if (resultado.jaExistia) {
+      setMensagem({ tipo: 'info', texto: 'Você já tinha se candidatado a esta vaga.' })
+    } else {
+      setMensagem({ tipo: 'sucesso', texto: 'Candidatura registrada. Acompanhe o andamento em Candidaturas.' })
     }
+  }
 
-    const candidaturasAtuais = lerCandidaturas()
-
-    if (
-      candidaturasAtuais.some(
-        (item) => Number(item.vagaId) === vaga.id
-      )
-    ) {
-      setCandidaturas(candidaturasAtuais)
-      setMensagem('Você já se candidatou a esta vaga. Consulte seu perfil.')
-      return
-    }
-
-    const agora = Date.now()
-    const dataFormatada = new Date(agora).toLocaleDateString('pt-BR')
-
-    const novaCandidatura = {
-      id: `${vaga.id}-${agora}`,
-      vagaId: vaga.id,
-      cargo: vaga.titulo,
-      empresa: vaga.empresa,
-      local: vaga.local,
-      modalidade: vaga.modalidade,
-      data: dataFormatada,
-      status: 'Em análise',
-    }
-
-    const atualizadas = [...candidaturasAtuais, novaCandidatura]
-
-    try {
-      localStorage.setItem('bloom-candidaturas', JSON.stringify(atualizadas))
-      setCandidaturas(atualizadas)
-      setMensagem(
-        'Candidatura registrada com sucesso! Você já pode acompanhá-la no seu perfil.'
-      )
-      window.dispatchEvent(new Event('bloom-candidaturas-atualizadas'))
-    } catch {
-      setMensagem(
-        'Não foi possível salvar sua candidatura. Verifique o armazenamento do navegador.'
-      )
-    }
-  }, [vaga])
+  const fichas = [
+    ['Modalidade', vaga.modalidade],
+    ['Contrato', vaga.contrato],
+    ['Nível', vaga.nivel],
+    ['Área', vaga.area],
+    ['Remuneração', vaga.salario],
+    ['Publicada', formatarPublicacao(vaga.publicadaHaDias)],
+  ].filter(([, valor]) => valor)
 
   return (
-    <div className="vagas-page">
-      <Cabecalho />
+    <Pagina titulo={vaga.titulo}>
+      <div className="border-b border-linha bg-branco">
+        <div className="mx-auto max-w-7xl px-4 pt-8 pb-10 sm:px-6 lg:px-8 lg:pb-14">
+          <nav aria-label="Trilha" className="text-sm text-suave">
+            <ol className="flex flex-wrap items-center gap-2">
+              <li>
+                <Link to="/vagas" className="link-linha hover:text-tinta">
+                  Vagas
+                </Link>
+              </li>
+              <li aria-hidden="true">/</li>
+              <li aria-current="page" className="truncate text-tinta-2">
+                {vaga.titulo}
+              </li>
+            </ol>
+          </nav>
 
-      <main className="detalhes-container">
-        <button
-          type="button"
-          className="detalhes-voltar"
-          onClick={() => navigate('/vagas')}
-        >
-          ← Voltar para vagas
-        </button>
-
-        {!vaga ? (
-          <section className="detalhes-cabecalho">
-            <div className="detalhes-titulo">
-              <h1>Vaga não encontrada</h1>
-              <p>Não encontramos uma oportunidade com este identificador.</p>
-              <Link to="/vagas" className="detalhes-candidatar" style={{ display: 'inline-block', marginTop: '16px' }}>
-                Ver todas as vagas
+          <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-start">
+            <MarcaEmpresa empresa={empresa} tamanho="lg" />
+            <div className="min-w-0 flex-1">
+              <Link to={`/empresas/${empresa.slug}`} className="link-linha font-semibold text-vinho">
+                {empresa.nome}
               </Link>
+              <h1 className="mt-2 font-display text-3xl leading-tight text-tinta sm:text-[2.75rem]">{vaga.titulo}</h1>
+              <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-tinta-2">
+                <span className="inline-flex items-center gap-1.5">
+                  <Icone nome="local" className="text-suave" /> {vaga.local}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Icone nome="maleta" className="text-suave" /> {vaga.modalidade} · {vaga.contrato}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Icone nome="relogio" className="text-suave" /> {formatarPublicacao(vaga.publicadaHaDias)}
+                </span>
+              </p>
+              {ehIniciante(vaga) && (
+                <Selo variante="vinho" className="mt-4">
+                  <Icone nome="broto" /> Boa para começar
+                </Selo>
+              )}
             </div>
-          </section>
-        ) : (
-          <>
-            <section className="detalhes-cabecalho">
-              <div className="detalhes-logo-empresa">
-                {vaga.empresa.slice(0, 2).toUpperCase()}
-              </div>
+          </div>
+        </div>
+      </div>
 
-              <div className="detalhes-titulo">
-                <span className="detalhes-area">{vaga.area}</span>
-                <h1>{vaga.titulo}</h1>
-                <p className="detalhes-empresa">{vaga.empresa}</p>
-                <p className="detalhes-local">
-                  {vaga.local} · {vaga.modalidade} · {vaga.tipo}
-                </p>
-              </div>
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-12 sm:px-6 lg:grid-cols-12 lg:px-8">
+        <article className="lg:col-span-7">
+          <Secao titulo="Sobre a vaga">
+            <p>{vaga.descricao}</p>
+          </Secao>
 
-              <button
-                type="button"
-                className="detalhes-candidatar"
-                onClick={candidatar}
-                disabled={jaCandidatou}
-              >
-                {jaCandidatou ? 'Candidatura enviada' : 'Candidatar-se'}
-              </button>
-            </section>
+          {vaga.responsabilidades?.length > 0 && (
+            <Secao titulo="Responsabilidades">
+              <ul className="flex flex-col gap-3">
+                {vaga.responsabilidades.map((item) => (
+                  <li key={item} className="flex gap-3">
+                    <span aria-hidden="true" className="mt-2.5 h-px w-4 shrink-0 bg-vinho" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </Secao>
+          )}
 
-            <div className="detalhes-informacoes">
-              <div className="detalhes-info-item">
-                <span>Modalidade</span>
-                <strong>{vaga.modalidade}</strong>
-              </div>
-              <div className="detalhes-info-item">
-                <span>Contrato</span>
-                <strong>{vaga.tipo}</strong>
-              </div>
-              <div className="detalhes-info-item">
-                <span>Remuneração</span>
-                <strong>{vaga.salario}</strong>
-              </div>
-            </div>
+          {vaga.requisitos?.length > 0 && (
+            <Secao titulo="Requisitos">
+              <ul className="flex flex-col gap-3">
+                {vaga.requisitos.map((item) => (
+                  <li key={item} className="flex gap-3">
+                    <span aria-hidden="true" className="mt-2.5 h-px w-4 shrink-0 bg-vinho" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </Secao>
+          )}
 
-            <section className="detalhes-conteudo">
-              {mensagem && (
-                <div
-                  className="detalhes-secao"
-                  style={{
-                    padding: '14px 18px',
-                    borderRadius: '10px',
-                    backgroundColor: '#faf2f5',
-                    border: '1px solid #eadde2',
-                    color: '#873c57',
-                    fontWeight: 600,
-                  }}
-                  role="status"
+          <Secao titulo="Tecnologias e competências">
+            <div className="flex flex-wrap gap-2">
+              {vaga.competencias.map((item) => (
+                <Link
+                  key={item}
+                  to={`/vagas?tec=${encodeURIComponent(item)}`}
+                  className="rounded-full border border-linha-forte bg-branco px-3 py-1.5 text-sm font-medium hover:border-vinho hover:text-vinho"
                 >
-                  <p style={{ margin: 0 }}>{mensagem}</p>
-                  {jaCandidatou && (
-                    <Link
-                      to="/perfil"
-                      style={{
-                        display: 'inline-block',
-                        marginTop: '8px',
-                        color: '#94104d',
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      Ver no meu perfil →
-                    </Link>
-                  )}
-                </div>
+                  {item}
+                </Link>
+              ))}
+            </div>
+          </Secao>
+
+          {!vaga.responsabilidades && (
+            <p className="mt-2 text-sm text-suave">A empresa ainda não detalhou responsabilidades e requisitos desta vaga.</p>
+          )}
+        </article>
+
+        <aside className="lg:col-span-4 lg:col-start-9">
+          <div className="flex flex-col gap-6 lg:sticky lg:top-24">
+            <div className="rounded-xl border border-linha bg-branco p-6">
+              {candidatura ? (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold text-tinta">Sua candidatura</p>
+                    <Selo variante={situacao(candidatura).variante}>{situacao(candidatura).rotulo}</Selo>
+                  </div>
+                  <div className="mt-5">
+                    <LinhaDoTempo candidatura={candidatura} />
+                  </div>
+                  <Botao as={Link} to="/minhas-candidaturas" variante="secundario" className="mt-2 w-full">
+                    Acompanhar candidaturas
+                  </Botao>
+                </>
+              ) : (
+                <>
+                  <p className="font-display text-2xl text-tinta">Pronta para dar esse passo?</p>
+                  <p className="mt-2 text-sm text-suave">Envie sua candidatura e acompanhe cada etapa em Candidaturas.</p>
+                  <Botao tamanho="lg" className="mt-5 w-full" onClick={handleCandidatar}>
+                    Candidatar-se
+                  </Botao>
+                </>
+              )}
+              <BotaoSalvar vaga={vaga} comTexto className="mt-3 w-full" />
+
+              {mensagem && (
+                <Aviso tipo={mensagem.tipo} className="mt-4">
+                  {mensagem.texto}
+                </Aviso>
               )}
 
-              <div className="detalhes-secao">
-                <h2>Sobre a vaga</h2>
-                <p>{vaga.descricao}</p>
-              </div>
+              <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-linha pt-6">
+                {fichas.map(([rotulo, valor]) => (
+                  <div key={rotulo}>
+                    <dt className="text-xs text-suave">{rotulo}</dt>
+                    <dd className="mt-0.5 text-sm font-semibold text-tinta">{valor}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
 
-              <div className="detalhes-secao">
-                <h2>Responsabilidades e atribuições</h2>
-                <ul>
-                  {vaga.responsabilidades.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
+            <Link to={`/empresas/${empresa.slug}`} className="group flex items-center gap-4 rounded-xl border border-linha bg-branco p-5 transition-colors hover:border-linha-forte">
+              <MarcaEmpresa empresa={empresa} tamanho="sm" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">{empresa.nome}</span>
+                <span className="block text-sm text-suave">{empresa.segmento}</span>
+              </span>
+              <Icone nome="seta" className="text-suave transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </aside>
 
-              <div className="detalhes-secao">
-                <h2>Requisitos e qualificações</h2>
-                <ul>
-                  {vaga.requisitos.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="detalhes-secao">
-                <h2>Competências valorizadas</h2>
-                <ul>
-                  {vaga.competencias.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="detalhes-final">
-                <div>
-                  <h2>Pronta para dar esse passo?</h2>
-                  <p>Envie sua candidatura e acompanhe o processo no seu perfil.</p>
-                </div>
-                <button
-                  type="button"
-                  className="detalhes-candidatar"
-                  onClick={candidatar}
-                  disabled={jaCandidatou}
-                >
-                  {jaCandidatou ? 'Candidatura enviada' : 'Candidatar-se agora'}
-                </button>
-              </div>
-            </section>
-          </>
+        {outras.length > 0 && (
+          <section aria-labelledby="titulo-outras" className="lg:col-span-12">
+            <h2 id="titulo-outras" className="border-b border-tinta pb-3 font-display text-2xl">
+              Outras vagas na {empresa.nomeCurto}
+            </h2>
+            {outras.map((outra) => (
+              <LinhaVaga key={outra.id} vaga={outra} candidatura={candidaturaDaVaga(outra.id, candidaturas)} />
+            ))}
+          </section>
         )}
-      </main>
-
-      <Rodape />
-    </div>
+      </div>
+    </Pagina>
   )
 }
 

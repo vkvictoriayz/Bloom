@@ -1,43 +1,32 @@
 import { Link } from 'react-router-dom'
 
-// Carrossel infinito com CSS marquee — sem scroll-jump, totalmente fluido.
-function CarrosselAreas({ areas, estaAutenticada = false }) {
-  // Duplicamos as áreas para criar o efeito de loop contínuo.
-  const itens = [...areas, ...areas]
+import FaixaMarcas from './ui/FaixaMarcas'
 
+// Carrossel contínuo das áreas de T.I., montado sobre a FaixaMarcas
+// (LogoSlider do VengeanceUI): movimento linear, sem salto no laço,
+// pausa no hover/foco e lista estática com movimento reduzido.
+function CarrosselAreas({ areas, estaAutenticada = false }) {
   function urlArea(area) {
     if (!estaAutenticada) return '/login'
     return area.filtro ? `/vagas?area=${encodeURIComponent(area.filtro)}` : '/vagas'
   }
 
-  return (
-    <div
-      className="carrossel"
-      role="region"
-      aria-roledescription="carrossel"
-      aria-label="Áreas de T.I."
+  const cartoes = areas.map((area, i) => (
+    <Link
+      key={area.nome}
+      to={urlArea(area)}
+      className="group flex h-full w-64 flex-col border-l border-linha-forte py-2 pr-6 pl-6 transition-colors hover:border-vinho"
     >
-      <div className="carrossel-faixa">
-        <ul className="carrossel-trilha">
-          {itens.map((area, i) => (
-            <li
-              key={`${area.nome}-${i}`}
-              className="carrossel-card"
-              aria-hidden={i >= areas.length ? 'true' : undefined}
-            >
-              <Link to={urlArea(area)}>
-                <h3>{area.nome}</h3>
-                <p>{area.descricao}</p>
-                <span className="carrossel-link">
-                  Ver vagas <span aria-hidden="true">→</span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  )
+      <span className="text-xs font-semibold text-suave tabular-nums">{String(i + 1).padStart(2, '0')}</span>
+      <h3 className="mt-6 font-display text-2xl leading-tight text-tinta group-hover:text-vinho">{area.nome}</h3>
+      <p className="mt-3 flex-1 text-sm leading-relaxed text-suave">{area.descricao}</p>
+      <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-vinho">
+        Ver vagas <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+      </span>
+    </Link>
+  ))
+
+  return <FaixaMarcas itens={cartoes} duracao={70} rotulo="Áreas de T.I." />
 }
 
 export default CarrosselAreas

@@ -1,8 +1,11 @@
 
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import './Empresa.css'
-import logoBloom from '../assets/logo-bloom.png'
+import { useLocation, useNavigate } from 'react-router-dom'
+import TelaAcesso, { LinkAcesso } from '../components/TelaAcesso'
+import { fotos } from '../data/imagens'
+import CampoSenha from '../components/CampoSenha'
+import Botao from '../components/ui/Botao'
+import { Aviso, Campo, Entrada } from '../components/ui/Campo'
 
 function LoginEmpresa() {
   const navigate = useNavigate()
@@ -14,8 +17,7 @@ function LoginEmpresa() {
     location.state?.mensagem || ''
   )
 
-  function handleSubmit(event) {
-    event.preventDefault()
+  function handleSubmit() {
     setMensagem('')
 
     if (!email.trim() || !senha) {
@@ -58,68 +60,51 @@ function LoginEmpresa() {
   }
 
   return (
-    <main className="empresa-auth-page">
-      <div className="empresa-auth-container">
-        <Link to="/" className="empresa-auth-voltar">
-          ← Voltar para o BLOOM
-        </Link>
-
-        <section className="empresa-auth-card">
-          <img className="empresa-auth-logo" src={logoBloom} alt="BLOOM" />
-
-          <p className="empresa-auth-etiqueta">ÁREA EMPRESARIAL</p>
-          <h1>Bem-vinda ao BLOOM</h1>
-          <p className="empresa-auth-descricao">
-            Entre na sua conta empresarial para continuar.
+    <TelaAcesso
+      etiqueta="Área empresarial"
+      titulo="Bem-vinda ao BLOOM"
+      subtitulo="Entre na sua conta empresarial para continuar."
+      aoEnviar={handleSubmit}
+      visual={{
+        foto: fotos.empresaAcesso,
+        frase: 'Talentos da tecnologia, perto da sua empresa.',
+        itens: ['Cadastro da sua organização', 'Acesso à área empresarial', 'Publicação de vagas em breve'],
+      }}
+      rodape={
+        <>
+          <p>
+            Ainda não tem conta? <LinkAcesso to="/empresa/cadastro">Cadastrar uma empresa</LinkAcesso>
           </p>
+          <p>
+            É candidata? <LinkAcesso to="/login">Acesse sua conta</LinkAcesso>
+          </p>
+        </>
+      }
+    >
+      <Campo rotulo="E-mail corporativo">
+        {(props) => (
+          <Entrada
+            {...props}
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="contato@empresa.com.br"
+            autoComplete="username"
+            required
+          />
+        )}
+      </Campo>
 
-          <form className="empresa-auth-form" onSubmit={handleSubmit}>
-            <label>
-              E-mail corporativo
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="contato@empresa.com.br"
-                autoComplete="username"
-                required
-              />
-            </label>
+      <CampoSenha rotulo="Senha" valor={senha} aoMudar={setSenha} placeholder="Digite sua senha" />
 
-            <label>
-              Senha
-              <input
-                type="password"
-                value={senha}
-                onChange={(event) => setSenha(event.target.value)}
-                placeholder="Digite sua senha"
-                autoComplete="current-password"
-                required
-              />
-            </label>
+      {mensagem && <Aviso tipo={location.state?.mensagem === mensagem ? 'sucesso' : 'erro'}>{mensagem}</Aviso>}
 
-            {mensagem && (
-              <p className="empresa-auth-mensagem" role="alert">
-                {mensagem}
-              </p>
-            )}
-
-            <button className="empresa-auth-botao" type="submit">
-              Entrar como empresa
-            </button>
-          </form>
-
-          <div className="empresa-auth-links">
-            <Link to="/empresa/cadastro">Cadastrar uma empresa</Link>
-            <span>
-              É candidata? <Link to="/login">Acesse sua conta</Link>
-            </span>
-            <Link to="/">Voltar à página inicial</Link>
-          </div>
-        </section>
-      </div>
-    </main>
+      <Botao type="submit" tamanho="lg" className="mt-2 w-full">
+        Entrar como empresa
+      </Botao>
+    </TelaAcesso>
   )
 }
 
 export default LoginEmpresa
+

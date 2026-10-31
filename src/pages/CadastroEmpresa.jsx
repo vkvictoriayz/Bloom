@@ -1,8 +1,11 @@
 
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import './Empresa.css'
-import logoBloom from '../assets/logo-bloom.png'
+import { useNavigate } from 'react-router-dom'
+import TelaAcesso, { LinkAcesso } from '../components/TelaAcesso'
+import { fotos } from '../data/imagens'
+import CampoSenha from '../components/CampoSenha'
+import Botao from '../components/ui/Botao'
+import { Aviso, Campo, Entrada } from '../components/ui/Campo'
 
 function CadastroEmpresa() {
   const navigate = useNavigate()
@@ -14,8 +17,7 @@ function CadastroEmpresa() {
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [mensagem, setMensagem] = useState('')
 
-  function handleSubmit(event) {
-    event.preventDefault()
+  function handleSubmit() {
     setMensagem('')
 
     if (!nome.trim() || !cnpj.trim() || !email.trim() || !senha) {
@@ -80,106 +82,81 @@ function CadastroEmpresa() {
   }
 
   return (
-    <main className="empresa-auth-page">
-      <div className="empresa-auth-container">
-        <Link to="/" className="empresa-auth-voltar">
-          ← Voltar para o BLOOM
-        </Link>
-
-        <section className="empresa-auth-card">
-          <img className="empresa-auth-logo" src={logoBloom} alt="BLOOM" />
-
-          <p className="empresa-auth-etiqueta">PARA EMPREGADORES</p>
-          <h1>Cadastre sua empresa</h1>
-          <p className="empresa-auth-descricao">
-            Faça parte do BLOOM e prepare-se para conectar sua empresa a
-            talentos da tecnologia.
+    <TelaAcesso
+      etiqueta="Para empregadores"
+      titulo="Cadastre sua empresa"
+      subtitulo="Faça parte do BLOOM e prepare-se para conectar sua empresa a talentos da tecnologia."
+      aoEnviar={handleSubmit}
+      visual={{
+        foto: fotos.empresaAcesso,
+        frase: 'Talentos da tecnologia, perto da sua empresa.',
+        itens: ['Cadastro da sua organização', 'Acesso à área empresarial', 'Publicação de vagas em breve'],
+      }}
+      rodape={
+        <>
+          <p>
+            Já possui uma conta? <LinkAcesso to="/empresa/login">Entrar</LinkAcesso>
           </p>
+          <p>
+            É candidata? <LinkAcesso to="/login">Acesse sua conta</LinkAcesso>
+          </p>
+        </>
+      }
+    >
+      <Campo rotulo="Nome da empresa">
+        {(props) => (
+          <Entrada
+            {...props}
+            value={nome}
+            onChange={(event) => setNome(event.target.value)}
+            placeholder="Ex.: Empresa Tecnologia Ltda."
+            autoComplete="organization"
+            required
+          />
+        )}
+      </Campo>
 
-          <form className="empresa-auth-form" onSubmit={handleSubmit}>
-            <label>
-              Nome da empresa
-              <input
-                value={nome}
-                onChange={(event) => setNome(event.target.value)}
-                placeholder="Ex.: Empresa Tecnologia Ltda."
-                autoComplete="organization"
-                required
-              />
-            </label>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Campo rotulo="CNPJ">
+          {(props) => (
+            <Entrada
+              {...props}
+              value={cnpj}
+              onChange={(event) => setCnpj(event.target.value)}
+              placeholder="14 números do CNPJ"
+              inputMode="numeric"
+              maxLength={18}
+              required
+            />
+          )}
+        </Campo>
 
-            <label>
-              CNPJ
-              <input
-                value={cnpj}
-                onChange={(event) => setCnpj(event.target.value)}
-                placeholder="Digite os 14 números do CNPJ"
-                inputMode="numeric"
-                maxLength={18}
-                required
-              />
-            </label>
-
-            <label>
-              E-mail corporativo
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="contato@empresa.com.br"
-                autoComplete="email"
-                required
-              />
-            </label>
-
-            <label>
-              Senha
-              <input
-                type="password"
-                value={senha}
-                onChange={(event) => setSenha(event.target.value)}
-                placeholder="Mínimo de 8 caracteres"
-                autoComplete="new-password"
-                minLength={8}
-                required
-              />
-            </label>
-
-            <label>
-              Confirmar senha
-              <input
-                type="password"
-                value={confirmarSenha}
-                onChange={(event) => setConfirmarSenha(event.target.value)}
-                placeholder="Digite a senha novamente"
-                autoComplete="new-password"
-                required
-              />
-            </label>
-
-            {mensagem && (
-              <p className="empresa-auth-mensagem" role="alert">
-                {mensagem}
-              </p>
-            )}
-
-            <button className="empresa-auth-botao" type="submit">
-              Criar conta empresarial
-            </button>
-          </form>
-
-          <div className="empresa-auth-links">
-            <span>
-              Já possui uma conta? <Link to="/empresa/login">Entrar</Link>
-            </span>
-            <span>
-              É candidata? <Link to="/login">Acesse sua conta</Link>
-            </span>
-          </div>
-        </section>
+        <Campo rotulo="E-mail corporativo">
+          {(props) => (
+            <Entrada
+              {...props}
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="contato@empresa.com.br"
+              autoComplete="email"
+              required
+            />
+          )}
+        </Campo>
       </div>
-    </main>
+
+      <CampoSenha rotulo="Senha" valor={senha} aoMudar={setSenha} placeholder="Mínimo de 8 caracteres" autoComplete="new-password" />
+      <CampoSenha rotulo="Confirmar senha" valor={confirmarSenha} aoMudar={setConfirmarSenha} placeholder="Digite a senha novamente" autoComplete="new-password" />
+
+      {mensagem && <Aviso tipo="erro">{mensagem}</Aviso>}
+
+      <Botao type="submit" tamanho="lg" className="mt-2 w-full">
+        Criar conta empresarial
+      </Botao>
+    </TelaAcesso>
   )
 }
 
 export default CadastroEmpresa
+

@@ -1,10 +1,12 @@
-// Logomarca da Bloom: a borboleta + o nome em Bodoni Moda (ver identidade de marca).
-// variante="clara" é para fundos escuros (menu lateral).
+import { cn } from '../lib/cn'
 
-export function Borboleta({ tamanho = 28, className = "" }) {
+// Logomarca da Bloom: a borboleta + o nome em Bodoni Moda (ver identidade de marca).
+// variante="clara" é para fundos escuros.
+
+export function Borboleta({ tamanho = 28, className = '' }) {
   return (
     <svg
-      className={`borboleta ${className}`}
+      className={className}
       width={tamanho}
       height={tamanho * 0.8}
       viewBox="0 0 100 80"
@@ -17,16 +19,22 @@ export function Borboleta({ tamanho = 28, className = "" }) {
       <path d="M50.8 45.6C57 30 72 8 94.5 5C96.5 23 80 41 50.8 45.6Z" />
       <path d="M51.4 48.4C60 46.2 69 44.8 76.5 44.6C79 56 73.5 70 65 75.5C59.5 76.5 54 62 51.4 48.4Z" />
     </svg>
-  );
+  )
 }
 
-function Logo({ variante = "escura", className = "" }) {
+function Logo({ variante = 'escura', tamanho = 26, className = '' }) {
   return (
-    <span className={`logo logo-${variante} ${className}`}>
-      <Borboleta />
-      <span className="logo-nome">BLOOM</span>
+    <span
+      className={cn(
+        'inline-flex items-center gap-2.5',
+        variante === 'clara' ? 'text-white' : 'text-vinho',
+        className
+      )}
+    >
+      <Borboleta tamanho={tamanho} />
+      <span className="font-display text-[1.3rem] leading-none font-semibold tracking-[0.14em]">BLOOM</span>
     </span>
-  );
+  )
 }
 
-export default Logo;
+export default Logo

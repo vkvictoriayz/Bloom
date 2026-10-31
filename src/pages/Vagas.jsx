@@ -1,452 +1,337 @@
+import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import Cabecalho from '../components/Cabecalho'
-import Rodape from '../components/Rodape'
-import './Vagas.css'
+import Icone from '../components/Icone'
+import LinhaVaga from '../components/LinhaVaga'
+import VagaDestaque from '../components/VagaDestaque'
+import CabecalhoPagina from '../components/layout/CabecalhoPagina'
+import Pagina from '../components/layout/Pagina'
+import Botao from '../components/ui/Botao'
+import { Selecao } from '../components/ui/Campo'
+import { Vazio, VazioAcoes, VazioDescricao, VazioIcone, VazioTitulo } from '../components/ui/Vazio'
+import { correspondeBusca, ehIniciante, listarVagas, opcoesFiltro } from '../data/vagas'
+import { buscarEmpresa } from '../data/empresas'
+import { fotos } from '../data/imagens'
+import { useDadosLocais } from '../hooks/useDadosLocais'
+import { candidaturaDaVaga, EVENTO_CANDIDATURAS, lerCandidaturas } from '../services/candidaturas'
+import { cn } from '../lib/cn'
 
-const CHAVE_FAVORITOS = 'bloom-vagas-salvas'
-const CHAVE_CANDIDATURAS = 'bloom-candidaturas'
+const POR_PAGINA = 10
 
-const vagasExemplo = [
-  {
-    id: 1,
-    cargo: 'Engenheira de Software Pleno - JAVA',
-    empresa: 'Itaú',
-    local: 'São Paulo, SP',
-    modalidade: 'Híbrido',
-    tipo: 'CLT',
-    area: 'Desenvolvimento',
-    publicada: 'Há 2 dias',
-    descricao:
-      'Desenvolva soluções e participe de projetos de tecnologia em equipe.',
-    competencias: ['Java', 'Spring', 'SQL'],
-  },
-  {
-    id: 2,
-    cargo: 'Engenheira de Software Sênior - Data Owner',
-    empresa: 'BTG Pactual',
-    local: 'Botucatu, SP',
-    modalidade: 'Presencial',
-    tipo: 'CLT',
-    area: 'Dados',
-    publicada: 'Há 3 dias',
-    descricao:
-      'Atue com dados, tecnologia e soluções para desafios de negócio.',
-    competencias: ['SQL', 'Dados', 'Python'],
-  },
-  {
-    id: 3,
-    cargo: 'Analista de Inteligência de Dados Sênior',
-    empresa: 'Porto Seguro',
-    local: 'Bragança Paulista, SP',
-    modalidade: 'Híbrido',
-    tipo: 'CLT',
-    area: 'Dados',
-    publicada: 'Há 1 semana',
-    descricao:
-      'Transforme dados em informações úteis para decisões estratégicas.',
-    competencias: ['SQL', 'Power BI', 'Excel'],
-  },
-  {
-    id: 4,
-    cargo: 'Analista DevOps Júnior',
-    empresa: 'Banco do Brasil',
-    local: 'Mogi das Cruzes, SP',
-    modalidade: 'Remoto',
-    tipo: 'CLT',
-    area: 'Infraestrutura',
-    publicada: 'Há 5 dias',
-    descricao:
-      'Colabore na automação e manutenção de ambientes de tecnologia.',
-    competencias: ['Git', 'Linux', 'Cloud'],
-  },
-  {
-    id: 5,
-    cargo: 'Desenvolvedora Mobile',
-    empresa: 'Ipiranga',
-    local: 'Mauá, SP',
-    modalidade: 'Remoto',
-    tipo: 'CLT',
-    area: 'Desenvolvimento',
-    publicada: 'Há 3 semanas',
-    descricao:
-      'Ajude a criar e aprimorar experiências em aplicativos móveis.',
-    competencias: ['React Native', 'JavaScript'],
-  },
-  {
-    id: 6,
-    cargo: 'Assistente de Tecnologia da Informação',
-    empresa: 'Unimed',
-    local: 'Campinas, SP',
-    modalidade: 'Presencial',
-    tipo: 'CLT',
-    area: 'Suporte',
-    publicada: 'Há 1 dia',
-    descricao:
-      'Apoie a equipe na organização e resolução de demandas técnicas.',
-    competencias: ['Suporte', 'Redes', 'Sistemas'],
-  },
-]
-
-function lerLista(chave) {
-  try {
-    const dados = JSON.parse(localStorage.getItem(chave) || '[]')
-    return Array.isArray(dados) ? dados : []
-  } catch {
-    return []
-  }
+const ORDENACOES = {
+  recentes: { rotulo: 'Mais recentes', comparar: (a, b) => a.publicadaHaDias - b.publicadaHaDias },
+  antigas: { rotulo: 'Mais antigas', comparar: (a, b) => b.publicadaHaDias - a.publicadaHaDias },
+  empresa: { rotulo: 'Empresa (A–Z)', comparar: (a, b) => a.dadosEmpresa.nome.localeCompare(b.dadosEmpresa.nome, 'pt-BR') },
 }
 
-const AREAS = ['Desenvolvimento', 'Dados', 'Infraestrutura', 'Suporte']
+// Grupos de filtros de múltipla escolha. As opções vêm dos dados.
+const GRUPOS = [
+  { chave: 'area', rotulo: 'Área', opcoes: opcoesFiltro.areas, campo: (v) => v.area },
+  { chave: 'nivel', rotulo: 'Nível', opcoes: opcoesFiltro.niveis, campo: (v) => v.nivel },
+  { chave: 'modalidade', rotulo: 'Modalidade', opcoes: opcoesFiltro.modalidades, campo: (v) => v.modalidade },
+  { chave: 'tec', rotulo: 'Tecnologias', opcoes: opcoesFiltro.tecnologias, campo: (v) => v.competencias, chips: true },
+]
+
+function GrupoFiltro({ grupo, selecionados, aoAlternar }) {
+  return (
+    <fieldset className="border-b border-linha py-5">
+      <legend className="mb-3 text-xs font-semibold tracking-[0.12em] text-suave uppercase">{grupo.rotulo}</legend>
+      {grupo.chips ? (
+        <div className="flex flex-wrap gap-1.5">
+          {grupo.opcoes.map((opcao) => {
+            const ativo = selecionados.includes(opcao)
+            return (
+              <button
+                key={opcao}
+                type="button"
+                aria-pressed={ativo}
+                onClick={() => aoAlternar(opcao)}
+                className={cn(
+                  'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                  ativo ? 'border-vinho bg-vinho text-white' : 'border-linha-forte bg-branco text-tinta-2 hover:border-tinta'
+                )}
+              >
+                {opcao}
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2.5">
+          {grupo.opcoes.map((opcao) => (
+            <label key={opcao} className="flex cursor-pointer items-center gap-3 text-sm text-tinta-2 hover:text-tinta">
+              <input
+                type="checkbox"
+                checked={selecionados.includes(opcao)}
+                onChange={() => aoAlternar(opcao)}
+                className="size-4 cursor-pointer rounded border-linha-forte accent-vinho"
+              />
+              {opcao}
+            </label>
+          ))}
+        </div>
+      )}
+    </fieldset>
+  )
+}
 
 function Vagas() {
-  // O carrossel da Home abre esta página com /vagas?area=Dados
-  // A busca do cabeçalho abre esta página com /vagas?busca=termo
-  const [parametros] = useSearchParams()
-  const areaDaUrl = parametros.get('area')
-  const buscaDaUrl = parametros.get('busca') || ''
+  const [parametros, setParametros] = useSearchParams()
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false)
+  const [quantidade, setQuantidade] = useState(POR_PAGINA)
+  const candidaturas = useDadosLocais(lerCandidaturas, [EVENTO_CANDIDATURAS])
 
-  const [busca, setBusca] = useState(buscaDaUrl)
+  const busca = parametros.get('busca') ?? ''
+  const local = parametros.get('local') ?? ''
+  const empresaSlug = parametros.get('empresa') ?? ''
+  const iniciante = parametros.get('iniciante') === '1'
+  const ordem = ORDENACOES[parametros.get('ordem')] ? parametros.get('ordem') : 'recentes'
+  const selecionados = Object.fromEntries(GRUPOS.map((g) => [g.chave, parametros.getAll(g.chave)]))
+  const empresaFiltro = empresaSlug ? buscarEmpresa(empresaSlug) : null
 
-  useEffect(() => setBusca(buscaDaUrl), [buscaDaUrl])
-  const [modalidade, setModalidade] = useState('')
-  const [area, setArea] = useState(AREAS.includes(areaDaUrl) ? areaDaUrl : '')
+  function atualizar(alterar) {
+    const proximos = new URLSearchParams(parametros)
+    alterar(proximos)
+    setQuantidade(POR_PAGINA)
+    setParametros(proximos, { replace: true })
+  }
 
-  const [salvas, setSalvas] = useState(() =>
-    lerLista(CHAVE_FAVORITOS)
-  )
-
-  const [candidaturas, setCandidaturas] = useState(() =>
-    lerLista(CHAVE_CANDIDATURAS)
-  )
-
-  const [mensagem, setMensagem] = useState('')
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(CHAVE_FAVORITOS, JSON.stringify(salvas))
-    } catch {
-      // Os favoritos continuam disponíveis durante esta sessão.
-    }
-  }, [salvas])
-
-  useEffect(() => {
-    function atualizarCandidaturas() {
-      setCandidaturas(lerLista(CHAVE_CANDIDATURAS))
-    }
-
-    window.addEventListener(
-      'bloom-candidaturas-atualizadas',
-      atualizarCandidaturas
-    )
-
-    window.addEventListener('storage', atualizarCandidaturas)
-
-    return () => {
-      window.removeEventListener(
-        'bloom-candidaturas-atualizadas',
-        atualizarCandidaturas
-      )
-
-      window.removeEventListener('storage', atualizarCandidaturas)
-    }
-  }, [])
-
-  const vagasFiltradas = useMemo(() => {
-    const termo = busca.trim().toLowerCase()
-
-    return vagasExemplo.filter((vaga) => {
-      const correspondeBusca =
-        !termo ||
-        [
-          vaga.cargo,
-          vaga.empresa,
-          vaga.local,
-          vaga.area,
-          ...vaga.competencias,
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(termo)
-
-      const correspondeModalidade =
-        !modalidade || vaga.modalidade === modalidade
-
-      const correspondeArea = !area || vaga.area === area
-
-      return (
-        correspondeBusca &&
-        correspondeModalidade &&
-        correspondeArea
-      )
-    })
-  }, [busca, modalidade, area])
-
-  function alternarSalva(id) {
-    setSalvas((atuais) => {
-      const jaSalva = atuais.some(
-        (item) => String(item) === String(id)
-      )
-
-      return jaSalva
-        ? atuais.filter((item) => String(item) !== String(id))
-        : [...atuais, id]
+  function alternar(chave, valor) {
+    atualizar((p) => {
+      const atuais = p.getAll(chave)
+      p.delete(chave)
+      const novos = atuais.includes(valor) ? atuais.filter((v) => v !== valor) : [...atuais, valor]
+      novos.forEach((v) => p.append(chave, v))
     })
   }
 
-  function jaCandidatou(id) {
-    return candidaturas.some(
-      (item) => String(item.vagaId) === String(id)
-    )
+  function definir(chave, valor) {
+    atualizar((p) => (valor ? p.set(chave, valor) : p.delete(chave)))
   }
 
-  function candidatar(vaga) {
-    // Lemos novamente para evitar usar uma lista desatualizada.
-    const atuais = lerLista(CHAVE_CANDIDATURAS)
-
-    const candidaturaExistente = atuais.some(
-      (item) => String(item.vagaId) === String(vaga.id)
-    )
-
-    if (candidaturaExistente) {
-      setCandidaturas(atuais)
-      setMensagem(`Você já se candidatou à vaga da ${vaga.empresa}.`)
-      return
-    }
-
-    const novaCandidatura = {
-      id: `${vaga.id}-${Date.now()}`,
-      vagaId: vaga.id,
-      cargo: vaga.cargo,
-      empresa: vaga.empresa,
-      local: vaga.local,
-      modalidade: vaga.modalidade,
-      data: new Date().toLocaleDateString('pt-BR'),
-      status: 'Em análise',
-    }
-
-    const listaAtualizada = [...atuais, novaCandidatura]
-
-    try {
-      localStorage.setItem(
-        CHAVE_CANDIDATURAS,
-        JSON.stringify(listaAtualizada)
-      )
-
-      setCandidaturas(listaAtualizada)
-      setMensagem(
-        `Candidatura para ${vaga.cargo} registrada! Acesse Meu perfil para acompanhá-la.`
-      )
-
-      window.dispatchEvent(
-        new Event('bloom-candidaturas-atualizadas')
-      )
-    } catch {
-      setMensagem(
-        'Não foi possível salvar a candidatura neste navegador.'
-      )
-    }
+  function limparTudo() {
+    setQuantidade(POR_PAGINA)
+    setParametros(ordem !== 'recentes' ? { ordem } : {}, { replace: true })
   }
+
+  const todas = useMemo(() => listarVagas(), [])
+
+  const resultado = useMemo(() => {
+    return todas
+      .filter((vaga) => correspondeBusca(vaga, busca))
+      .filter((vaga) => !local || vaga.local === local)
+      .filter((vaga) => !empresaSlug || vaga.empresa === empresaSlug)
+      .filter((vaga) => !iniciante || ehIniciante(vaga))
+      .filter((vaga) =>
+        GRUPOS.every((g) => {
+          const escolhas = selecionados[g.chave]
+          if (!escolhas.length) return true
+          const valor = g.campo(vaga)
+          return Array.isArray(valor) ? escolhas.some((e) => valor.includes(e)) : escolhas.includes(valor)
+        })
+      )
+      .sort(ORDENACOES[ordem].comparar)
+    // selecionados é derivado de "parametros"
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parametros])
+
+  // Etiquetas dos filtros ativos (todas removíveis).
+  const ativos = [
+    busca && { id: 'busca', rotulo: `“${busca}”`, remover: () => definir('busca', '') },
+    empresaFiltro && { id: 'empresa', rotulo: empresaFiltro.nome, remover: () => definir('empresa', '') },
+    local && { id: 'local', rotulo: local, remover: () => definir('local', '') },
+    iniciante && { id: 'iniciante', rotulo: 'Boas para começar', remover: () => definir('iniciante', '') },
+    ...GRUPOS.flatMap((g) =>
+      selecionados[g.chave].map((v) => ({ id: `${g.chave}-${v}`, rotulo: v, remover: () => alternar(g.chave, v) }))
+    ),
+  ].filter(Boolean)
+
+  const totalFiltros = ativos.length - (busca ? 1 : 0)
+
+  const painelFiltros = (
+    <div>
+      <div className="border-b border-linha pb-5">
+        <label htmlFor="filtro-local" className="mb-3 block text-xs font-semibold tracking-[0.12em] text-suave uppercase">
+          Localização
+        </label>
+        <Selecao id="filtro-local" value={local} onChange={(e) => definir('local', e.target.value)}>
+          <option value="">Todas as localizações</option>
+          {opcoesFiltro.locais.map((opcao) => (
+            <option key={opcao} value={opcao}>
+              {opcao}
+            </option>
+          ))}
+        </Selecao>
+      </div>
+
+      <label className="flex cursor-pointer items-start justify-between gap-4 border-b border-linha py-5">
+        <span>
+          <span className="block text-sm font-semibold text-tinta">Boas para começar</span>
+          <span className="mt-0.5 block text-xs text-suave">Estágio, assistente, trainee e júnior</span>
+        </span>
+        <input
+          type="checkbox"
+          role="switch"
+          checked={iniciante}
+          onChange={(e) => definir('iniciante', e.target.checked ? '1' : '')}
+          className="peer sr-only"
+        />
+        <span
+          aria-hidden="true"
+          className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full bg-linha-forte transition-colors peer-checked:bg-vinho peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-vinho after:absolute after:top-0.5 after:left-0.5 after:size-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5"
+        />
+      </label>
+
+      {GRUPOS.map((grupo) => (
+        <GrupoFiltro key={grupo.chave} grupo={grupo} selecionados={selecionados[grupo.chave]} aoAlternar={(v) => alternar(grupo.chave, v)} />
+      ))}
+
+      {ativos.length > 0 && (
+        <Botao variante="link" className="mt-5" onClick={limparTudo}>
+          Limpar todos os filtros
+        </Botao>
+      )}
+    </div>
+  )
+
+  const visiveis = resultado.slice(0, quantidade)
+  // As duas primeiras do resultado abrem a lista em destaque (com 3+ vagas).
+  const destaques = visiveis.length >= 3 ? visiveis.slice(0, 2) : []
+  const demais = visiveis.slice(destaques.length)
 
   return (
-    <div className="vagas-page">
-      <Cabecalho />
-
-      <main className="vagas-content">
-        <div className="vagas-heading">
-          <h1>VAGAS</h1>
-        </div>
-
-        <section className="vagas-search">
-          <label htmlFor="buscar-vaga">
-            Encontre as melhores vagas do mercado
-          </label>
-
-          <div className="vagas-search-row">
-            <input
-              id="buscar-vaga"
-              type="search"
-              placeholder="Cargo, empresa ou competência"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-
-            <button
-              type="button"
-              onClick={() => setBusca(busca.trim())}
-            >
-              Buscar
-            </button>
-          </div>
-        </section>
-
-        {mensagem && (
-          <div className="detalhes-mensagem" role="status">
-            {mensagem}
-            <button
-              type="button"
-              onClick={() => setMensagem('')}
-              aria-label="Fechar mensagem"
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        <div className="vagas-layout">
-          <aside className="vagas-sidebar">
-            <h2>Filtros</h2>
-
-            <label htmlFor="filtro-modalidade">
-              Modalidade
-            </label>
-
-            <select
-              id="filtro-modalidade"
-              value={modalidade}
-              onChange={(e) => setModalidade(e.target.value)}
-            >
-              <option value="">Qualquer modalidade</option>
-              <option value="Remoto">Remoto</option>
-              <option value="Híbrido">Híbrido</option>
-              <option value="Presencial">Presencial</option>
-            </select>
-
-            <label htmlFor="filtro-area">Área</label>
-
-            <select
-              id="filtro-area"
-              value={area}
-              onChange={(e) => setArea(e.target.value)}
-            >
-              <option value="">Todas as áreas</option>
-              <option value="Desenvolvimento">
-                Desenvolvimento
-              </option>
-              <option value="Dados">Dados</option>
-              <option value="Infraestrutura">Infraestrutura</option>
-              <option value="Suporte">Suporte</option>
-            </select>
-
-            <button
-              type="button"
-              className="vaga-save-button"
-              onClick={() => {
-                setBusca('')
-                setModalidade('')
-                setArea('')
-                setMensagem('')
-              }}
-            >
-              Limpar filtros
-            </button>
-          </aside>
-
-          <section className="vagas-results">
-            <div className="vagas-list-heading">
-              <h2>Oportunidades</h2>
-              <span>
-                {vagasFiltradas.length} vagas encontradas
-              </span>
+    <Pagina titulo="Vagas">
+      <CabecalhoPagina
+        tema="claro"
+        forma="folha"
+        foto={fotos.vagas}
+        rotulo="Oportunidades"
+        titulo={
+          <>
+            Encontre a vaga certa para o seu <em className="text-vinho">próximo passo.</em>
+          </>
+        }
+        descricao="Vagas de tecnologia de empresas de diferentes segmentos. Refine por área, nível, modalidade e tecnologias."
+      >
+        <dl className="grid max-w-lg grid-cols-3 divide-x divide-linha border-y border-linha py-4">
+          {[
+            [todas.length, todas.length === 1 ? 'vaga aberta' : 'vagas abertas'],
+            [new Set(todas.map((v) => v.empresa)).size, 'empresas'],
+            [todas.filter(ehIniciante).length, 'boas para começar'],
+          ].map(([valor, rotulo]) => (
+            <div key={rotulo} className="flex flex-col-reverse px-4 first:pl-0">
+              <dt className="mt-0.5 text-xs text-suave">{rotulo}</dt>
+              <dd className="font-display text-3xl text-tinta tabular-nums">{valor}</dd>
             </div>
+          ))}
+        </dl>
+      </CabecalhoPagina>
 
-            {vagasFiltradas.length > 0 ? (
-              <div className="vagas-list">
-                {vagasFiltradas.map((vaga) => {
-                  const favorita = salvas.some(
-                    (item) => String(item) === String(vaga.id)
-                  )
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[260px_1fr] lg:gap-14 lg:px-8 lg:py-12">
+        <aside aria-label="Filtros" className="hidden lg:block">
+          <h2 className="flex items-center gap-2 border-b border-tinta pb-3 font-semibold">
+            <Icone nome="filtros" /> Filtros
+          </h2>
+          {painelFiltros}
+        </aside>
 
-                  const candidaturaEnviada = jaCandidatou(vaga.id)
+        <section aria-labelledby="titulo-resultados" className="min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-tinta pb-3">
+            <h2 id="titulo-resultados" className="text-sm text-tinta-2" aria-live="polite">
+              <span className="font-display text-2xl text-tinta tabular-nums">{resultado.length}</span>{' '}
+              {resultado.length === 1 ? 'vaga encontrada' : 'vagas encontradas'}
+            </h2>
+            <div className="flex items-center gap-2">
+              <Botao variante="secundario" tamanho="sm" className="lg:hidden" aria-expanded={filtrosAbertos} onClick={() => setFiltrosAbertos((v) => !v)}>
+                <Icone nome="filtros" tamanho={16} /> Filtros{totalFiltros > 0 && ` (${totalFiltros})`}
+              </Botao>
+              <label htmlFor="ordem" className="sr-only">
+                Ordenar por
+              </label>
+              <Selecao id="ordem" value={ordem} onChange={(e) => definir('ordem', e.target.value === 'recentes' ? '' : e.target.value)} className="h-8 w-auto py-0 text-xs">
+                {Object.entries(ORDENACOES).map(([chave, { rotulo }]) => (
+                  <option key={chave} value={chave}>
+                    {rotulo}
+                  </option>
+                ))}
+              </Selecao>
+            </div>
+          </div>
 
-                  return (
-                    <article
-                      className="vaga-card"
-                      key={vaga.id}
-                    >
-                      <div className="vaga-card-top">
-                        <div className="vaga-company-icon">
-                          {vaga.empresa.charAt(0)}
-                        </div>
+          {filtrosAbertos && (
+            <div className="mt-4 rounded-lg border border-linha bg-branco px-5 pb-5 lg:hidden">{painelFiltros}</div>
+          )}
 
-                        <div className="vaga-title-group">
-                          <p>{vaga.empresa}</p>
-                          <h3>{vaga.cargo}</h3>
-                        </div>
+          {ativos.length > 0 && (
+            <ul className="mt-4 flex flex-wrap gap-2" aria-label="Filtros ativos">
+              {ativos.map((filtro) => (
+                <li key={filtro.id}>
+                  <button
+                    type="button"
+                    onClick={filtro.remover}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-tinta py-1 pr-2 pl-3 text-xs font-medium text-white hover:bg-tinta-2"
+                    aria-label={`Remover filtro ${filtro.rotulo}`}
+                  >
+                    {filtro.rotulo}
+                    <Icone nome="fechar" tamanho={12} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
 
-                        <button
-                          type="button"
-                          className="vaga-save-button"
-                          aria-label={
-                            favorita
-                              ? 'Remover vaga das salvas'
-                              : 'Salvar vaga'
-                          }
-                          aria-pressed={favorita}
-                          onClick={() => alternarSalva(vaga.id)}
-                        >
-                          {favorita ? '♥' : '♡'}
-                        </button>
-                      </div>
+          {resultado.length === 0 ? (
+            <Vazio className="mt-8">
+              <VazioIcone>
+                <Icone nome="busca" />
+              </VazioIcone>
+              <VazioTitulo>Nenhuma vaga encontrada</VazioTitulo>
+              <VazioDescricao>
+                {busca ? `Não há vagas para “${busca}” com esses filtros. ` : 'Nenhuma vaga combina com esses filtros. '}
+                Tente outro cargo, tecnologia ou empresa, ou remova alguns filtros.
+              </VazioDescricao>
+              <VazioAcoes>
+                <Botao variante="secundario" onClick={limparTudo}>
+                  Limpar pesquisa e filtros
+                </Botao>
+              </VazioAcoes>
+            </Vazio>
+          ) : (
+            <>
+              {destaques.length > 0 && (
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  {destaques.map((vaga) => (
+                    <VagaDestaque key={vaga.id} vaga={vaga} candidatura={candidaturaDaVaga(vaga.id, candidaturas)} />
+                  ))}
+                </div>
+              )}
+              {demais.length > 0 && (
+                <div className={destaques.length ? 'mt-8' : undefined}>
+                  {destaques.length > 0 && (
+                    <h3 className="border-b border-linha pb-2 text-xs font-bold tracking-[0.14em] text-suave uppercase">Mais vagas</h3>
+                  )}
+                  {demais.map((vaga) => (
+                    <LinhaVaga key={vaga.id} vaga={vaga} candidatura={candidaturaDaVaga(vaga.id, candidaturas)} />
+                  ))}
+                </div>
+              )}
+              {resultado.length > quantidade && (
+                <div className="mt-8 flex justify-center">
+                  <Botao variante="secundario" onClick={() => setQuantidade((q) => q + POR_PAGINA)}>
+                    Carregar mais vagas ({resultado.length - quantidade} restantes)
+                  </Botao>
+                </div>
+              )}
+            </>
+          )}
 
-                      <p className="vaga-description">
-                        {vaga.local} · {vaga.modalidade}
-                      </p>
-
-                      <p className="vaga-description">
-                        {vaga.publicada}
-                      </p>
-
-                      <div className="vaga-card-bottom">
-                        <Link
-                          className="vaga-save-button"
-                          to={`/vagas/${vaga.id}`}
-                        >
-                          Detalhes
-                        </Link>
-
-                        <button
-                          type="button"
-                          className="vaga-apply-button"
-                          onClick={() => candidatar(vaga)}
-                          disabled={candidaturaEnviada}
-                        >
-                          {candidaturaEnviada
-                            ? 'Já se candidatou'
-                            : 'Candidatar-se'}
-                        </button>
-                      </div>
-                    </article>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="vagas-empty">
-                <p>
-                  Nenhuma vaga encontrada
-                  {busca.trim() ? ` para “${busca.trim()}”` : ''}. Tente
-                  outro cargo, tecnologia ou empresa, ou ajuste os filtros.
-                </p>
-                <button
-                  type="button"
-                  className="vaga-save-button"
-                  onClick={() => {
-                    setBusca('')
-                    setModalidade('')
-                    setArea('')
-                  }}
-                >
-                  Limpar pesquisa
-                </button>
-              </div>
-            )}
-          </section>
-        </div>
-      </main>
-
-      <Rodape />
-    </div>
+          <p className="mt-10 flex items-start gap-2 text-xs text-suave">
+            <Icone nome="info" tamanho={16} className="mt-px shrink-0" />
+            As vagas exibidas são as vagas de exemplo do projeto, até a publicação de vagas pelas empresas ser ligada ao banco de dados.
+          </p>
+        </section>
+      </div>
+    </Pagina>
   )
 }
 

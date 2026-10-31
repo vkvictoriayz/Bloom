@@ -1,35 +1,38 @@
-import { useState } from "react";
-import Icone from "./Icone";
+import { useState } from 'react'
+
+import Icone from './Icone'
+import { Campo, Entrada } from './ui/Campo'
 
 // Campo de senha com o botão de mostrar/ocultar.
-function CampoSenha({ rotulo, valor, aoMudar, placeholder, autoComplete = "current-password" }) {
-  const [mostrar, setMostrar] = useState(false);
+function CampoSenha({ rotulo, valor, aoMudar, placeholder, autoComplete = 'current-password', acessorio }) {
+  const [mostrar, setMostrar] = useState(false)
 
   return (
-    <label className="campo">
-      <span className="campo-rotulo">{rotulo}</span>
-
-      <span className="senha-container">
-        <input
-          type={mostrar ? "text" : "password"}
-          placeholder={placeholder}
-          value={valor}
-          onChange={(e) => aoMudar(e.target.value)}
-          autoComplete={autoComplete}
-        />
-
-        <button
-          type="button"
-          className="mostrar-senha"
-          onClick={() => setMostrar(!mostrar)}
-          aria-label={mostrar ? "Ocultar senha" : "Mostrar senha"}
-          title={mostrar ? "Ocultar senha" : "Mostrar senha"}
-        >
-          <Icone nome={mostrar ? "olho-fechado" : "olho"} />
-        </button>
-      </span>
-    </label>
-  );
+    <Campo rotulo={rotulo} acessorio={acessorio}>
+      {(props) => (
+        <div className="relative">
+          <Entrada
+            {...props}
+            type={mostrar ? 'text' : 'password'}
+            placeholder={placeholder}
+            value={valor}
+            onChange={(e) => aoMudar(e.target.value)}
+            autoComplete={autoComplete}
+            className="pr-12"
+          />
+          <button
+            type="button"
+            className="absolute top-1/2 right-1.5 grid size-9 -translate-y-1/2 place-items-center rounded-md text-suave hover:bg-papel-2 hover:text-tinta"
+            onClick={() => setMostrar(!mostrar)}
+            aria-label={mostrar ? 'Ocultar senha' : 'Mostrar senha'}
+            title={mostrar ? 'Ocultar senha' : 'Mostrar senha'}
+          >
+            <Icone nome={mostrar ? 'olho-fechado' : 'olho'} />
+          </button>
+        </div>
+      )}
+    </Campo>
+  )
 }
 
-export default CampoSenha;
+export default CampoSenha

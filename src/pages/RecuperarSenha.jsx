@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import TelaAcesso from '../components/TelaAcesso'
+import TelaAcesso, { LinkAcesso } from '../components/TelaAcesso'
+import Botao from '../components/ui/Botao'
+import { Aviso, Campo, Entrada } from '../components/ui/Campo'
 
 function RecuperarSenha() {
   const [email, setEmail] = useState('')
@@ -27,30 +28,28 @@ function RecuperarSenha() {
       aoEnviar={handleSubmit}
       rodape={
         <p>
-          Lembrou sua senha? <Link to="/login">Voltar ao login</Link>
+          Lembrou sua senha? <LinkAcesso to="/login">Voltar ao login</LinkAcesso>
         </p>
       }
     >
-      <label className="campo">
-        <span className="campo-rotulo">E-mail</span>
-        <input
-          type="email"
-          placeholder="voce@email.com"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </label>
+      <Campo rotulo="E-mail">
+        {(props) => (
+          <Entrada
+            {...props}
+            type="email"
+            placeholder="voce@email.com"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        )}
+      </Campo>
 
-      {mensagem && (
-        <p className={`mensagem ${tipoMensagem}`} role="alert">
-          {mensagem}
-        </p>
-      )}
+      {mensagem && <Aviso tipo={tipoMensagem}>{mensagem}</Aviso>}
 
-      <button type="submit" className="botao">
+      <Botao type="submit" tamanho="lg" className="mt-2 w-full">
         Recuperar senha
-      </button>
+      </Botao>
     </TelaAcesso>
   )
 }

@@ -1,0 +1,45 @@
+import { forwardRef } from 'react'
+import { cva } from 'class-variance-authority'
+import { cn } from '../../lib/cn'
+
+// Adaptado do Button do VengeanceUI (cva + variantes), com as cores da Bloom.
+// Use "as" para renderizar um Link ou <a> com o mesmo visual.
+const botaoVariantes = cva(
+  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0',
+  {
+    variants: {
+      variante: {
+        primario: 'bg-vinho text-white hover:bg-vinho-escuro',
+        secundario: 'border border-linha-forte bg-branco text-tinta hover:border-tinta',
+        fantasma: 'text-tinta-2 hover:bg-papel-2 hover:text-tinta',
+        claro: 'bg-branco text-vinho-escuro hover:bg-blush',
+        contornoClaro: 'border border-white/40 text-white hover:border-white hover:bg-white/10',
+        link: 'text-vinho underline-offset-4 hover:underline',
+      },
+      tamanho: {
+        sm: 'h-8 px-3 text-xs',
+        md: 'h-10 px-4 text-sm',
+        lg: 'h-12 px-6 text-[15px]',
+        icone: 'size-10',
+      },
+    },
+    compoundVariants: [{ variante: 'link', className: 'h-auto px-0' }],
+    defaultVariants: { variante: 'primario', tamanho: 'md' },
+  }
+)
+
+const Botao = forwardRef(function Botao(
+  { as: Componente = 'button', variante, tamanho, className, type, ...props },
+  ref
+) {
+  return (
+    <Componente
+      ref={ref}
+      type={Componente === 'button' ? type ?? 'button' : type}
+      className={cn(botaoVariantes({ variante, tamanho }), className)}
+      {...props}
+    />
+  )
+})
+
+export default Botao
