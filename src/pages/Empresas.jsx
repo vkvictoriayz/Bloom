@@ -20,50 +20,44 @@ function textoVagas(n) {
   return `${n} ${n === 1 ? 'vaga aberta' : 'vagas abertas'}`
 }
 
-// Posição de cada empresa no mosaico (grade de 6 colunas no desktop):
-// a primeira ocupa um bloco grande; a última fecha a grade em faixa larga.
-const MOSAICO = [
-  'col-span-2 row-span-2 md:col-span-4',
-  'md:col-span-2',
-  'md:col-span-2',
-  'md:col-span-2',
-  'md:col-span-2',
-  'col-span-2 md:col-span-2',
-  'col-span-2 md:col-span-6',
-]
+// Cartão de empresa em destaque: marca, nome, descrição curta e as vagas
+// abertas, sempre na mesma ordem e com o mesmo alinhamento.
+function CartaoEmpresa({ empresa }) {
+  const abertas = empresa.vagas.slice(0, 2)
 
-// Bloco do mosaico: a cor institucional da empresa ocupa todo o espaço e o
-// nome ganha o papel principal, em Fraunces.
-function BlocoEmpresa({ empresa, grande, faixa, className }) {
   return (
     <Link
       to={`/empresas/${empresa.slug}`}
-      className={cn('group relative flex flex-col justify-between overflow-hidden rounded-xl p-6 transition-[filter] hover:brightness-95 sm:p-7', className)}
-      style={{ backgroundColor: empresa.cor, color: empresa.corTexto }}
+      className="group flex h-full flex-col border border-linha bg-branco p-6 transition-colors hover:border-linha-forte"
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          'pointer-events-none absolute font-display leading-none font-semibold uppercase opacity-[0.13] select-none',
-          grande ? '-right-4 -bottom-10 text-[11rem] sm:text-[15rem]' : '-right-2 -bottom-6 text-[6rem]',
-          faixa && 'top-1/2 bottom-auto -translate-y-1/2'
-        )}
-      >
-        {empresa.sigla}
-      </span>
-
-      <p className="relative text-[11px] font-bold tracking-[0.14em] uppercase opacity-80">{empresa.segmento}</p>
-
-      <div className={cn('relative', faixa && 'sm:flex sm:items-end sm:justify-between sm:gap-6')}>
-        <div>
-          <h3 className={cn('font-display leading-[1.05]', grande ? 'text-4xl sm:text-6xl' : 'text-2xl sm:text-3xl')}>{empresa.nome}</h3>
-          <p className="mt-2 text-sm opacity-80">{empresa.sede}</p>
-          {grande && <p className="mt-4 hidden max-w-md text-[15px] leading-relaxed opacity-90 sm:block">{empresa.descricao}</p>}
+      <div className="flex items-center gap-4">
+        <MarcaEmpresa empresa={empresa} tamanho="md" />
+        <div className="min-w-0">
+          <h3 className="truncate font-display text-xl text-tinta transition-colors group-hover:text-vinho">{empresa.nome}</h3>
+          <p className="truncate text-sm text-suave">
+            {empresa.segmento} · {empresa.sede}
+          </p>
         </div>
-        <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold whitespace-nowrap">
-          {textoVagas(empresa.vagas.length)}
-          <Icone nome="seta" tamanho={16} className="transition-transform group-hover:translate-x-1" />
-        </span>
+      </div>
+
+      <p className="mt-5 line-clamp-3 text-[15px] leading-relaxed text-tinta-2">{empresa.descricao}</p>
+
+      <div className="mt-auto pt-6">
+        {abertas.length > 0 && (
+          <ul className="mb-5 flex flex-col gap-2 border-t border-linha pt-5">
+            {abertas.map((vaga) => (
+              <li key={vaga.id} className="truncate text-sm text-tinta">
+                {vaga.titulo}
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className={cn('flex items-center justify-between gap-3 text-sm', abertas.length === 0 && 'border-t border-linha pt-5')}>
+          <span className={cn('font-semibold', empresa.vagas.length ? 'text-vinho' : 'text-suave')}>{textoVagas(empresa.vagas.length)}</span>
+          <span className="inline-flex items-center gap-1.5 font-semibold text-tinta group-hover:text-vinho">
+            Ver perfil <Icone nome="seta" tamanho={16} className="transition-transform group-hover:translate-x-1" />
+          </span>
+        </div>
       </div>
     </Link>
   )
@@ -109,18 +103,17 @@ function Empresas() {
   return (
     <Pagina titulo="Empresas">
       <CabecalhoPagina
-        tema="escuro"
-        forma="folha"
+        variante="retangular"
         foto={fotos.empresas}
         rotulo="Empresas"
         titulo={
           <>
-            Descubra onde você quer <em className="text-rosa">construir sua carreira.</em>
+            Descubra onde construir sua <em className="text-vinho">carreira.</em>
           </>
         }
         descricao={`${empresas.length} organizações de ${segmentos.length} segmentos, com ${totalVagas} vagas abertas em tecnologia.`}
       >
-        <div className="grid gap-2 rounded-xl bg-branco p-2 text-tinta sm:grid-cols-2">
+        <div className="grid gap-2 border border-linha bg-branco p-2 text-tinta sm:grid-cols-2">
           <div className="relative sm:col-span-2">
             <Icone nome="busca" className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-suave" />
             <input
@@ -153,24 +146,20 @@ function Empresas() {
 
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         {!filtrando && (
-          <section aria-labelledby="titulo-mosaico" className="mb-20">
+          <section aria-labelledby="titulo-mosaico" className="mb-16 lg:mb-20">
             <div className="mb-8 flex items-end justify-between gap-4">
               <h2 id="titulo-mosaico" className="font-display text-3xl text-tinta sm:text-4xl">
                 Em destaque
               </h2>
               <p className="text-sm text-suave">Ordenadas pelo número de vagas abertas</p>
             </div>
-            <div className="grid auto-rows-[200px] grid-cols-2 gap-3 md:grid-cols-6 md:auto-rows-[210px]">
-              {comContagem.map((empresa, i) => (
-                <BlocoEmpresa
-                  key={empresa.slug}
-                  empresa={empresa}
-                  grande={i === 0}
-                  faixa={i === MOSAICO.length - 1}
-                  className={MOSAICO[i] ?? 'md:col-span-2'}
-                />
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {comContagem.slice(0, 6).map((empresa) => (
+                <li key={empresa.slug} className="h-full">
+                  <CartaoEmpresa empresa={empresa} />
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
         )}
 

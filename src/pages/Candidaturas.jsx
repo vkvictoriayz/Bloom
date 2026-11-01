@@ -119,9 +119,7 @@ function Candidaturas() {
   return (
     <Pagina titulo={aba === 'salvas' ? 'Vagas salvas' : 'Candidaturas'}>
       <CabecalhoPagina
-        tema="rosado"
-        forma="arco"
-        lado="esquerda"
+        variante="retangular"
         foto={fotos.candidaturas}
         rotulo="Sua jornada"
         titulo={
@@ -129,21 +127,18 @@ function Candidaturas() {
             Cada passo da sua <em className="text-vinho">carreira</em>, acompanhado.
           </>
         }
-        descricao="Veja em que etapa está cada processo seletivo e volte às vagas que você guardou para depois."
+        descricao="Veja em que etapa está cada processo seletivo e volte às vagas que você guardou."
       >
-        <ul className="grid max-w-xl grid-cols-2 gap-px overflow-hidden rounded-lg bg-vinho/15 sm:grid-cols-4" aria-label="Resumo das candidaturas">
+        <ul className="grid max-w-md grid-cols-4 divide-x divide-linha border-y border-linha" aria-label="Resumo das candidaturas">
           {[
-            ['andamento', 'Em andamento', 'bg-vinho'],
-            ['aprovada', 'Aprovadas', 'bg-sucesso'],
-            ['recusada', 'Não selecionadas', 'bg-erro'],
-            ['encerrada', 'Encerradas', 'bg-linha-forte'],
-          ].map(([grupo, rotulo, cor]) => (
-            <li key={grupo} className="bg-blush/60 px-4 py-3">
+            ['andamento', 'Em andamento'],
+            ['aprovada', 'Aprovadas'],
+            ['recusada', 'Não selecionadas'],
+            ['encerrada', 'Encerradas'],
+          ].map(([grupo, rotulo]) => (
+            <li key={grupo} className="px-3 py-3 first:pl-0">
               <span className="font-display text-3xl text-tinta tabular-nums">{contagem[grupo] ?? 0}</span>
-              <span className="mt-1 flex items-center gap-1.5 text-xs text-tinta-2">
-                <span aria-hidden="true" className={cn('size-2 rounded-full', cor)} />
-                {rotulo}
-              </span>
+              <span className="mt-1 block text-[11px] leading-tight text-suave">{rotulo}</span>
             </li>
           ))}
         </ul>

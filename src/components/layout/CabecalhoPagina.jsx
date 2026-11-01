@@ -17,7 +17,34 @@ const FORMAS = {
 
 // Cabeçalho de página com foto. A composição muda por página (tema, forma e
 // lado da foto), mantendo a mesma grade, tipografia e espaçamento.
-function CabecalhoPagina({ rotulo, titulo, descricao, foto, posicaoFoto, tema = 'claro', forma = 'arco', lado = 'direita', children, rodape }) {
+//
+// variante="retangular": composição limpa e neutra — fundo do próprio site,
+// foto reta (sem recorte arredondado, moldura ou cor de fundo) e o texto ao
+// lado. Quando "rodape" é informado, ele entra na mesma grade, abaixo do texto.
+function CabecalhoPagina({ rotulo, titulo, descricao, foto, posicaoFoto, tema = 'claro', forma = 'arco', lado = 'direita', variante, children, rodape }) {
+  if (variante === 'retangular') {
+    return (
+      <section className="border-b border-linha bg-papel text-tinta">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+          <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
+            <div className={cn('lg:col-span-6', lado === 'esquerda' && 'lg:order-2')}>
+              {rotulo && <p className="text-xs font-bold tracking-[0.16em] text-vinho uppercase">{rotulo}</p>}
+              <h1 className="mt-3 font-display text-[2.4rem] leading-[1.05] sm:text-5xl lg:text-[3.2rem]">{titulo}</h1>
+              {descricao && <p className="mt-4 max-w-lg text-[17px] leading-relaxed text-tinta-2">{descricao}</p>}
+              {children && <div className="mt-7">{children}</div>}
+            </div>
+            <div className={cn('lg:col-span-6', lado === 'esquerda' && 'lg:order-1')}>
+              <div className="aspect-[16/9] w-full overflow-hidden sm:aspect-[2/1] lg:aspect-[16/9]">
+                <Foto foto={foto} prioridade sizes="(min-width: 1024px) 50vw, 100vw" posicao={posicaoFoto} />
+              </div>
+            </div>
+          </div>
+          {rodape && <div className="mt-8 lg:mt-10">{rodape}</div>}
+        </div>
+      </section>
+    )
+  }
+
   const escuro = tema === 'escuro'
   const fotoNoFundo = forma === 'arco'
 

@@ -35,18 +35,16 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
   return (
     <div className="grid min-h-screen bg-branco lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
       {/* Painel visual */}
-      <aside className="relative hidden overflow-hidden bg-vinho-escuro p-5 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
-        <div className="relative min-h-0 flex-1 overflow-hidden rounded-t-[200px] rounded-b-2xl">
+      <aside className="relative hidden overflow-hidden bg-papel-2 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
+        <div className="relative min-h-0 flex-1 overflow-hidden">
           {imagem}
-          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-vinho-escuro/90 to-transparent" />
+          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-10 text-white">
             <p className="max-w-md font-display text-4xl leading-tight italic">{frase}</p>
             <ul className="mt-6 flex flex-col gap-2.5 text-[15px] text-white/85">
               {itens.map((item) => (
                 <li key={item} className="flex items-center gap-3">
-                  <span className="grid size-6 place-items-center rounded-full bg-white/15">
-                    <Icone nome="check" tamanho={14} />
-                  </span>
+                  <Icone nome="check" tamanho={16} className="shrink-0" />
                   {item}
                 </li>
               ))}
@@ -59,7 +57,7 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
       <main className="flex flex-col">
         <div className="relative h-36 overflow-hidden lg:hidden">
           {imagem}
-          <div aria-hidden="true" className="absolute inset-0 bg-vinho-escuro/35" />
+          <div aria-hidden="true" className="absolute inset-0 bg-black/10" />
         </div>
 
         <div className="flex flex-1 flex-col px-6 py-8 sm:px-12 xl:px-20">

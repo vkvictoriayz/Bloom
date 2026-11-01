@@ -93,7 +93,7 @@ function HomePublica() {
             <img
               src={bannerBloom}
               alt="Três mulheres sorrindo e trabalhando juntas em notebooks"
-              className="aspect-[1.2] w-full object-cover object-left"
+              className="aspect-[4/3] w-full object-cover object-left lg:aspect-[1.2]"
               width="1400"
               height="1152"
             />
@@ -130,7 +130,7 @@ function HomePublica() {
             <Botao as={Link} to="/cadastro" variante="secundario" className="mt-8">
               Começar agora
             </Botao>
-            <div className="mt-12 hidden aspect-[4/3] overflow-hidden rounded-tl-[160px] rounded-br-[160px] lg:block">
+            <div className="mt-12 hidden aspect-[4/3] overflow-hidden lg:block">
               <Foto foto={fotos.comoFunciona} sizes="40vw" posicao="center 30%" />
             </div>
           </div>
@@ -150,7 +150,7 @@ function HomePublica() {
       </section>
 
       {/* ── Empresas ─────────────────────────────────────────── */}
-      <section aria-labelledby="titulo-empresas" className="bg-papel-2 py-16 lg:py-24">
+      <section aria-labelledby="titulo-empresas" className="border-t border-linha py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <CabecalhoSecao
             id="titulo-empresas"
@@ -188,26 +188,25 @@ function HomePublica() {
       {/* ── Para empresas ────────────────────────────────────── */}
       <section aria-labelledby="titulo-para-empresas" className="py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid overflow-hidden rounded-xl bg-vinho text-white lg:grid-cols-12">
-            <div className="p-8 sm:p-12 lg:col-span-7 lg:p-16">
+          <div className="grid items-center gap-10 border-y border-linha py-12 lg:grid-cols-12 lg:py-16">
+            <div className="lg:col-span-8">
               <CabecalhoSecao
-                claro
                 id="titulo-para-empresas"
                 rotulo="Para empresas"
                 titulo="Sua empresa contrata talentos em tecnologia?"
                 descricao="Crie a conta da sua organização na Bloom. O painel empresarial está em evolução e vai receber a publicação de vagas e a edição do perfil da empresa."
               />
               <div className="mt-8 flex flex-wrap gap-3">
-                <Botao as={Link} to="/empresa/cadastro" variante="claro" tamanho="lg">
+                <Botao as={Link} to="/empresa/cadastro" tamanho="lg">
                   Cadastrar empresa
                 </Botao>
-                <Botao as={Link} to="/empresa/login" variante="contornoClaro" tamanho="lg">
+                <Botao as={Link} to="/empresa/login" variante="secundario" tamanho="lg">
                   Entrar como empresa
                 </Botao>
               </div>
             </div>
-            <div className="relative hidden items-center justify-center border-l border-white/10 bg-vinho-escuro lg:col-span-5 lg:flex">
-              <svg viewBox="0 0 100 80" className="w-3/5 text-white/10" fill="currentColor" aria-hidden="true">
+            <div className="hidden justify-end lg:col-span-4 lg:flex" aria-hidden="true">
+              <svg viewBox="0 0 100 80" className="w-40 text-vinho" fill="currentColor">
                 <path d="M49.2 45.6C43 30 28 8 5.5 5C3.5 23 20 41 49.2 45.6Z" />
                 <path d="M48.6 48.4C40 46.2 31 44.8 23.5 44.6C21 56 26.5 70 35 75.5C40.5 76.5 46 62 48.6 48.4Z" />
                 <path d="M50.8 45.6C57 30 72 8 94.5 5C96.5 23 80 41 50.8 45.6Z" />

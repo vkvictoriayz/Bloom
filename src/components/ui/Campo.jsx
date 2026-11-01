@@ -3,7 +3,7 @@ import { cn } from '../../lib/cn'
 
 // Campos de formulário (Input/Label/Field do VengeanceUI) no padrão Bloom.
 export const estiloControle =
-  'w-full rounded-md border border-linha-forte bg-branco px-3.5 text-sm text-tinta placeholder:text-suave/70 transition-colors hover:border-suave focus:border-vinho focus:ring-2 focus:ring-vinho/15 focus:outline-none focus-visible:outline-none disabled:bg-papel-2 aria-invalid:border-erro'
+  'w-full rounded-md border border-linha-forte bg-branco px-3.5 text-sm text-tinta placeholder:text-suave transition-colors hover:border-suave focus:border-vinho focus:ring-[3px] focus:ring-vinho/30 focus:outline-none focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-papel-2 disabled:text-suave aria-invalid:border-erro'
 
 export const Entrada = forwardRef(function Entrada({ className, ...props }, ref) {
   return <input ref={ref} className={cn(estiloControle, 'h-11', className)} {...props} />

@@ -15,7 +15,7 @@ import Progresso from '../components/ui/Progresso'
 import Selo from '../components/ui/Selo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioIcone, VazioTitulo } from '../components/ui/Vazio'
 import { empresas } from '../data/empresas'
-import { listarVagas, opcoesFiltro } from '../data/vagas'
+import { listarVagas } from '../data/vagas'
 import { useDadosLocais } from '../hooks/useDadosLocais'
 import { primeiroNome, useSessao } from '../hooks/useSessao'
 import { candidaturaDaVaga, EVENTO_CANDIDATURAS, lerCandidaturas, situacao } from '../services/candidaturas'
@@ -69,10 +69,9 @@ function Painel() {
   const ultimas = [...candidaturas].reverse().slice(0, 3)
 
   // Data e saudação ficam fixas durante a visita (não mudam a cada render).
-  const [{ hoje, ola }] = useState(() => {
+  const [{ ola }] = useState(() => {
     const agora = new Date()
     return {
-      hoje: agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }),
       ola: saudacao(agora),
     }
   })
@@ -81,33 +80,30 @@ function Painel() {
     <Pagina titulo="Início">
       {/* ── Saudação e busca ─────────────────────────────────── */}
       <CabecalhoPagina
-        tema="escuro"
-        forma="arco"
+        variante="retangular"
         foto={fotos.painel}
         posicaoFoto="85% center"
-        rotulo={hoje}
         titulo={
           <>
-            {ola}, <em className="text-rosa">{primeiroNome(usuario?.nome) || 'boas-vindas'}.</em>
+            {ola}, <em className="text-vinho">{primeiroNome(usuario?.nome) || 'boas-vindas'}.</em>
           </>
         }
-        descricao="Qual oportunidade você quer encontrar hoje?"
         rodape={
-          <nav aria-label="Acessos rápidos" className="border-t border-white/10 bg-black/15">
-            <ul className="mx-auto grid max-w-7xl grid-cols-2 px-4 sm:px-6 md:grid-cols-4 lg:px-8">
+          <nav aria-label="Acessos rápidos">
+            <ul className="grid grid-cols-2 border-y border-linha md:grid-cols-4">
               {[
-                { rotulo: 'Vagas', detalhe: `${vagas.length} abertas`, para: '/vagas', icone: 'maleta' },
-                { rotulo: 'Candidaturas', detalhe: candidaturas.length ? `${candidaturas.length} em acompanhamento` : 'Nenhuma ainda', para: '/minhas-candidaturas', icone: 'candidaturas' },
-                { rotulo: 'Vagas salvas', detalhe: salvas.length ? `${salvas.length} guardadas` : 'Nenhuma salva', para: '/vagas-salvas', icone: 'coracao' },
-                { rotulo: 'Meu perfil', detalhe: `${percentual}% completo`, para: '/perfil', icone: 'perfil' },
+                { rotulo: 'Vagas', para: '/vagas', icone: 'maleta' },
+                { rotulo: 'Candidaturas', para: '/minhas-candidaturas', icone: 'candidaturas' },
+                { rotulo: 'Vagas salvas', para: '/vagas-salvas', icone: 'coracao' },
+                { rotulo: 'Meu perfil', para: '/perfil', icone: 'perfil' },
               ].map((item) => (
-                <li key={item.rotulo} className="border-white/10 not-first:border-l max-md:[&:nth-child(3)]:border-l-0 max-md:[&:nth-child(n+3)]:border-t">
-                  <Link to={item.para} className="group flex items-center gap-3 px-3 py-5 text-white transition-colors hover:bg-white/5 sm:px-5">
-                    <Icone nome={item.icone} tamanho={20} className="shrink-0 text-rosa" />
-                    <span className="min-w-0">
-                      <span className="block text-sm font-bold">{item.rotulo}</span>
-                      <span className="block truncate text-xs text-white/60">{item.detalhe}</span>
+                <li key={item.rotulo} className="border-linha not-first:border-l max-md:[&:nth-child(3)]:border-l-0 max-md:[&:nth-child(n+3)]:border-t">
+                  <Link to={item.para} className="group flex items-center justify-between gap-3 px-3 py-4 text-tinta transition-colors hover:bg-branco hover:text-vinho sm:px-5">
+                    <span className="flex items-center gap-3">
+                      <Icone nome={item.icone} tamanho={20} className="shrink-0 text-vinho" />
+                      <span className="text-sm font-bold">{item.rotulo}</span>
                     </span>
+                    <Icone nome="seta" tamanho={16} className="hidden text-suave transition-transform group-hover:translate-x-1 sm:block" />
                   </Link>
                 </li>
               ))}
@@ -115,24 +111,7 @@ function Painel() {
           </nav>
         }
       >
-        <BuscaVagas destaque className="max-w-2xl" />
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <Link
-            to="/vagas?iniciante=1"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-vinho-escuro hover:bg-blush"
-          >
-            <Icone nome="broto" tamanho={15} /> Boas para começar
-          </Link>
-          {opcoesFiltro.areas.map((area) => (
-            <Link
-              key={area}
-              to={`/vagas?area=${encodeURIComponent(area)}`}
-              className="rounded-full border border-white/30 px-3 py-1.5 text-sm font-medium text-white/85 hover:border-white hover:text-white"
-            >
-              {area}
-            </Link>
-          ))}
-        </div>
+        <BuscaVagas destaque className="max-w-xl" />
       </CabecalhoPagina>
 
       <div className="mx-auto grid max-w-7xl gap-14 px-4 py-12 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:py-16">

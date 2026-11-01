@@ -249,3 +249,53 @@ CREATE TABLE DASHBOARD_ADMIN (
     novas_candidaturas_dia INT DEFAULT 0,
     atualizacao_em DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ============================================================
+-- COMUNIDADE (rede social). Estas tabelas também são criadas
+-- automaticamente por "npm run server" quando não existem.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS PERFIL_COMUNIDADE (
+    id_perfil_comunidade INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL UNIQUE,
+    area VARCHAR(80),
+    interesses VARCHAR(300),
+    bio VARCHAR(280),
+    FOREIGN KEY (id_usuario) REFERENCES CADASTRO_USUARIA(id_usuario)
+);
+
+CREATE TABLE IF NOT EXISTS PUBLICACAO (
+    id_publicacao INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    tipo VARCHAR(20) NOT NULL DEFAULT 'dica',
+    texto VARCHAR(1000) NOT NULL,
+    criada_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES CADASTRO_USUARIA(id_usuario)
+);
+
+CREATE TABLE IF NOT EXISTS COMENTARIO (
+    id_comentario INT AUTO_INCREMENT PRIMARY KEY,
+    id_publicacao INT NOT NULL,
+    id_usuario INT NOT NULL,
+    texto VARCHAR(500) NOT NULL,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_publicacao) REFERENCES PUBLICACAO(id_publicacao),
+    FOREIGN KEY (id_usuario) REFERENCES CADASTRO_USUARIA(id_usuario)
+);
+
+CREATE TABLE IF NOT EXISTS CURTIDA (
+    id_curtida INT AUTO_INCREMENT PRIMARY KEY,
+    id_publicacao INT NOT NULL,
+    id_usuario INT NOT NULL,
+    UNIQUE (id_publicacao, id_usuario),
+    FOREIGN KEY (id_publicacao) REFERENCES PUBLICACAO(id_publicacao),
+    FOREIGN KEY (id_usuario) REFERENCES CADASTRO_USUARIA(id_usuario)
+);
+
+CREATE TABLE IF NOT EXISTS CONEXAO (
+    id_conexao INT AUTO_INCREMENT PRIMARY KEY,
+    id_seguidora INT NOT NULL,
+    id_seguida INT NOT NULL,
+    UNIQUE (id_seguidora, id_seguida),
+    FOREIGN KEY (id_seguidora) REFERENCES CADASTRO_USUARIA(id_usuario),
+    FOREIGN KEY (id_seguida) REFERENCES CADASTRO_USUARIA(id_usuario)
+);

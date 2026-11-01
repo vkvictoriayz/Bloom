@@ -17,12 +17,12 @@
   --color-tinta: #1f1a1c;
   --color-tinta-2: #4a4044;
   --color-suave: #6b5f63;
-  --color-linha: #e6dadd;
-  --color-linha-forte: #cfbfc4;
+  --color-linha: #ddced3;
+  --color-linha-forte: #928086; /* bordas de campos e botões: 3,7:1 sobre o branco (WCAG 1.4.11) */
 
   --color-vinho: #85243d;
   --color-vinho-escuro: #4e1226;
-  --color-rosa: #b96f85;
+  --color-rosa: #9c4a63; /* usável como texto: 5,9:1 sobre o branco */
   --color-blush: #f4e4e9;
 
   --color-sucesso: #2b6a4c;
@@ -73,7 +73,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-vinho);
+    outline: 3px solid var(--color-vinho);
     outline-offset: 2px;
   }
 

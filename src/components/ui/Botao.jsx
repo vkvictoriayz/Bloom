@@ -5,13 +5,13 @@ import { cn } from '../../lib/cn'
 // Adaptado do Button do VengeanceUI (cva + variantes), com as cores da Bloom.
 // Use "as" para renderizar um Link ou <a> com o mesmo visual.
 const botaoVariantes = cva(
-  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0',
+  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-55 [&_svg]:shrink-0',
   {
     variants: {
       variante: {
-        primario: 'bg-vinho text-white hover:bg-vinho-escuro',
-        secundario: 'border border-linha-forte bg-branco text-tinta hover:border-tinta',
-        fantasma: 'text-tinta-2 hover:bg-papel-2 hover:text-tinta',
+        primario: 'bg-vinho text-white hover:bg-vinho-escuro active:bg-vinho-escuro active:brightness-90',
+        secundario: 'border border-linha-forte bg-branco text-tinta hover:border-tinta hover:bg-papel-2 active:bg-papel-2',
+        fantasma: 'text-tinta-2 hover:bg-papel-2 hover:text-tinta active:bg-linha',
         claro: 'bg-branco text-vinho-escuro hover:bg-blush',
         contornoClaro: 'border border-white/40 text-white hover:border-white hover:bg-white/10',
         link: 'text-vinho underline-offset-4 hover:underline',

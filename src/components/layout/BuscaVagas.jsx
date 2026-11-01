@@ -57,7 +57,7 @@ function BuscaVagas({ destaque = false, aoBuscar, autoFoco, className }) {
         placeholder={destaque ? 'Cargo, tecnologia, empresa ou palavra-chave' : 'Buscar vagas'}
         aria-label="Buscar vagas por cargo, tecnologia, empresa ou palavra-chave"
         className={cn(
-          'peer w-full border border-linha-forte bg-branco text-tinta placeholder:text-suave/80 transition-colors hover:border-suave focus:border-vinho focus:ring-2 focus:ring-vinho/15 focus:outline-none focus-visible:outline-none',
+          'peer w-full border border-linha-forte bg-branco text-tinta placeholder:text-suave transition-colors hover:border-suave focus:border-vinho focus:ring-[3px] focus:ring-vinho/30 focus:outline-none focus-visible:outline-none',
           destaque ? 'h-16 rounded-lg pr-36 pl-14 text-base' : 'h-10 rounded-md pr-9 pl-9 text-sm'
         )}
       />

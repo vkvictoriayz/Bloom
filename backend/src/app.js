@@ -1,14 +1,16 @@
 import cors from "cors";
 import express from "express";
 import authRoutes from "./routes/authRoutes.js";
+import comunidadeRoutes from "./routes/comunidadeRoutes.js";
 
 const app = express();
 
 app.use(cors({ origin: process.env.FRONTEND_URL ?? "http://localhost:5173" }));
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({ limit: "20kb" }));
 
 app.get("/api/saude", (req, res) => res.json({ ok: true }));
 app.use("/api/auth", authRoutes);
+app.use("/api/comunidade", comunidadeRoutes);
 
 app.use((req, res) => res.status(404).json({ erro: "Rota não encontrada." }));
 

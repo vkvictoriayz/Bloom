@@ -13,6 +13,7 @@ import Candidaturas from './pages/Candidaturas'
 import Empresas from './pages/Empresas'
 import EmpresaDetalhe from './pages/EmpresaDetalhe'
 import Contatos from './pages/Contatos'
+import Comunidade from './pages/Comunidade'
 
 import LoginEmpresa from './pages/LoginEmpresa'
 import CadastroEmpresa from './pages/CadastroEmpresa'
@@ -49,6 +50,7 @@ function App() {
         <Route path="/minhas-candidaturas" element={<Protegida><Candidaturas /></Protegida>} />
         <Route path="/vagas-salvas" element={<Protegida><Candidaturas /></Protegida>} />
         <Route path="/contatos" element={<Protegida><Contatos /></Protegida>} />
+        <Route path="/comunidade" element={<Protegida><Comunidade /></Protegida>} />
 
         {/* Acesso das empresas */}
         <Route path="/empresa" element={<LoginEmpresa />} />

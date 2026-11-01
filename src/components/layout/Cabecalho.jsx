@@ -24,6 +24,7 @@ const NAV_PRIVADA = [
   { rotulo: 'Vagas', para: '/vagas' },
   { rotulo: 'Candidaturas', para: '/minhas-candidaturas' },
   { rotulo: 'Empresas', para: '/empresas' },
+  { rotulo: 'Comunidade', para: '/comunidade' },
   { rotulo: 'Contatos', para: '/contatos' },
 ]
 
