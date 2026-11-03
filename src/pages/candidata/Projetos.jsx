@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
+import { IlustracaoCodigo } from '../../components/ilustracoes/Ilustracoes'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import { enderecoSeguro, periodo } from '../../components/candidata/utilPerfil'
 import Botao from '../../components/ui/Botao'
-import { Vazio, VazioAcoes, VazioDescricao, VazioIcone, VazioTitulo } from '../../components/ui/Vazio'
+import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { useDadosLocais } from '../../hooks/useDadosLocais'
 import { useSessao } from '../../hooks/useSessao'
 import { EVENTO_PERFIL } from '../../services/perfil'
@@ -30,9 +31,7 @@ function Projetos() {
 
       {projetos.length === 0 ? (
         <Vazio className="bg-branco">
-          <VazioIcone>
-            <Icone nome="pasta" />
-          </VazioIcone>
+          <IlustracaoCodigo className="max-w-[240px]" />
           <VazioTitulo>Comece seu portfólio</VazioTitulo>
           <VazioDescricao>Mostre o que você construiu: um site, uma análise de dados, um app ou um trabalho da faculdade.</VazioDescricao>
           <VazioAcoes>

@@ -193,7 +193,27 @@ const CAMINHOS = {
       <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
     </>
   ),
-  codigo: <path d="m8.5 7.5-4.5 4.5 4.5 4.5M15.5 7.5l4.5 4.5-4.5 4.5M13.5 5l-3 14" />,
+  lampada: (
+    <>
+      <path d="M9 17.5h6M10 20.5h4" />
+      <path d="M12 3.5a6 6 0 0 0-3.6 10.8c.6.5 1.1 1.3 1.1 2.2h5c0-.9.5-1.7 1.1-2.2A6 6 0 0 0 12 3.5Z" />
+    </>
+  ),
+  estrela: <path d="m12 4 2.4 5 5.4.6-4 3.7 1.1 5.3L12 16l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6Z" />,
+  compartilhar: (
+    <>
+      <path d="M20 4 10.5 13.5" />
+      <path d="M20 4 14 20l-3.5-6.5L4 10Z" />
+    </>
+  ),
+  mais_opcoes: (
+    <>
+      <circle cx="6" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="18" cy="12" r="1.2" fill="currentColor" />
+    </>
+  ),
+  codigo:<path d="m8.5 7.5-4.5 4.5 4.5 4.5M15.5 7.5l4.5 4.5-4.5 4.5M13.5 5l-3 14" />,
   info: (
     <>
       <circle cx="12" cy="12" r="8.5" />
@@ -212,7 +232,7 @@ const CAMINHOS = {
 function Icone({ nome, tamanho = 18, preenchido = false, className = "" }) {
   return (
     <svg
-      className={`icone ${className}`}
+      className={`icone icone-${nome} ${className}`}
       width={tamanho}
       height={tamanho}
       viewBox="0 0 24 24"

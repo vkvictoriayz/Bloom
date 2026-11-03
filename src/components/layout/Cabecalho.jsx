@@ -5,6 +5,7 @@ import BuscaVagas from './BuscaVagas'
 import Icone from '../Icone'
 import Logo from '../Logo'
 import Botao from '../ui/Botao'
+import NavSpotlight from '../ui/NavSpotlight'
 import { iniciais, primeiroNome, useSessao } from '../../hooks/useSessao'
 import { sair } from '../../services/auth'
 import { cn } from '../../lib/cn'
@@ -40,7 +41,7 @@ function ItemNav({ item, mobile }) {
       className={
         mobile
           ? 'block rounded-md px-3 py-3 text-base font-medium text-tinta-2 hover:bg-papel-2 hover:text-tinta aria-[current=page]:bg-blush aria-[current=page]:text-vinho'
-          : 'link-linha py-1 text-[14px] font-medium text-tinta-2 transition-colors hover:text-tinta aria-[current=page]:text-vinho'
+          : 'relative z-10 rounded-full px-3.5 py-2 text-[14px] font-medium text-tinta-2 transition-colors hover:text-vinho focus-visible:outline-offset-0 aria-[current=page]:font-semibold aria-[current=page]:text-vinho'
       }
     >
       {item.rotulo}
@@ -87,7 +88,7 @@ function MenuConta({ usuario, aoSair }) {
       </button>
 
       {aberto && (
-        <div role="menu" className="absolute right-0 mt-2 w-60 overflow-hidden rounded-lg border border-linha bg-branco py-1 shadow-[0_8px_24px_rgba(31,26,28,0.08)]">
+        <div role="menu" className="absolute right-0 mt-2 w-60 overflow-hidden rounded-lg border border-linha bg-branco py-1 shadow-menu">
           <div className="border-b border-linha px-4 py-3">
             <p className="truncate text-sm font-semibold text-tinta">{usuario?.nome}</p>
             <p className="truncate text-xs text-suave">{usuario?.email}</p>
@@ -155,11 +156,11 @@ function Cabecalho() {
           <Logo />
         </Link>
 
-        <nav aria-label="Navegação principal" className={cn('hidden items-center gap-7 lg:flex', autenticada ? 'ml-6' : 'mx-auto')}>
+        <NavSpotlight rotulo="Navegação principal" className={cn('hidden gap-1 lg:flex', autenticada ? 'ml-4' : 'mx-auto')}>
           {itens.map((item) => (
             <ItemNav key={item.rotulo} item={item} />
           ))}
-        </nav>
+        </NavSpotlight>
 
         <div className={cn('hidden items-center gap-3 lg:flex', autenticada && 'ml-auto')}>
           {autenticada ? (

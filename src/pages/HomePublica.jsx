@@ -2,44 +2,57 @@ import { Link } from 'react-router-dom'
 
 import CarrosselAreas from '../components/CarrosselAreas'
 import Icone from '../components/Icone'
+import { IlustracaoCodigo, IlustracaoConexoes } from '../components/ilustracoes/Ilustracoes'
 import MarcaEmpresa from '../components/MarcaEmpresa'
 import Pagina from '../components/layout/Pagina'
 import Botao from '../components/ui/Botao'
-import CabecalhoSecao from '../components/ui/CabecalhoSecao'
 import FaixaMarcas from '../components/ui/FaixaMarcas'
-import Perguntas from '../components/ui/Perguntas'
 import Foto from '../components/ui/Foto'
+import Perguntas from '../components/ui/Perguntas'
 import TextoEscalonado from '../components/ui/TextoEscalonado'
-import { fotos } from '../data/imagens'
 import { areasTI } from '../data/areas'
 import { empresas } from '../data/empresas'
+import { fotos } from '../data/imagens'
+import { cn } from '../lib/cn'
 
 import bannerBloom from '../assets/banner-bloom.png'
 
-// Benefícios descritos a partir do que a plataforma realmente faz hoje.
+// O que a plataforma realmente oferece hoje (nada de números inventados).
+const recursos = [
+  {
+    icone: 'mensagem',
+    ilustracao: IlustracaoConexoes,
+    titulo: 'Rede profissional',
+    texto: 'Publique projetos, conquistas e dúvidas, comente, curta e siga outras mulheres da tecnologia.',
+  },
+  {
+    icone: 'maleta',
+    titulo: 'Vagas com filtros',
+    texto: 'Busque por cargo, tecnologia ou empresa e refine por área, nível, modalidade e localização.',
+  },
+  {
+    icone: 'candidaturas',
+    titulo: 'Candidaturas acompanhadas',
+    texto: 'Cada candidatura mostra a etapa atual. Nada avança sem uma atualização registrada pela empresa.',
+  },
+  {
+    icone: 'pasta',
+    ilustracao: IlustracaoCodigo,
+    titulo: 'Perfil e portfólio',
+    texto: 'Reúna formação, experiências, competências e projetos com links de repositório e demonstração.',
+  },
+]
+
 const passos = [
-  {
-    titulo: 'Monte seu perfil profissional',
-    texto: 'Reúna apresentação, experiências, formação, competências e links em um perfil que você controla e atualiza quando quiser.',
-  },
-  {
-    titulo: 'Encontre vagas com precisão',
-    texto: 'Pesquise por cargo, tecnologia ou empresa e refine por área, nível, modalidade e localização.',
-  },
-  {
-    titulo: 'Candidate-se e acompanhe',
-    texto: 'Cada candidatura tem uma linha do tempo. As etapas só avançam quando a empresa registra uma atualização.',
-  },
-  {
-    titulo: 'Conheça as empresas',
-    texto: 'Veja segmento, sede e vagas abertas de cada organização antes de decidir onde quer trabalhar.',
-  },
+  { titulo: 'Crie sua conta', texto: 'Leva poucos minutos. Depois, complete o perfil no seu ritmo.' },
+  { titulo: 'Conecte-se e publique', texto: 'Siga outras integrantes e compartilhe o que você está construindo.' },
+  { titulo: 'Candidate-se e acompanhe', texto: 'Encontre vagas, envie sua candidatura e veja cada etapa do processo.' },
 ]
 
 const perguntas = [
   {
     pergunta: 'Como me candidato a uma vaga?',
-    resposta: 'Crie sua conta, abra a vaga e clique em “Candidatar-se”. A candidatura passa a aparecer em Candidaturas, com a data de envio.',
+    resposta: 'Crie sua conta, abra a vaga e clique em “Candidatar-se”. A candidatura passa a aparecer em Minhas candidaturas, com a data de envio.',
   },
   {
     pergunta: 'Posso me candidatar duas vezes à mesma vaga?',
@@ -47,7 +60,7 @@ const perguntas = [
   },
   {
     pergunta: 'Como sei em que etapa está meu processo?',
-    resposta: 'Em Candidaturas, cada processo mostra as etapas: envio, análise da empresa e resultado. Nenhuma etapa é marcada como concluída sem uma atualização registrada.',
+    resposta: 'Cada candidatura mostra as etapas: envio, análise da empresa e resultado. Nenhuma etapa é marcada como concluída sem uma atualização registrada.',
   },
   {
     pergunta: 'Sou de uma empresa. Como participo?',
@@ -55,116 +68,149 @@ const perguntas = [
   },
 ]
 
+// Título de seção no mesmo padrão da área logada.
+function TituloSecao({ id, titulo, descricao, acao }) {
+  return (
+    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="max-w-2xl">
+        <h2 id={id} className="font-display text-3xl leading-tight text-tinta sm:text-4xl">
+          {titulo}
+        </h2>
+        {descricao && <p className="mt-2 text-tinta-2">{descricao}</p>}
+      </div>
+      {acao}
+    </div>
+  )
+}
+
 function HomePublica() {
   return (
-    <Pagina titulo="Carreiras em tecnologia">
-      {/* ── Abertura ─────────────────────────────────────────── */}
-      <section className="overflow-hidden bg-branco">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 pt-10 pb-14 sm:px-6 lg:grid-cols-12 lg:gap-6 lg:px-8 lg:pt-16 lg:pb-20">
-          <div className="lg:col-span-6 xl:col-span-6">
-            <p className="flex items-center gap-3 text-xs font-semibold tracking-[0.16em] text-vinho uppercase">
-              <span aria-hidden="true" className="h-px w-8 bg-vinho/40" />
-              Carreiras · Tecnologia · Oportunidades
+    <Pagina titulo="Carreiras em tecnologia" className="bg-papel">
+      <div className="mx-auto flex max-w-7xl flex-col gap-16 px-4 py-8 sm:px-6 lg:gap-24 lg:px-8 lg:py-12">
+        {/* ── Abertura ─────────────────────────────────────────── */}
+        <section className="grid overflow-hidden rounded-2xl border border-linha bg-branco lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-16">
+            <p className="inline-flex w-fit items-center gap-2 rounded-full bg-blush px-3 py-1 text-xs font-bold text-vinho">
+              <Icone nome="broto" tamanho={14} /> Carreiras · Tecnologia · Oportunidades
             </p>
-
-            <h1 className="mt-6 font-display text-[2.6rem] leading-[1.04] text-tinta sm:text-6xl xl:text-[4.5rem]">
+            <h1 className="mt-6 font-display text-[2.5rem] leading-[1.05] text-tinta sm:text-[3.4rem] xl:text-[3.9rem]">
               <TextoEscalonado texto="Conectando mulheres da tecnologia a" />{' '}
               <em className="text-vinho">
                 <TextoEscalonado texto="oportunidades reais." atraso={330} />
               </em>
             </h1>
-
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-tinta-2">
-              A BLOOM conecta talentos a oportunidades profissionais e a empresas que valorizam o potencial das mulheres na
-              tecnologia.
+            <p className="mt-5 max-w-lg text-lg leading-relaxed text-tinta-2">
+              A BLOOM conecta talentos a oportunidades profissionais e a empresas que valorizam o potencial das mulheres na tecnologia.
             </p>
-
-            <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
-              <Botao as={Link} to="/cadastro" tamanho="lg">
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Botao as={Link} to="/cadastro" tamanho="lg" className="rounded-full">
                 Criar minha conta <Icone nome="seta" />
               </Botao>
-              <Link to="/login" className="link-linha text-[15px] font-semibold text-tinta">
-                Já tenho conta
-              </Link>
+              <Botao as={Link} to="/login" variante="secundario" tamanho="lg" className="rounded-full">
+                Entrar
+              </Botao>
             </div>
+            <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-tinta-2">
+              {['Rede profissional', 'Vagas em tecnologia', 'Candidaturas acompanhadas'].map((item) => (
+                <li key={item} className="inline-flex items-center gap-1.5">
+                  <Icone nome="check" tamanho={16} className="text-vinho" /> {item}
+                </li>
+              ))}
+            </ul>
           </div>
-
-          <div className="relative lg:col-span-6">
+          <div className="p-3 pt-0 lg:pt-3 lg:pl-0">
             <img
               src={bannerBloom}
               alt="Três mulheres sorrindo e trabalhando juntas em notebooks"
-              className="aspect-[4/3] w-full object-cover object-left lg:aspect-[1.2]"
+              className="aspect-[4/3] h-full w-full rounded-xl object-cover lg:aspect-auto"
+              style={{ objectPosition: '9% center' }}
               width="1400"
               height="1152"
             />
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── Áreas ────────────────────────────────────────────── */}
-      <section id="areas" aria-labelledby="titulo-areas" className="scroll-mt-20 border-y border-linha py-16 lg:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <CabecalhoSecao
-            id="titulo-areas"
-            indice="01"
-            rotulo="Explore suas possibilidades"
-            titulo="Vagas em todas as áreas de T.I."
-            descricao="Do primeiro emprego à liderança técnica: escolha uma área para começar a explorar."
-          />
-        </div>
-        <div className="mt-12">
-          <CarrosselAreas areas={areasTI} />
-        </div>
-      </section>
+        {/* ── O que você encontra ─────────────────────────────── */}
+        <section aria-labelledby="titulo-recursos" id="como-funciona" className="scroll-mt-24">
+          <TituloSecao id="titulo-recursos" titulo="Tudo para a sua carreira, em um só lugar" descricao="Os mesmos recursos que você usa depois de entrar na plataforma." />
+          {/* Grade bento (Why-Us Bento do VengeanceUI): blocos de tamanhos
+              alternados; os grandes levam as ilustrações da marca. */}
+          <ul className="grid gap-4 md:grid-cols-6">
+            {recursos.map((r, i) => {
+              const grande = i === 0 || i === 3
+              const Ilustracao = r.ilustracao
+              return (
+                <li
+                  key={r.titulo}
+                  className={cn(
+                    'cartao flex flex-col overflow-hidden',
+                    grande ? 'md:col-span-4 md:flex-row md:items-center' : 'md:col-span-2'
+                  )}
+                >
+                  <div className={cn('flex flex-1 flex-col p-6 sm:p-8', grande && 'md:max-w-[52%]')}>
+                    <span className="grid size-11 place-items-center rounded-full bg-blush text-vinho" aria-hidden="true">
+                      <Icone nome={r.icone} tamanho={20} />
+                    </span>
+                    <h3 className={cn('mt-5 font-bold text-tinta', grande ? 'font-display text-2xl font-normal' : 'text-lg')}>{r.titulo}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-tinta-2">{r.texto}</p>
+                  </div>
+                  {grande && Ilustracao && (
+                    <div className="bg-papel px-6 pt-4 pb-2 md:flex-1 md:self-stretch md:py-6">
+                      <Ilustracao className="mx-auto max-w-[300px]" />
+                    </div>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </section>
 
-      {/* ── Como funciona ────────────────────────────────────── */}
-      <section id="como-funciona" aria-labelledby="titulo-como" className="scroll-mt-20 py-16 lg:py-28">
-        <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:px-8">
-          <div className="lg:sticky lg:top-28 lg:col-span-5 lg:self-start">
-            <CabecalhoSecao
-              id="titulo-como"
-              indice="02"
-              rotulo="Como funciona"
-              titulo="Do primeiro clique ao retorno da empresa, em um só lugar."
-            />
-            <Botao as={Link} to="/cadastro" variante="secundario" className="mt-8">
-              Começar agora
-            </Botao>
-            <div className="mt-12 hidden aspect-[4/3] overflow-hidden lg:block">
-              <Foto foto={fotos.comoFunciona} sizes="40vw" posicao="center 30%" />
-            </div>
+        {/* ── Como funciona ────────────────────────────────────── */}
+        <section aria-labelledby="titulo-passos" className="grid gap-4 lg:grid-cols-2">
+          <div className="min-h-64 overflow-hidden rounded-2xl border border-linha">
+            <Foto foto={fotos.comoFunciona} sizes="(min-width: 1024px) 45vw, 100vw" posicao="center 30%" />
           </div>
+          <div className="rounded-2xl border border-linha bg-branco p-6 sm:p-10">
+            <h2 id="titulo-passos" className="font-display text-3xl leading-tight text-tinta sm:text-4xl">
+              Como funciona
+            </h2>
+            <ol className="mt-8 flex flex-col gap-6">
+              {passos.map((p, i) => (
+                <li key={p.titulo} className="flex gap-4">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-vinho font-bold text-white">{i + 1}</span>
+                  <div>
+                    <h3 className="font-bold text-tinta">{p.titulo}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-tinta-2">{p.texto}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <Botao as={Link} to="/cadastro" className="mt-8 rounded-full">
+              Começar agora <Icone nome="seta" tamanho={16} />
+            </Botao>
+          </div>
+        </section>
 
-          <ol className="lg:col-span-6 lg:col-start-7">
-            {passos.map((passo, i) => (
-              <li key={passo.titulo} className="grid grid-cols-[4.75rem_1fr] gap-4 border-t border-linha py-8 first:border-t-0 first:pt-0 sm:grid-cols-[5.5rem_1fr]">
-                <span className="font-display text-5xl leading-none font-light text-vinho italic sm:text-6xl">{String(i + 1).padStart(2, '0')}</span>
-                <div>
-                  <h3 className="text-xl font-semibold text-tinta">{passo.titulo}</h3>
-                  <p className="mt-2 leading-relaxed text-suave">{passo.texto}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
+        {/* ── Áreas ────────────────────────────────────────────── */}
+        <section id="areas" aria-labelledby="titulo-areas" className="scroll-mt-24">
+          <TituloSecao id="titulo-areas" titulo="Vagas em todas as áreas de T.I." descricao="Do primeiro emprego à liderança técnica: escolha uma área para começar." />
+          <div className="rounded-2xl border border-linha bg-branco py-8">
+            <CarrosselAreas areas={areasTI} />
+          </div>
+        </section>
 
-      {/* ── Empresas ─────────────────────────────────────────── */}
-      <section aria-labelledby="titulo-empresas" className="border-t border-linha py-16 lg:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <CabecalhoSecao
+        {/* ── Empresas ─────────────────────────────────────────── */}
+        <section aria-labelledby="titulo-empresas">
+          <TituloSecao
             id="titulo-empresas"
-            indice="03"
-            rotulo="Empresas"
-            titulo="Conheça quem está contratando antes de se candidatar."
+            titulo="Conheça quem está contratando"
+            descricao="Veja o segmento, a sede e as vagas abertas de cada empresa antes de se candidatar."
             acao={
-              <Botao as={Link} to="/empresas" variante="secundario">
+              <Botao as={Link} to="/empresas" variante="secundario" className="rounded-full">
                 Explorar empresas <Icone nome="seta" />
               </Botao>
             }
           />
-        </div>
-        <div className="mt-12">
           <FaixaMarcas
             rotulo="Empresas na plataforma"
             duracao={45}
@@ -172,7 +218,7 @@ function HomePublica() {
               <Link
                 key={empresa.slug}
                 to={`/empresas/${empresa.slug}`}
-                className="flex items-center gap-4 rounded-lg border border-linha bg-branco py-3 pr-6 pl-3 transition-colors hover:border-linha-forte"
+                className="flex items-center gap-4 rounded-2xl border border-linha bg-branco py-3 pr-6 pl-3 transition-colors hover:border-linha-forte"
               >
                 <MarcaEmpresa empresa={empresa} tamanho="md" />
                 <span>
@@ -182,70 +228,54 @@ function HomePublica() {
               </Link>
             ))}
           />
-        </div>
-      </section>
+        </section>
 
-      {/* ── Para empresas ────────────────────────────────────── */}
-      <section aria-labelledby="titulo-para-empresas" className="py-16 lg:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid items-center gap-10 border-y border-linha py-12 lg:grid-cols-12 lg:py-16">
-            <div className="lg:col-span-8">
-              <CabecalhoSecao
-                id="titulo-para-empresas"
-                rotulo="Para empresas"
-                titulo="Sua empresa contrata talentos em tecnologia?"
-                descricao="Crie a conta da sua organização na Bloom. O painel empresarial está em evolução e vai receber a publicação de vagas e a edição do perfil da empresa."
-              />
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Botao as={Link} to="/empresa/cadastro" tamanho="lg">
-                  Cadastrar empresa
-                </Botao>
-                <Botao as={Link} to="/empresa/login" variante="secundario" tamanho="lg">
-                  Entrar como empresa
-                </Botao>
-              </div>
+        {/* ── Para empresas + perguntas ────────────────────────── */}
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <section aria-labelledby="titulo-para-empresas" className="flex flex-col rounded-2xl bg-vinho p-8 text-white sm:p-10">
+            <span className="grid size-11 place-items-center rounded-full bg-white/15" aria-hidden="true">
+              <Icone nome="predio" tamanho={20} />
+            </span>
+            <h2 id="titulo-para-empresas" className="mt-6 font-display text-3xl leading-tight">
+              Sua empresa contrata talentos em tecnologia?
+            </h2>
+            <p className="mt-3 flex-1 text-white/80">
+              Crie a conta da sua organização na Bloom. O painel empresarial está em evolução e vai receber a publicação de vagas e a edição do perfil da empresa.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Botao as={Link} to="/empresa/cadastro" variante="claro" className="rounded-full">
+                Cadastrar empresa
+              </Botao>
+              <Botao as={Link} to="/empresa/login" variante="contornoClaro" className="rounded-full">
+                Entrar como empresa
+              </Botao>
             </div>
-            <div className="hidden justify-end lg:col-span-4 lg:flex" aria-hidden="true">
-              <svg viewBox="0 0 100 80" className="w-40 text-vinho" fill="currentColor">
-                <path d="M49.2 45.6C43 30 28 8 5.5 5C3.5 23 20 41 49.2 45.6Z" />
-                <path d="M48.6 48.4C40 46.2 31 44.8 23.5 44.6C21 56 26.5 70 35 75.5C40.5 76.5 46 62 48.6 48.4Z" />
-                <path d="M50.8 45.6C57 30 72 8 94.5 5C96.5 23 80 41 50.8 45.6Z" />
-                <path d="M51.4 48.4C60 46.2 69 44.8 76.5 44.6C79 56 73.5 70 65 75.5C59.5 76.5 54 62 51.4 48.4Z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
-      {/* ── Perguntas ────────────────────────────────────────── */}
-      <section aria-labelledby="titulo-perguntas" className="border-t border-linha py-16 lg:py-24">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:px-8">
-          <div className="lg:col-span-4">
-            <CabecalhoSecao id="titulo-perguntas" indice="04" rotulo="Dúvidas" titulo="Perguntas frequentes" />
-          </div>
-          <Perguntas itens={perguntas} className="lg:col-span-8" />
+          <section aria-labelledby="titulo-perguntas" className="rounded-2xl border border-linha bg-branco p-6 sm:p-8">
+            <h2 id="titulo-perguntas" className="mb-4 font-display text-3xl text-tinta">
+              Perguntas frequentes
+            </h2>
+            <Perguntas itens={perguntas} />
+          </section>
         </div>
-      </section>
 
-      {/* ── Chamada final ────────────────────────────────────── */}
-      <section className="border-t border-linha bg-branco py-20 lg:py-28">
-        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
-          <h2 className="font-display text-4xl leading-tight text-tinta sm:text-5xl">
-            Seu talento merece espaço para <em className="text-vinho">florescer.</em>
+        {/* ── Chamada final ────────────────────────────────────── */}
+        <section className="rounded-2xl bg-vinho-escuro px-6 py-14 text-center text-white sm:px-10">
+          <h2 className="font-display text-4xl leading-tight sm:text-5xl">
+            Seu talento merece espaço para <em className="text-rosa">florescer.</em>
           </h2>
-          <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-suave">
-            Descubra oportunidades e construa seu próximo capítulo na área de tecnologia.
-          </p>
-          <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <Botao as={Link} to="/cadastro" tamanho="lg">
+          <p className="mx-auto mt-4 max-w-xl text-lg text-white/75">Descubra oportunidades e construa seu próximo capítulo na área de tecnologia.</p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Botao as={Link} to="/cadastro" variante="claro" tamanho="lg" className="rounded-full">
               Criar minha conta
             </Botao>
-            <Botao as={Link} to="/login" variante="secundario" tamanho="lg">
+            <Botao as={Link} to="/login" variante="contornoClaro" tamanho="lg" className="rounded-full">
               Entrar
             </Botao>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </Pagina>
   )
 }

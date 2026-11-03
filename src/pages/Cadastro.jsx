@@ -4,7 +4,6 @@ import { cadastrarUsuaria, salvarSessao } from "../services/auth";
 import { destinoAposLogin } from "../services/destino";
 import { formatarCPF, formatarTelefone } from "../utils/documentos";
 import TelaAcesso, { GrupoCampos, LinkAcesso } from "../components/TelaAcesso";
-import { fotos } from "../data/imagens";
 import CampoSenha from "../components/CampoSenha";
 import Botao from "../components/ui/Botao";
 import { Aviso, Campo, Entrada } from "../components/ui/Campo";
@@ -75,7 +74,7 @@ function Cadastro() {
       titulo="Crie sua conta"
       subtitulo="Seu próximo capítulo começa aqui."
       visual={{
-        foto: fotos.cadastro,
+        ilustracao: "crescimento",
         frase: "Seu talento merece espaço para florescer.",
       }}
       aoEnviar={cadastrar}

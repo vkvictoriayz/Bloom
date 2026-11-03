@@ -177,7 +177,7 @@ function DetalhesVaga() {
           <h2 id="titulo-relacionadas" className="mb-4 font-display text-2xl text-tinta">
             Vagas relacionadas
           </h2>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-4">
             {relacionadas.map((v) => (
               <CartaoVaga key={v.id} vaga={v} candidatura={candidaturaDaVaga(v.id, candidaturas)} />
             ))}

@@ -153,7 +153,7 @@ function Empresas() {
               </h2>
               <p className="text-sm text-suave">Ordenadas pelo número de vagas abertas</p>
             </div>
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {comContagem.slice(0, 6).map((empresa) => (
                 <li key={empresa.slug} className="h-full">
                   <CartaoEmpresa empresa={empresa} />

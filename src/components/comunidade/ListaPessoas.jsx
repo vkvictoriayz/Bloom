@@ -9,7 +9,7 @@ import { lerPerfis, seguir } from '../../services/comunidade'
 // "limite" mostra só as primeiras N pessoas (versão compacta do feed);
 // "comBusca" esconde o campo de busca quando a página já tem um.
 // "busca" vinda de fora (página Explorar) substitui o campo interno.
-function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: buscaExterna, titulo = 'Pessoas para conhecer' }) {
+function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: buscaExterna, titulo = 'Pessoas para conhecer', grade = false }) {
   const [buscaInterna, setBusca] = useState('')
   const busca = buscaExterna ?? buscaInterna
   const [pessoas, setPessoas] = useState(null)
@@ -45,7 +45,7 @@ function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: 
   }
 
   return (
-    <section aria-labelledby="titulo-pessoas" className="rounded-xl border border-linha bg-branco p-5 sm:p-6">
+    <section aria-labelledby="titulo-pessoas" className="rounded-2xl border border-linha bg-branco p-5 sm:p-6">
       <h2 id="titulo-pessoas" className="font-display text-xl text-tinta">
         {titulo}
       </h2>
@@ -70,6 +70,26 @@ function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: 
         <p className="mt-4 text-sm text-suave">
           {busca ? 'Nenhuma integrante encontrada.' : 'Você é uma das primeiras por aqui. Quando outras mulheres se cadastrarem, elas aparecem nesta lista.'}
         </p>
+      ) : grade ? (
+        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {(limite ? pessoas?.slice(0, limite) : pessoas)?.map((p) => (
+            <li key={p.id} className="flex flex-col items-center rounded-xl border border-linha p-4 text-center">
+              <Avatar nome={p.nome} tamanho="lg" />
+              <p className="mt-3 w-full truncate text-sm font-semibold text-tinta">{p.nome}</p>
+              <p className="w-full truncate text-xs text-suave">{p.area || 'Área não informada'}</p>
+              <Botao
+                tamanho="sm"
+                variante={p.seguindo ? 'secundario' : 'primario'}
+                className="mt-3 w-full"
+                aria-pressed={p.seguindo}
+                aria-label={`${p.seguindo ? 'Deixar de seguir' : 'Seguir'} ${p.nome}`}
+                onClick={() => alternar(p)}
+              >
+                {p.seguindo ? 'Seguindo' : 'Seguir'}
+              </Botao>
+            </li>
+          ))}
+        </ul>
       ) : (
         <ul className="mt-2 divide-y divide-linha">
           {(limite ? pessoas?.slice(0, limite) : pessoas)?.map((p) => (

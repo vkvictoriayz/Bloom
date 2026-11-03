@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
 import MarcaEmpresa from '../../components/MarcaEmpresa'
+import { IlustracaoCrescimento } from '../../components/ilustracoes/Ilustracoes'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Botao from '../../components/ui/Botao'
 import Selo from '../../components/ui/Selo'
-import { Vazio, VazioAcoes, VazioDescricao, VazioIcone, VazioTitulo } from '../../components/ui/Vazio'
+import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { buscarEmpresa, empresaPorNome } from '../../data/empresas'
 import { useDadosLocais } from '../../hooks/useDadosLocais'
 import { EVENTO_CANDIDATURAS, lerCandidaturas, situacao } from '../../services/candidaturas'
@@ -38,9 +39,7 @@ function Candidaturas() {
 
       {candidaturas.length === 0 ? (
         <Vazio className="bg-branco">
-          <VazioIcone>
-            <Icone nome="candidaturas" />
-          </VazioIcone>
+          <IlustracaoCrescimento className="max-w-[240px]" />
           <VazioTitulo>Você ainda não se candidatou</VazioTitulo>
           <VazioDescricao>Encontre uma vaga que combine com você. Cada candidatura aparece aqui com o status atual.</VazioDescricao>
           <VazioAcoes>

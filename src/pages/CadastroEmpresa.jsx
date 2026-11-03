@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TelaAcesso, { LinkAcesso } from '../components/TelaAcesso'
-import { fotos } from '../data/imagens'
 import CampoSenha from '../components/CampoSenha'
 import Botao from '../components/ui/Botao'
 import { Aviso, Campo, Entrada } from '../components/ui/Campo'
@@ -88,7 +87,7 @@ function CadastroEmpresa() {
       subtitulo="Faça parte do BLOOM e prepare-se para conectar sua empresa a talentos da tecnologia."
       aoEnviar={handleSubmit}
       visual={{
-        foto: fotos.empresaAcesso,
+        ilustracao: 'empresa',
         frase: 'Talentos da tecnologia, perto da sua empresa.',
         itens: ['Cadastro da sua organização', 'Acesso à área empresarial', 'Publicação de vagas em breve'],
       }}

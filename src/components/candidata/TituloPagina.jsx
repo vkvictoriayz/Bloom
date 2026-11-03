@@ -31,12 +31,16 @@ function TituloPagina({ titulo, descricao, acoes, voltar }) {
 
 // Estado para recursos que ainda dependem de uma API do backend.
 // Diz com clareza o que falta, sem simular dados.
-export function RecursoIndisponivel({ icone, titulo, descricao, children }) {
+export function RecursoIndisponivel({ icone, ilustracao: Ilustracao, titulo, descricao, children }) {
   return (
     <Vazio className="bg-branco">
-      <VazioIcone>
-        <Icone nome={icone} />
-      </VazioIcone>
+      {Ilustracao ? (
+        <Ilustracao className="max-w-[240px]" />
+      ) : (
+        <VazioIcone>
+          <Icone nome={icone} />
+        </VazioIcone>
+      )}
       <VazioTitulo>{titulo}</VazioTitulo>
       <VazioDescricao>{descricao}</VazioDescricao>
       <p className="inline-flex items-center gap-1.5 rounded-full bg-alerta-claro px-3 py-1 text-xs font-semibold text-alerta">

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
+import { IlustracaoConexoes } from '../../components/ilustracoes/Ilustracoes'
 import TituloPagina, { RecursoIndisponivel } from '../../components/candidata/TituloPagina'
 import { useRecurso } from '../../components/candidata/useRecurso'
 import Botao from '../../components/ui/Botao'
@@ -21,6 +22,7 @@ function Comunidades() {
       {r.estado === 'indisponivel' && (
         <RecursoIndisponivel
           icone="grupo"
+          ilustracao={IlustracaoConexoes}
           titulo="As comunidades estão chegando"
           descricao="Em breve você poderá entrar em grupos por tema, ver publicações de cada comunidade e conhecer participantes. Enquanto isso, a conversa acontece no feed."
         >

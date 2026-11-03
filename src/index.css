@@ -32,6 +32,15 @@
   --color-erro: #a3262a;
   --color-erro-claro: #f7e2e2;
 
+  /* Sombras: só para o que flutua sobre a página (menus, dicas, gaveta).
+     Cartões usam borda, não sombra. */
+  --shadow-menu: 0 8px 24px rgba(31, 26, 28, 0.08);
+  --shadow-dica: 0 4px 12px rgba(31, 26, 28, 0.18);
+  --shadow-gaveta: 4px 0 24px rgba(31, 26, 28, 0.12);
+
+  /* Movimento: uma curva única para toda a interface. */
+  --ease-bloom: cubic-bezier(0.22, 1, 0.36, 1);
+
   --animate-subir: subir 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-faixa: faixa var(--faixa-duracao, 50s) linear infinite;
 
@@ -94,6 +103,14 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* Contêiner padrão da Bloom: fundo branco, borda fina e cantos de 16px.
+   Use "cartao" em vez de repetir as três classes. */
+@utility cartao {
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--color-linha);
+  background-color: var(--color-branco);
 }
 
 /* Link com sublinhado que desliza (VengeanceUI · LineHoverLink, variante "slide"). */

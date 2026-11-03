@@ -1,21 +1,70 @@
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import Icone from './Icone'
 import Logo from './Logo'
-import Foto from './ui/Foto'
-import login from '../assets/login.png'
+import { IlustracaoCodigo, IlustracaoConexoes, IlustracaoCrescimento, IlustracaoEmpresa } from './ilustracoes/Ilustracoes'
+import { cn } from '../lib/cn'
+
+const ILUSTRACOES = {
+  codigo: IlustracaoCodigo,
+  conexoes: IlustracaoConexoes,
+  crescimento: IlustracaoCrescimento,
+  empresa: IlustracaoEmpresa,
+}
 
 const VISUAL_PADRAO = {
+  ilustracao: 'codigo',
   frase: 'Florescer é voltar para você.',
   itens: ['Vagas de tecnologia em um só lugar', 'Candidaturas com etapas claras', 'Perfil profissional que você controla'],
 }
 
+// Para onde o seletor "Candidata | Empresa" leva, conforme a tela atual.
+// É só navegação: o tipo da conta continua vindo do backend no login.
+const TROCAS = {
+  '/login': { publico: 'candidata', candidata: '/login', empresa: '/empresa/login' },
+  '/cadastro': { publico: 'candidata', candidata: '/cadastro', empresa: '/empresa/cadastro' },
+  '/empresa': { publico: 'empresa', candidata: '/login', empresa: '/empresa/login' },
+  '/empresa/login': { publico: 'empresa', candidata: '/login', empresa: '/empresa/login' },
+  '/empresa/cadastro': { publico: 'empresa', candidata: '/cadastro', empresa: '/empresa/cadastro' },
+}
+
+function SeletorPublico({ troca }) {
+  const opcoes = [
+    { id: 'candidata', rotulo: 'Sou candidata', icone: 'perfil' },
+    { id: 'empresa', rotulo: 'Sou empresa', icone: 'predio' },
+  ]
+  return (
+    <nav aria-label="Tipo de conta" className="mb-8 flex w-fit rounded-full border border-linha bg-papel p-1">
+      {opcoes.map((op) => {
+        const ativo = troca.publico === op.id
+        return (
+          <Link
+            key={op.id}
+            to={troca[op.id]}
+            aria-current={ativo ? 'page' : undefined}
+            className={cn(
+              'inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-colors',
+              ativo ? 'bg-vinho text-white' : 'text-tinta-2 hover:text-tinta'
+            )}
+          >
+            <Icone nome={op.icone} tamanho={16} /> {op.rotulo}
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}
+
 // Moldura das telas de acesso (login, cadastro, recuperação de senha e área
-// da empresa). À esquerda, o painel visual da marca (ilustração ou foto,
-// frase e o que a pessoa encontra na Bloom); à direita, o formulário.
+// da empresa), no mesmo visual da área logada: barra superior branca, fundo
+// claro e um cartão com o formulário ao lado do painel visual da marca
+// (ilustração vetorial: codigo, conexoes, crescimento ou empresa).
 function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, visual = {} }) {
-  const { foto, frase, itens } = { ...VISUAL_PADRAO, ...visual }
+  const { ilustracao, frase, itens } = { ...VISUAL_PADRAO, ...visual }
+  const Ilustracao = ILUSTRACOES[ilustracao] ?? IlustracaoCodigo
+  const { pathname } = useLocation()
+  const troca = TROCAS[pathname]
 
   useEffect(() => {
     document.title = `${titulo} · BLOOM`
@@ -26,66 +75,57 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
     aoEnviar()
   }
 
-  const imagem = foto ? (
-    <Foto foto={foto} prioridade sizes="(min-width: 1024px) 50vw, 100vw" />
-  ) : (
-    <img src={login} alt="Ilustração de muitas mulheres diferentes, lado a lado" className="h-full w-full object-cover" />
-  )
-
   return (
-    <div className="grid min-h-screen bg-branco lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-      {/* Painel visual */}
-      <aside className="relative hidden overflow-hidden bg-papel-2 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
-        <div className="relative min-h-0 flex-1 overflow-hidden">
-          {imagem}
-          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-10 text-white">
-            <p className="max-w-md font-display text-4xl leading-tight italic">{frase}</p>
-            <ul className="mt-6 flex flex-col gap-2.5 text-[15px] text-white/85">
-              {itens.map((item) => (
-                <li key={item} className="flex items-center gap-3">
-                  <Icone nome="check" tamanho={16} className="shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+    <div className="flex min-h-screen flex-col bg-papel">
+      <header className="border-b border-linha bg-branco">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <Link to="/" className="rounded-sm" title="Voltar para a página inicial">
+            <Logo />
+          </Link>
+          <Link to="/" className="inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-tinta-2 hover:bg-papel-2 hover:text-tinta">
+            <Icone nome="voltar" tamanho={16} /> Início
+          </Link>
         </div>
-      </aside>
+      </header>
 
-      {/* Formulário */}
-      <main className="flex flex-col">
-        <div className="relative h-36 overflow-hidden lg:hidden">
-          {imagem}
-          <div aria-hidden="true" className="absolute inset-0 bg-black/10" />
-        </div>
+      <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 lg:py-12">
+        <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-linha bg-branco lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
+          {/* Formulário */}
+          <section className="px-6 py-8 sm:px-10 sm:py-10 lg:px-12">
+            {troca && <SeletorPublico troca={troca} />}
+            <div className="mb-6 rounded-xl bg-papel px-6 py-4 lg:hidden">
+              <Ilustracao className="mx-auto max-w-[260px]" />
+            </div>
+            {etiqueta && <p className="mb-2 text-xs font-bold tracking-[0.16em] text-vinho uppercase">{etiqueta}</p>}
+            <h1 className="font-display text-3xl leading-tight text-tinta sm:text-[2.4rem]">{titulo}</h1>
+            {subtitulo && <p className="mt-2 text-[15px] text-suave">{subtitulo}</p>}
 
-        <div className="flex flex-1 flex-col px-6 py-8 sm:px-12 xl:px-20">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="w-fit rounded-sm" title="Voltar para a página inicial">
-              <Logo />
-            </Link>
-            <Link to="/" className="inline-flex items-center gap-1 text-sm text-suave hover:text-tinta">
-              <Icone nome="voltar" tamanho={16} /> Início
-            </Link>
-          </div>
-
-          <div className="mx-auto my-auto w-full max-w-[440px] py-12">
-            {etiqueta && (
-              <p className="mb-4 flex items-center gap-3 text-xs font-bold tracking-[0.16em] text-vinho uppercase">
-                <span aria-hidden="true" className="h-px w-8 bg-vinho/40" />
-                {etiqueta}
-              </p>
-            )}
-            <h1 className="font-display text-[2.6rem] leading-[1.05] text-tinta">{titulo}</h1>
-            {subtitulo && <p className="mt-3 text-[15px] text-suave">{subtitulo}</p>}
-
-            <form className="mt-9 flex flex-col gap-5" onSubmit={enviar} noValidate>
+            <form className="mt-8 flex flex-col gap-5" onSubmit={enviar} noValidate>
               {children}
             </form>
 
             {rodape && <div className="mt-8 flex flex-col gap-2 border-t border-linha pt-6 text-sm text-tinta-2">{rodape}</div>}
-          </div>
+          </section>
+
+          {/* Painel visual da marca: ilustração vetorial, frase e o que a pessoa encontra */}
+          <aside className="hidden p-3 lg:block">
+            <div className="flex h-full min-h-[560px] flex-col justify-between rounded-xl bg-papel p-8">
+              <Ilustracao className="mx-auto max-w-[400px]" />
+              <div>
+                <p className="max-w-sm font-display text-3xl leading-tight text-vinho-escuro italic">{frase}</p>
+                <ul className="mt-5 flex flex-col gap-2 text-sm text-tinta-2">
+                  {itens.map((item) => (
+                    <li key={item} className="flex items-center gap-2.5">
+                      <span className="grid size-5 shrink-0 place-items-center rounded-full bg-vinho text-white">
+                        <Icone nome="check" tamanho={12} />
+                      </span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </aside>
         </div>
       </main>
     </div>

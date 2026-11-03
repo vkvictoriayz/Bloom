@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import { IlustracaoConexoes } from '../../components/ilustracoes/Ilustracoes'
 import TituloPagina, { RecursoIndisponivel } from '../../components/candidata/TituloPagina'
 import { useRecurso } from '../../components/candidata/useRecurso'
 import Avatar from '../../components/comunidade/Avatar'
@@ -24,6 +25,7 @@ function Mensagens() {
       {r.estado === 'indisponivel' && (
         <RecursoIndisponivel
           icone="mensagem"
+          ilustracao={IlustracaoConexoes}
           titulo="Mensagens ainda não disponíveis"
           descricao="As conversas privadas dependem de uma API de mensagens. Enquanto isso, você pode comentar publicações no feed e seguir outras integrantes."
         >
