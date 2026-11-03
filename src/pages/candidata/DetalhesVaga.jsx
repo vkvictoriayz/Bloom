@@ -8,9 +8,10 @@ import CartaoVaga from '../../components/candidata/CartaoVaga'
 import Botao from '../../components/ui/Botao'
 import Selo from '../../components/ui/Selo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
-import { buscarVaga, ehIniciante, formatarPublicacao, listarVagas } from '../../data/vagas'
-import { useDadosLocais } from '../../hooks/useDadosLocais'
-import { candidaturaDaVaga, EVENTO_CANDIDATURAS, lerCandidaturas, situacao } from '../../services/candidaturas'
+import { ehIniciante, formatarPublicacao, listarVagas } from '../../data/vagas'
+import Esqueleto from '../../components/ui/Esqueleto'
+import { candidaturaDaVaga, situacao } from '../../services/candidaturas'
+import { useCandidaturas, useVaga } from '../../hooks/useVagasReais'
 
 function Secao({ titulo, children }) {
   return (
@@ -36,13 +37,15 @@ function Lista({ itens }) {
 
 function DetalhesVaga() {
   const { id } = useParams()
-  const vaga = buscarVaga(id)
-  const candidaturas = useDadosLocais(lerCandidaturas, [EVENTO_CANDIDATURAS])
+  const { vaga, carregando } = useVaga(id)
+  const candidaturas = useCandidaturas()
   const candidatura = vaga ? candidaturaDaVaga(vaga.id, candidaturas) : null
 
   useEffect(() => {
     document.title = `${vaga?.titulo ?? 'Vaga não encontrada'} · BLOOM`
   }, [vaga?.titulo])
+
+  if (carregando) return <Esqueleto className="h-96 rounded-2xl" />
 
   if (!vaga) {
     return (
@@ -60,7 +63,8 @@ function DetalhesVaga() {
 
   const empresa = vaga.dadosEmpresa
   // Relacionadas: mesma empresa ou mesma área.
-  const relacionadas = listarVagas()
+  // Relacionadas: só entre as vagas de exemplo (as reais ainda não têm busca por área).
+  const relacionadas = (vaga.real ? [] : listarVagas())
     .filter((v) => v.id !== vaga.id && (v.empresa === vaga.empresa || v.area === vaga.area))
     .slice(0, 2)
 
@@ -83,9 +87,13 @@ function DetalhesVaga() {
       <header className="flex flex-col gap-5 rounded-xl border border-linha bg-branco p-6 sm:flex-row sm:items-start sm:p-8">
         <MarcaEmpresa empresa={empresa} tamanho="lg" />
         <div className="min-w-0 flex-1">
-          <Link to={`/empresas/${empresa.slug}`} className="font-semibold text-vinho hover:underline">
-            {empresa.nome}
-          </Link>
+          {empresa.slug ? (
+            <Link to={`/empresas/${empresa.slug}`} className="font-semibold text-vinho hover:underline">
+              {empresa.nome}
+            </Link>
+          ) : (
+            <p className="font-semibold text-vinho">{empresa.nome}</p>
+          )}
           <h1 className="mt-1 font-display text-3xl leading-tight text-tinta sm:text-4xl">{vaga.titulo}</h1>
           <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-tinta-2">
             <span className="inline-flex items-center gap-1.5">
@@ -153,6 +161,10 @@ function DetalhesVaga() {
                   Ver minha candidatura
                 </Botao>
               </>
+            ) : vaga.real && vaga.status !== 'Aberta' ? (
+              <p className="rounded-xl bg-papel-2 px-4 py-3 text-sm font-semibold text-tinta-2">
+                Esta vaga está {vaga.status?.toLowerCase()} e não recebe novas candidaturas.
+              </p>
             ) : (
               <Botao as={Link} to={`/vagas/${vaga.id}/candidatar`} tamanho="lg" className="w-full">
                 Candidatar-se

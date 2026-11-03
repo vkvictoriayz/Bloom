@@ -13,6 +13,7 @@ import { cn } from '../../lib/cn'
 // Duas navegações com objetivos diferentes:
 //  - visitante: conhecer a Bloom e criar conta;
 //  - usuária autenticada: trabalhar — vagas, candidaturas, empresas, contatos.
+// A empresa autenticada tem uma terceira, que leva para a área dela.
 const NAV_PUBLICA = [
   { rotulo: 'Oportunidades', para: '/#areas' },
   { rotulo: 'Empresas', para: '/empresas' },
@@ -28,6 +29,26 @@ const NAV_PRIVADA = [
   { rotulo: 'Comunidade', para: '/comunidade' },
   { rotulo: 'Contatos', para: '/contatos' },
 ]
+
+const NAV_EMPRESA = [
+  { rotulo: 'Feed', para: '/empresa/feed' },
+  { rotulo: 'Vagas', para: '/empresa/vagas' },
+  { rotulo: 'Candidaturas', para: '/empresa/candidaturas' },
+  { rotulo: 'Talentos', para: '/empresa/talentos' },
+  { rotulo: 'Empresas', para: '/empresas' },
+]
+
+// Atalhos do menu da conta, conforme o tipo de conta.
+const CONTA = {
+  usuaria: [
+    { rotulo: 'Meu perfil', para: '/perfil', icone: 'perfil' },
+    { rotulo: 'Vagas salvas', para: '/vagas-salvas', icone: 'coracao' },
+  ],
+  empresa: [
+    { rotulo: 'Perfil da empresa', para: '/empresa/perfil', icone: 'predio' },
+    { rotulo: 'Configurações', para: '/empresa/configuracoes', icone: 'engrenagem' },
+  ],
+}
 
 function ItemNav({ item, mobile }) {
   // Âncoras (/#...) não ficam "ativas": são atalhos dentro da home.
@@ -50,7 +71,7 @@ function ItemNav({ item, mobile }) {
 }
 
 // Menu da conta (avatar). Fecha com Esc e com clique fora.
-function MenuConta({ usuario, aoSair }) {
+function MenuConta({ usuario, atalhos, aoSair }) {
   const [aberto, setAberto] = useState(false)
   const caixa = useRef(null)
 
@@ -93,12 +114,11 @@ function MenuConta({ usuario, aoSair }) {
             <p className="truncate text-sm font-semibold text-tinta">{usuario?.nome}</p>
             <p className="truncate text-xs text-suave">{usuario?.email}</p>
           </div>
-          <Link role="menuitem" to="/perfil" className={itemMenu} onClick={() => setAberto(false)}>
-            <Icone nome="perfil" /> Meu perfil
-          </Link>
-          <Link role="menuitem" to="/vagas-salvas" className={itemMenu} onClick={() => setAberto(false)}>
-            <Icone nome="coracao" /> Vagas salvas
-          </Link>
+          {atalhos.map((a) => (
+            <Link key={a.para} role="menuitem" to={a.para} className={itemMenu} onClick={() => setAberto(false)}>
+              <Icone nome={a.icone} /> {a.rotulo}
+            </Link>
+          ))}
           <button role="menuitem" type="button" className={cn(itemMenu, 'border-t border-linha')} onClick={aoSair}>
             <Icone nome="sair" /> Sair
           </button>
@@ -111,6 +131,8 @@ function MenuConta({ usuario, aoSair }) {
 function Cabecalho() {
   const sessao = useSessao()
   const autenticada = Boolean(sessao?.usuario)
+  const empresa = sessao?.usuario?.tipo === 'empresa'
+  const atalhos = CONTA[empresa ? 'empresa' : 'usuaria']
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [menuAberto, setMenuAberto] = useState(false)
@@ -139,10 +161,10 @@ function Cabecalho() {
 
   function handleSair() {
     sair()
-    navigate('/')
+    navigate(empresa ? '/empresa/login' : '/')
   }
 
-  const itens = autenticada ? NAV_PRIVADA : NAV_PUBLICA
+  const itens = !autenticada ? NAV_PUBLICA : empresa ? NAV_EMPRESA : NAV_PRIVADA
 
   return (
     <header
@@ -165,8 +187,8 @@ function Cabecalho() {
         <div className={cn('hidden items-center gap-3 lg:flex', autenticada && 'ml-auto')}>
           {autenticada ? (
             <>
-              <BuscaVagas className="w-56 xl:w-72" />
-              <MenuConta usuario={sessao.usuario} aoSair={handleSair} />
+              {!empresa && <BuscaVagas className="w-56 xl:w-72" />}
+              <MenuConta usuario={sessao.usuario} atalhos={atalhos} aoSair={handleSair} />
             </>
           ) : (
             <>
@@ -205,7 +227,7 @@ function Cabecalho() {
                   <p className="truncate text-sm text-suave">{sessao.usuario.email}</p>
                 </div>
               </div>
-              <BuscaVagas className="mb-3" aoBuscar={() => setMenuAberto(false)} />
+              {!empresa && <BuscaVagas className="mb-3" aoBuscar={() => setMenuAberto(false)} />}
             </>
           )}
 
@@ -213,12 +235,7 @@ function Cabecalho() {
             {itens.map((item) => (
               <ItemNav key={item.rotulo} item={item} mobile />
             ))}
-            {autenticada && (
-              <>
-                <ItemNav item={{ rotulo: 'Meu perfil', para: '/perfil' }} mobile />
-                <ItemNav item={{ rotulo: 'Vagas salvas', para: '/vagas-salvas' }} mobile />
-              </>
-            )}
+            {autenticada && atalhos.map((a) => <ItemNav key={a.para} item={a} mobile />)}
           </nav>
 
           <div className="mt-5 grid grid-cols-2 gap-3 border-t border-linha pt-5">

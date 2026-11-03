@@ -5,6 +5,8 @@ import TelaAcesso, { LinkAcesso } from '../components/TelaAcesso'
 import CampoSenha from '../components/CampoSenha'
 import Botao from '../components/ui/Botao'
 import { Aviso, Campo, Entrada } from '../components/ui/Campo'
+import { entrarEmpresa, salvarSessao } from '../services/auth'
+import { destinoAposLogin } from '../services/destino'
 
 function LoginEmpresa() {
   const navigate = useNavigate()
@@ -15,8 +17,9 @@ function LoginEmpresa() {
   const [mensagem, setMensagem] = useState(
     location.state?.mensagem || ''
   )
+  const [carregando, setCarregando] = useState(false)
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setMensagem('')
 
     if (!email.trim() || !senha) {
@@ -24,37 +27,17 @@ function LoginEmpresa() {
       return
     }
 
+    // Login real pela API (/api/auth/empresa/login): o tipo da conta vem
+    // no token, e a área da empresa só abre para contas "empresa".
+    setCarregando(true)
     try {
-      const empresas = JSON.parse(
-        localStorage.getItem('bloom-empresas-demo') || '[]'
-      )
-
-      const empresa = Array.isArray(empresas)
-        ? empresas.find(
-            (item) =>
-              item.email === email.trim().toLowerCase() &&
-              item.senha === senha
-          )
-        : null
-
-      if (!empresa) {
-        setMensagem('E-mail ou senha incorretos. Confira os dados ou cadastre sua empresa.')
-        return
-      }
-
-      // Acesso demonstrativo: não representa autenticação segura.
-      sessionStorage.setItem(
-        'bloom-empresa-logada-demo',
-        JSON.stringify({
-          id: empresa.id,
-          nome: empresa.nome,
-          email: empresa.email,
-        })
-      )
-
-      navigate('/empresa/painel')
-    } catch {
-      setMensagem('Não foi possível realizar o login. Tente novamente.')
+      const sessao = await entrarEmpresa({ email: email.trim(), senha })
+      salvarSessao(sessao)
+      navigate(destinoAposLogin(sessao))
+    } catch (erro) {
+      setMensagem(erro.message)
+    } finally {
+      setCarregando(false)
     }
   }
 
@@ -98,8 +81,8 @@ function LoginEmpresa() {
 
       {mensagem && <Aviso tipo={location.state?.mensagem === mensagem ? 'sucesso' : 'erro'}>{mensagem}</Aviso>}
 
-      <Botao type="submit" tamanho="lg" className="mt-2 w-full">
-        Entrar como empresa
+      <Botao type="submit" tamanho="lg" className="mt-2 w-full" disabled={carregando}>
+        {carregando ? 'Entrando…' : 'Entrar como empresa'}
       </Botao>
     </TelaAcesso>
   )

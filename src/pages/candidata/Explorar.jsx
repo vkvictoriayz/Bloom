@@ -9,10 +9,10 @@ import ListaPessoas from '../../components/comunidade/ListaPessoas'
 import { Aviso, estiloControle } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { correspondeBusca, listarVagas } from '../../data/vagas'
-import { useDadosLocais } from '../../hooks/useDadosLocais'
 import { cn } from '../../lib/cn'
-import { candidaturaDaVaga, EVENTO_CANDIDATURAS, lerCandidaturas } from '../../services/candidaturas'
+import { candidaturaDaVaga } from '../../services/candidaturas'
 import { lerFeed } from '../../services/comunidade'
+import { useCandidaturas } from '../../hooks/useVagasReais'
 
 const CATEGORIAS = [
   { id: 'tudo', rotulo: 'Tudo' },
@@ -80,7 +80,7 @@ function Explorar() {
   const [parametros, setParametros] = useSearchParams()
   const categoria = CATEGORIAS.some((c) => c.id === parametros.get('categoria')) ? parametros.get('categoria') : 'tudo'
   const busca = parametros.get('q') ?? ''
-  const candidaturas = useDadosLocais(lerCandidaturas, [EVENTO_CANDIDATURAS])
+  const candidaturas = useCandidaturas()
 
   function definir(chave, valor) {
     const p = new URLSearchParams(parametros)

@@ -9,9 +9,9 @@ import Botao from '../../components/ui/Botao'
 import Selo from '../../components/ui/Selo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { buscarEmpresa, empresaPorNome } from '../../data/empresas'
-import { useDadosLocais } from '../../hooks/useDadosLocais'
-import { EVENTO_CANDIDATURAS, lerCandidaturas, situacao } from '../../services/candidaturas'
+import { situacao } from '../../services/candidaturas'
 import { cn } from '../../lib/cn'
+import { useCandidaturas } from '../../hooks/useVagasReais'
 
 // Filtros pelos status reais do sistema (ENUM do banco + vaga encerrada).
 const FILTROS = [
@@ -24,7 +24,7 @@ const FILTROS = [
 
 function Candidaturas() {
   const [filtro, setFiltro] = useState('todas')
-  const candidaturas = useDadosLocais(lerCandidaturas, [EVENTO_CANDIDATURAS])
+  const candidaturas = useCandidaturas()
 
   const contagem = candidaturas.reduce((acc, c) => {
     const grupo = situacao(c).grupo

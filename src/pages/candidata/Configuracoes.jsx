@@ -81,8 +81,9 @@ function Configuracoes() {
 
         <Secao icone="olho" titulo="Privacidade do perfil" descricao="Quem vê suas informações.">
           <p className="text-sm text-tinta-2">
-            Hoje, seu nome, área de atuação, interesses e apresentação curta são visíveis para outras integrantes autenticadas. Os demais dados do
-            perfil ficam neste navegador e não são compartilhados.
+            Hoje, seu nome, área de atuação, interesses, apresentação curta e publicações na comunidade são visíveis para outras integrantes e
+            empresas autenticadas. Ao se candidatar a uma vaga, a empresa também recebe seu e-mail e o que você enviou. Os demais dados do perfil
+            ficam neste navegador e não são compartilhados.
           </p>
           <div className="mt-3">
             <EmBreve>Os controles de visibilidade dependem de uma API de privacidade.</EmBreve>

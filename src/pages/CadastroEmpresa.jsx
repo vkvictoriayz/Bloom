@@ -5,6 +5,8 @@ import TelaAcesso, { LinkAcesso } from '../components/TelaAcesso'
 import CampoSenha from '../components/CampoSenha'
 import Botao from '../components/ui/Botao'
 import { Aviso, Campo, Entrada } from '../components/ui/Campo'
+import { cadastrarEmpresa, salvarSessao } from '../services/auth'
+import { destinoAposLogin } from '../services/destino'
 
 function CadastroEmpresa() {
   const navigate = useNavigate()
@@ -15,8 +17,9 @@ function CadastroEmpresa() {
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [mensagem, setMensagem] = useState('')
+  const [carregando, setCarregando] = useState(false)
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setMensagem('')
 
     if (!nome.trim() || !cnpj.trim() || !email.trim() || !senha) {
@@ -34,49 +37,22 @@ function CadastroEmpresa() {
       return
     }
 
+    if (cnpj.replace(/\D/g, '').length !== 14) {
+      setMensagem('Informe um CNPJ com 14 números.')
+      return
+    }
+
+    // Cadastro real pela API (/api/auth/empresa/cadastro), que já devolve a
+    // sessão da empresa.
+    setCarregando(true)
     try {
-      const empresas = JSON.parse(
-        localStorage.getItem('bloom-empresas-demo') || '[]'
-      )
-
-      if (!Array.isArray(empresas)) {
-        setMensagem('Não foi possível ler os cadastros. Tente novamente.')
-        return
-      }
-
-      const emailNormalizado = email.trim().toLowerCase()
-      const cnpjNormalizado = cnpj.replace(/\D/g, '')
-
-      if (empresas.some((empresa) => empresa.email === emailNormalizado)) {
-        setMensagem('Já existe uma conta com esse e-mail.')
-        return
-      }
-
-      if (cnpjNormalizado.length !== 14) {
-        setMensagem('Informe um CNPJ com 14 números.')
-        return
-      }
-
-      if (empresas.some((empresa) => empresa.cnpj === cnpjNormalizado)) {
-        setMensagem('Já existe uma conta com esse CNPJ.')
-        return
-      }
-
-      empresas.push({
-        id: Date.now(),
-        nome: nome.trim(),
-        cnpj: cnpjNormalizado,
-        email: emailNormalizado,
-        senha,
-      })
-
-      localStorage.setItem('bloom-empresas-demo', JSON.stringify(empresas))
-
-      navigate('/empresa/login', {
-        state: { mensagem: 'Cadastro demonstrativo realizado! Entre com sua conta.' },
-      })
-    } catch {
-      setMensagem('Não foi possível concluir o cadastro neste navegador.')
+      const sessao = await cadastrarEmpresa({ nome: nome.trim(), cnpj, email: email.trim(), senha, confirmarSenha })
+      salvarSessao(sessao)
+      navigate(destinoAposLogin(sessao))
+    } catch (erro) {
+      setMensagem(erro.message)
+    } finally {
+      setCarregando(false)
     }
   }
 
@@ -150,8 +126,8 @@ function CadastroEmpresa() {
 
       {mensagem && <Aviso tipo="erro">{mensagem}</Aviso>}
 
-      <Botao type="submit" tamanho="lg" className="mt-2 w-full">
-        Criar conta empresarial
+      <Botao type="submit" tamanho="lg" className="mt-2 w-full" disabled={carregando}>
+        {carregando ? 'Criando conta…' : 'Criar conta empresarial'}
       </Botao>
     </TelaAcesso>
   )

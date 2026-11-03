@@ -8,10 +8,10 @@ import Botao from '../../components/ui/Botao'
 import { Selecao, estiloControle } from '../../components/ui/Campo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioIcone, VazioTitulo } from '../../components/ui/Vazio'
 import { buscarEmpresa } from '../../data/empresas'
-import { correspondeBusca, ehIniciante, listarVagas, opcoesFiltro } from '../../data/vagas'
-import { useDadosLocais } from '../../hooks/useDadosLocais'
-import { candidaturaDaVaga, EVENTO_CANDIDATURAS, lerCandidaturas } from '../../services/candidaturas'
+import { correspondeBusca, ehIniciante } from '../../data/vagas'
+import { candidaturaDaVaga } from '../../services/candidaturas'
 import { cn } from '../../lib/cn'
+import { useCandidaturas, useVagas } from '../../hooks/useVagasReais'
 
 const POR_PAGINA = 10
 
@@ -23,11 +23,15 @@ const ORDENACOES = {
 
 // Filtros de múltipla escolha. As opções vêm dos dados (nunca inventadas).
 const GRUPOS = [
-  { chave: 'modalidade', rotulo: 'Modalidade', opcoes: opcoesFiltro.modalidades, campo: (v) => v.modalidade },
-  { chave: 'nivel', rotulo: 'Nível de experiência', opcoes: opcoesFiltro.niveis, campo: (v) => v.nivel },
-  { chave: 'contrato', rotulo: 'Tipo de contratação', opcoes: opcoesFiltro.contratos, campo: (v) => v.contrato },
-  { chave: 'area', rotulo: 'Área tecnológica', opcoes: opcoesFiltro.areas, campo: (v) => v.area },
+  { chave: 'modalidade', rotulo: 'Modalidade', campo: (v) => v.modalidade },
+  { chave: 'nivel', rotulo: 'Nível de experiência', campo: (v) => v.nivel },
+  { chave: 'contrato', rotulo: 'Tipo de contratação', campo: (v) => v.contrato },
+  { chave: 'area', rotulo: 'Área tecnológica', campo: (v) => v.area },
 ]
+
+function unicos(lista) {
+  return [...new Set(lista.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'))
+}
 
 function GrupoFiltro({ grupo, selecionados, aoAlternar }) {
   return (
@@ -54,7 +58,7 @@ function Vagas() {
   const [parametros, setParametros] = useSearchParams()
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
   const [quantidade, setQuantidade] = useState(POR_PAGINA)
-  const candidaturas = useDadosLocais(lerCandidaturas, [EVENTO_CANDIDATURAS])
+  const candidaturas = useCandidaturas()
 
   const busca = parametros.get('busca') ?? ''
   const local = parametros.get('local') ?? ''
@@ -89,7 +93,11 @@ function Vagas() {
     setParametros(ordem !== 'recentes' ? { ordem } : {}, { replace: true })
   }
 
-  const todas = useMemo(() => listarVagas(), [])
+  // Vagas reais publicadas pelas empresas + vagas de exemplo do projeto.
+  const { vagas: todas, erro: erroVagasReais } = useVagas()
+  // Opções dos filtros a partir das vagas carregadas (nunca inventadas).
+  const grupos = GRUPOS.map((g) => ({ ...g, opcoes: unicos(todas.map(g.campo)) }))
+  const locais = unicos(todas.map((v) => v.local))
   const resultado = useMemo(
     () =>
       todas
@@ -97,11 +105,11 @@ function Vagas() {
         .filter((vaga) => !local || vaga.local === local)
         .filter((vaga) => !empresaSlug || vaga.empresa === empresaSlug)
         .filter((vaga) => !iniciante || ehIniciante(vaga))
-        .filter((vaga) => GRUPOS.every((g) => !selecionados[g.chave].length || selecionados[g.chave].includes(g.campo(vaga))))
+        .filter((vaga) => grupos.every((g) => !selecionados[g.chave].length || selecionados[g.chave].includes(g.campo(vaga))))
         .sort(ORDENACOES[ordem].comparar),
     // selecionados é derivado de "parametros"
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [todas, parametros]
+    [todas.length, parametros]
   )
 
   const ativos = [
@@ -119,7 +127,7 @@ function Vagas() {
         </label>
         <Selecao id="filtro-local" value={local} onChange={(e) => definir('local', e.target.value)} className="h-10">
           <option value="">Todas</option>
-          {opcoesFiltro.locais.map((opcao) => (
+          {locais.map((opcao) => (
             <option key={opcao} value={opcao}>
               {opcao}
             </option>
@@ -130,7 +138,7 @@ function Vagas() {
         <span className="text-sm font-semibold text-tinta">Boas para começar</span>
         <input type="checkbox" checked={iniciante} onChange={(e) => definir('iniciante', e.target.checked ? '1' : '')} className="size-4 accent-vinho" />
       </label>
-      {GRUPOS.map((grupo) => (
+      {grupos.map((grupo) => (
         <GrupoFiltro key={grupo.chave} grupo={grupo} selecionados={selecionados[grupo.chave]} aoAlternar={(v) => alternar(grupo.chave, v)} />
       ))}
     </div>
@@ -231,7 +239,9 @@ function Vagas() {
 
           <p className="mt-8 flex items-start gap-2 text-xs text-suave">
             <Icone nome="info" tamanho={16} className="mt-px shrink-0" />
-            Vagas de exemplo do projeto: ainda não há API de vagas. Quando as empresas publicarem pelo backend, esta lista passa a usá-la.
+            {erroVagasReais
+              ? `Não foi possível carregar as vagas publicadas pelas empresas (${erroVagasReais}). Mostrando só as vagas de exemplo do projeto.`
+              : 'Inclui as vagas publicadas pelas empresas na Bloom e as vagas de exemplo do projeto.'}
           </p>
         </section>
       </div>

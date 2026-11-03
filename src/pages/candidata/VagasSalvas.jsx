@@ -5,17 +5,19 @@ import CartaoVaga from '../../components/candidata/CartaoVaga'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Botao from '../../components/ui/Botao'
 import { Vazio, VazioAcoes, VazioDescricao, VazioIcone, VazioTitulo } from '../../components/ui/Vazio'
-import { buscarVaga } from '../../data/vagas'
 import { useDadosLocais } from '../../hooks/useDadosLocais'
-import { candidaturaDaVaga, EVENTO_CANDIDATURAS, lerCandidaturas } from '../../services/candidaturas'
+import { candidaturaDaVaga } from '../../services/candidaturas'
 import { EVENTO_SALVAS, lerSalvas } from '../../services/salvas'
+import { useCandidaturas, useVagas } from '../../hooks/useVagasReais'
 
 // Vagas salvas: mesma persistência de antes (chave "bloom-vagas-salvas").
 // O coração de cada cartão remove a vaga da lista.
 function VagasSalvas() {
   const salvas = useDadosLocais(lerSalvas, [EVENTO_SALVAS])
-  const candidaturas = useDadosLocais(lerCandidaturas, [EVENTO_CANDIDATURAS])
-  const vagas = salvas.map((id) => buscarVaga(id)).filter(Boolean)
+  const candidaturas = useCandidaturas()
+  // Vagas de exemplo e vagas reais (ids "b<id>") que a candidata salvou.
+  const { vagas: todas } = useVagas()
+  const vagas = salvas.map((id) => todas.find((v) => String(v.id) === String(id))).filter(Boolean)
 
   return (
     <>

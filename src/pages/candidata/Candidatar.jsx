@@ -7,7 +7,9 @@ import { enderecoSeguro, LINKS } from '../../components/candidata/utilPerfil'
 import Botao from '../../components/ui/Botao'
 import { AreaTexto, Aviso, Campo } from '../../components/ui/Campo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
-import { buscarVaga } from '../../data/vagas'
+import Esqueleto from '../../components/ui/Esqueleto'
+import { useCandidaturas, useVaga } from '../../hooks/useVagasReais'
+import { candidatarServidor } from '../../services/vagasApi'
 import { useSessao } from '../../hooks/useSessao'
 import { candidatar, candidaturaDaVaga } from '../../services/candidaturas'
 import { lerPerfil } from '../../services/perfil'
@@ -31,12 +33,13 @@ function Bloco({ titulo, acao, children }) {
 // Fluxo de candidatura: revisar dados -> confirmar -> enviar.
 function Candidatar() {
   const { id } = useParams()
-  const vaga = buscarVaga(id)
+  const { vaga, carregando } = useVaga(id)
   const sessao = useSessao()
   const usuario = sessao?.usuario
   const [perfil] = useState(() => lerPerfil(usuario))
   const [projetos] = useState(() => lerProjetos(usuario))
-  const [existente] = useState(() => (vaga ? candidaturaDaVaga(vaga.id) : null))
+  const candidaturas = useCandidaturas()
+  const existente = vaga ? candidaturaDaVaga(vaga.id, candidaturas) : null
 
   const [etapa, setEtapa] = useState('dados') // dados | revisao | enviada
   const [apresentacao, setApresentacao] = useState('')
@@ -44,15 +47,18 @@ function Candidatar() {
   const [confirmo, setConfirmo] = useState(false)
   const [erro, setErro] = useState('')
   const [enviada, setEnviada] = useState(null)
+  const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
     document.title = `Candidatar-se · ${vaga?.titulo ?? 'Vaga'} · BLOOM`
   }, [vaga?.titulo])
 
-  if (!vaga) {
+  if (carregando) return <Esqueleto className="h-96 rounded-2xl" />
+
+  if (!vaga || (vaga.real && vaga.status !== 'Aberta')) {
     return (
       <Vazio className="bg-branco">
-        <VazioTitulo>Vaga não encontrada</VazioTitulo>
+        <VazioTitulo>{vaga ? 'Esta vaga não está recebendo candidaturas' : 'Vaga não encontrada'}</VazioTitulo>
         <VazioDescricao>Não é possível se candidatar a uma vaga que não existe ou foi encerrada.</VazioDescricao>
         <VazioAcoes>
           <Botao as={Link} to="/candidata/vagas">
@@ -93,7 +99,36 @@ function Candidatar() {
     setEtapa('revisao')
   }
 
+  // Vaga real (publicada por uma empresa): a candidatura vai para a API e só
+  // é confirmada depois da resposta do servidor. Vaga de exemplo: continua
+  // registrada neste navegador, como antes.
+  async function enviarParaEmpresa() {
+    setEnviando(true)
+    setErro('')
+    try {
+      const r = await candidatarServidor(vaga.id, {
+        titulo: perfil.cargo,
+        competencias: perfil.tecnicas,
+        apresentacao: apresentacao.trim(),
+        links: [
+          ...links.map((l) => ({ rotulo: l.rotulo, url: l.url })),
+          ...projetosEscolhidos
+            .map((p) => ({ rotulo: `Projeto: ${p.nome}`, url: enderecoSeguro(p.demo) ?? enderecoSeguro(p.repositorio) ?? '' }))
+            .filter((l) => l.url),
+        ],
+      })
+      const [a, m, d] = String(r.candidatura.data).split('-')
+      setEnviada({ id: `s${r.candidatura.id}`, data: `${d}/${m}/${a}` })
+      setEtapa('enviada')
+    } catch (falha) {
+      setErro(falha.message)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
   function enviar() {
+    if (vaga.real) return enviarParaEmpresa()
     const r = candidatar(vaga, {
       apresentacao: apresentacao.trim(),
       links: [
@@ -113,12 +148,14 @@ function Candidatar() {
         <span className="mx-auto grid size-14 place-items-center rounded-full bg-sucesso-claro text-sucesso" aria-hidden="true">
           <Icone nome="check" tamanho={28} />
         </span>
-        <h1 className="mt-5 font-display text-3xl text-tinta">Candidatura registrada</h1>
+        <h1 className="mt-5 font-display text-3xl text-tinta">{vaga.real ? 'Candidatura enviada' : 'Candidatura registrada'}</h1>
         <p className="mt-2 text-tinta-2">
           Sua candidatura para <strong>{vaga.titulo}</strong> foi registrada em {enviada.data}.
         </p>
         <p className="mt-3 text-sm text-suave">
-          Ela fica salva neste navegador. O envio direto à empresa depende da API de candidaturas, que ainda não existe no backend.
+          {vaga.real
+            ? `${vaga.dadosEmpresa.nome} já pode ver sua candidatura. Quando a empresa atualizar o status, ele aparece no acompanhamento.`
+            : 'Esta é uma vaga de exemplo: a candidatura fica salva neste navegador e não chega a uma empresa.'}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Botao as={Link} to={`/candidata/candidaturas/${encodeURIComponent(enviada.id)}/andamento`}>
@@ -277,12 +314,14 @@ function Candidatar() {
             </dl>
           </Bloco>
           <Aviso tipo="info">
-            A candidatura será registrada neste navegador. O envio direto à empresa depende da API de candidaturas, que ainda não existe.
+            {vaga.real
+              ? `Sua candidatura será enviada a ${vaga.dadosEmpresa.nome}, com os dados e links acima.`
+              : 'Esta é uma vaga de exemplo: a candidatura será registrada neste navegador e não chega a uma empresa.'}
           </Aviso>
           {erro && <Aviso tipo="erro">{erro}</Aviso>}
           <div className="flex flex-wrap gap-2">
-            <Botao tamanho="lg" onClick={enviar}>
-              Confirmar candidatura
+            <Botao tamanho="lg" onClick={enviar} disabled={enviando}>
+              {enviando ? 'Enviando…' : 'Confirmar candidatura'}
             </Botao>
             <Botao variante="secundario" tamanho="lg" onClick={() => setEtapa('dados')}>
               Voltar e editar

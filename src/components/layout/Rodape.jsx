@@ -18,7 +18,9 @@ function Coluna({ titulo, children }) {
 // nada de redes sociais ou endereços inventados.
 function Rodape() {
   const sessao = useSessao()
-  const autenticada = Boolean(sessao?.usuario)
+  const empresa = sessao?.usuario?.tipo === 'empresa'
+  // A empresa logada vê os atalhos da área dela, não os da candidata.
+  const autenticada = Boolean(sessao?.usuario) && !empresa
 
   return (
     <footer className="bg-vinho-escuro text-white">
@@ -48,38 +50,53 @@ function Rodape() {
           )}
         </Coluna>
 
-        <Coluna titulo={autenticada ? 'Sua conta' : 'Comece'}>
-          {autenticada ? (
+        {!empresa && (
+          <Coluna titulo={autenticada ? 'Sua conta' : 'Comece'}>
+            {autenticada ? (
+              <>
+                <Link to="/perfil" className={estiloLink}>
+                  Meu perfil
+                </Link>
+                <Link to="/minhas-candidaturas" className={estiloLink}>
+                  Candidaturas
+                </Link>
+                <Link to="/vagas-salvas" className={estiloLink}>
+                  Vagas salvas
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/cadastro" className={estiloLink}>
+                  Criar conta
+                </Link>
+                <Link to="/login" className={estiloLink}>
+                  Entrar
+                </Link>
+              </>
+            )}
+          </Coluna>
+        )}
+
+        <Coluna titulo="Para empresas">
+          {empresa ? (
             <>
-              <Link to="/perfil" className={estiloLink}>
-                Meu perfil
+              <Link to="/empresa/feed" className={estiloLink}>
+                Área da empresa
               </Link>
-              <Link to="/minhas-candidaturas" className={estiloLink}>
-                Candidaturas
-              </Link>
-              <Link to="/vagas-salvas" className={estiloLink}>
-                Vagas salvas
+              <Link to="/empresa/vagas" className={estiloLink}>
+                Gerenciar vagas
               </Link>
             </>
           ) : (
             <>
-              <Link to="/cadastro" className={estiloLink}>
-                Criar conta
+              <Link to="/empresa/login" className={estiloLink}>
+                Área da empresa
               </Link>
-              <Link to="/login" className={estiloLink}>
-                Entrar
+              <Link to="/empresa/cadastro" className={estiloLink}>
+                Cadastrar empresa
               </Link>
             </>
           )}
-        </Coluna>
-
-        <Coluna titulo="Para empresas">
-          <Link to="/empresa/login" className={estiloLink}>
-            Área da empresa
-          </Link>
-          <Link to="/empresa/cadastro" className={estiloLink}>
-            Cadastrar empresa
-          </Link>
           <a href="mailto:contato@bloom.com.br" className={estiloLink}>
             contato@bloom.com.br
           </a>

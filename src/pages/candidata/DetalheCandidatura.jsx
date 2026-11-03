@@ -9,8 +9,8 @@ import Selo from '../../components/ui/Selo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { buscarEmpresa, empresaPorNome } from '../../data/empresas'
 import { buscarVaga } from '../../data/vagas'
-import { useDadosLocais } from '../../hooks/useDadosLocais'
-import { buscarCandidatura, EVENTO_CANDIDATURAS, lerCandidaturas, situacao } from '../../services/candidaturas'
+import { buscarCandidatura, situacao } from '../../services/candidaturas'
+import { useCandidaturas } from '../../hooks/useVagasReais'
 
 // Só a própria candidata acessa: as candidaturas lidas são as dela.
 function NaoEncontrada() {
@@ -29,9 +29,10 @@ function NaoEncontrada() {
 
 function useCandidatura() {
   const { id } = useParams()
-  const lista = useDadosLocais(lerCandidaturas, [EVENTO_CANDIDATURAS])
+  const lista = useCandidaturas()
   const candidatura = buscarCandidatura(id, lista)
-  const vaga = candidatura ? buscarVaga(candidatura.vagaId) : null
+  // Candidatura enviada ao backend: a vaga é real ("b<id>") e abre em /vagas/:id.
+  const vaga = candidatura ? (candidatura.servidor ? { id: candidatura.vagaId } : buscarVaga(candidatura.vagaId)) : null
   const empresa = candidatura ? buscarEmpresa(candidatura.empresaSlug) ?? empresaPorNome(candidatura.empresa) : null
   return { candidatura, vaga, empresa }
 }

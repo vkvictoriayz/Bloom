@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 
 import RotaPrivada from './components/RotaPrivada'
+import { obterSessao } from './services/auth'
 import LayoutCandidata from './components/candidata/LayoutCandidata'
 
 import Home from './pages/Home'
@@ -34,7 +35,29 @@ import Configuracoes from './pages/candidata/Configuracoes'
 
 import LoginEmpresa from './pages/LoginEmpresa'
 import CadastroEmpresa from './pages/CadastroEmpresa'
-import PainelEmpresa from './pages/PainelEmpresa'
+// Área privada da empresa
+import LayoutEmpresa from './components/empresa/LayoutEmpresa'
+import FeedEmpresa from './pages/empresa/Feed'
+import ExplorarTalentos from './pages/empresa/ExplorarTalentos'
+import PerfilEmpresa from './pages/empresa/Perfil'
+import EditarPerfilEmpresa from './pages/empresa/EditarPerfil'
+import PublicacoesEmpresa from './pages/empresa/Publicacoes'
+import CriarPublicacao from './pages/empresa/CriarPublicacao'
+import VagasEmpresa from './pages/empresa/Vagas'
+import FormularioVaga from './pages/empresa/FormularioVaga'
+import DetalheVagaEmpresa from './pages/empresa/DetalheVaga'
+import CandidaturasEmpresa from './pages/empresa/Candidaturas'
+import DetalheCandidaturaEmpresa from './pages/empresa/DetalheCandidatura'
+import BancoTalentos from './pages/empresa/BancoTalentos'
+import Talento from './pages/empresa/Talento'
+import {
+  Comunidades as ComunidadesEmpresa,
+  DetalheComunidade as DetalheComunidadeEmpresa,
+  Mensagens as MensagensEmpresa,
+  Conversa as ConversaEmpresa,
+} from './pages/empresa/Complementares'
+import NotificacoesEmpresa from './pages/empresa/Notificacoes'
+import ConfiguracoesEmpresa from './pages/empresa/Configuracoes'
 
 // Páginas internas: só abrem para quem fez login ou cadastro.
 // Sem sessão, a pessoa é direcionada para a tela de login.
@@ -47,6 +70,14 @@ function Protegida({ children }) {
 function Redirecionar({ para }) {
   const { search, hash } = useLocation()
   return <Navigate to={`${para}${search}${hash}`} replace />
+}
+
+// Login e cadastro de empresa: quem já entrou como empresa vai direto para
+// o feed da área dela.
+function AcessoEmpresa({ children }) {
+  const sessao = obterSessao()
+  if (sessao?.usuario?.tipo === 'empresa') return <Navigate to="/empresa/feed" replace />
+  return children
 }
 
 function App() {
@@ -107,11 +138,41 @@ function App() {
         <Route path="/contatos" element={<Protegida><Contatos /></Protegida>} />
 
         {/* Acesso das empresas */}
-        <Route path="/empresa" element={<LoginEmpresa />} />
-        <Route path="/empresa/login" element={<LoginEmpresa />} />
-        <Route path="/empresa/cadastro" element={<CadastroEmpresa />} />
-        {/* O painel confere a sessão da empresa (real ou demonstrativa) */}
-        <Route path="/empresa/painel" element={<PainelEmpresa />} />
+        <Route path="/empresa" element={<AcessoEmpresa><LoginEmpresa /></AcessoEmpresa>} />
+        <Route path="/empresa/login" element={<AcessoEmpresa><LoginEmpresa /></AcessoEmpresa>} />
+        <Route path="/empresa/cadastro" element={<AcessoEmpresa><CadastroEmpresa /></AcessoEmpresa>} />
+        {/* Endereço antigo do painel */}
+        <Route path="/empresa/painel" element={<Navigate to="/empresa/feed" replace />} />
+
+        {/* Área privada da empresa: um único layout, protegido por login de empresa */}
+        <Route
+          element={
+            <RotaPrivada tipo="empresa">
+              <LayoutEmpresa />
+            </RotaPrivada>
+          }
+        >
+          <Route path="/empresa/feed" element={<FeedEmpresa />} />
+          <Route path="/empresa/explorar" element={<ExplorarTalentos />} />
+          <Route path="/empresa/perfil" element={<PerfilEmpresa />} />
+          <Route path="/empresa/perfil/editar" element={<EditarPerfilEmpresa />} />
+          <Route path="/empresa/publicacoes" element={<PublicacoesEmpresa />} />
+          <Route path="/empresa/publicacoes/criar" element={<CriarPublicacao />} />
+          <Route path="/empresa/vagas" element={<VagasEmpresa />} />
+          <Route path="/empresa/vagas/criar" element={<FormularioVaga key="criar" />} />
+          <Route path="/empresa/vagas/:id" element={<DetalheVagaEmpresa />} />
+          <Route path="/empresa/vagas/:id/editar" element={<FormularioVaga key="editar" />} />
+          <Route path="/empresa/candidaturas" element={<CandidaturasEmpresa />} />
+          <Route path="/empresa/candidaturas/:id" element={<DetalheCandidaturaEmpresa />} />
+          <Route path="/empresa/talentos" element={<BancoTalentos />} />
+          <Route path="/empresa/talentos/:id" element={<Talento />} />
+          <Route path="/empresa/comunidades" element={<ComunidadesEmpresa />} />
+          <Route path="/empresa/comunidades/:id" element={<DetalheComunidadeEmpresa />} />
+          <Route path="/empresa/mensagens" element={<MensagensEmpresa />} />
+          <Route path="/empresa/mensagens/:id" element={<ConversaEmpresa />} />
+          <Route path="/empresa/notificacoes" element={<NotificacoesEmpresa />} />
+          <Route path="/empresa/configuracoes" element={<ConfiguracoesEmpresa />} />
+        </Route>
 
         {/* Qualquer outro endereço volta para a Home */}
         <Route path="*" element={<Navigate to="/" replace />} />

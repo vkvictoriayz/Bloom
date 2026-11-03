@@ -5,16 +5,16 @@ import TituloPagina from '../../components/candidata/TituloPagina'
 import Botao from '../../components/ui/Botao'
 import Selo from '../../components/ui/Selo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
-import { useDadosLocais } from '../../hooks/useDadosLocais'
-import { buscarCandidatura, ETAPAS, EVENTO_CANDIDATURAS, lerCandidaturas, situacao } from '../../services/candidaturas'
+import { buscarCandidatura, ETAPAS, situacao } from '../../services/candidaturas'
 import { cn } from '../../lib/cn'
+import { useCandidaturas } from '../../hooks/useVagasReais'
 
 // Linha do tempo vertical do processo seletivo. As etapas seguem os status
 // do banco (Pendente -> Em análise -> Aprovada/Reprovada). Só marcamos como
 // concluída a etapa confirmada nos dados; nada é inventado.
 function Andamento() {
   const { id } = useParams()
-  const lista = useDadosLocais(lerCandidaturas, [EVENTO_CANDIDATURAS])
+  const lista = useCandidaturas()
   const candidatura = buscarCandidatura(id, lista)
 
   if (!candidatura) {
