@@ -6,8 +6,12 @@ import Avatar from './Avatar'
 import { lerPerfis, seguir } from '../../services/comunidade'
 
 // Descobrir e acompanhar outras integrantes (networking).
-function ListaPessoas({ aoMudarConexao }) {
-  const [busca, setBusca] = useState('')
+// "limite" mostra só as primeiras N pessoas (versão compacta do feed);
+// "comBusca" esconde o campo de busca quando a página já tem um.
+// "busca" vinda de fora (página Explorar) substitui o campo interno.
+function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: buscaExterna, titulo = 'Pessoas para conhecer' }) {
+  const [buscaInterna, setBusca] = useState('')
+  const busca = buscaExterna ?? buscaInterna
   const [pessoas, setPessoas] = useState(null)
   const [erro, setErro] = useState('')
 
@@ -41,14 +45,18 @@ function ListaPessoas({ aoMudarConexao }) {
   }
 
   return (
-    <section aria-labelledby="titulo-pessoas" className="border border-linha bg-branco p-5 sm:p-6">
+    <section aria-labelledby="titulo-pessoas" className="rounded-xl border border-linha bg-branco p-5 sm:p-6">
       <h2 id="titulo-pessoas" className="font-display text-xl text-tinta">
-        Pessoas para conhecer
+        {titulo}
       </h2>
-      <label htmlFor="busca-pessoas" className="sr-only">
-        Buscar integrantes por nome, área ou interesse
-      </label>
-      <Entrada id="busca-pessoas" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, área ou interesse" className="mt-4 h-10" />
+      {comBusca && (
+        <>
+          <label htmlFor="busca-pessoas" className="sr-only">
+            Buscar integrantes por nome, área ou interesse
+          </label>
+          <Entrada id="busca-pessoas" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, área ou interesse" className="mt-4 h-10" />
+        </>
+      )}
 
       {erro && (
         <Aviso tipo="erro" className="mt-4">
@@ -64,7 +72,7 @@ function ListaPessoas({ aoMudarConexao }) {
         </p>
       ) : (
         <ul className="mt-2 divide-y divide-linha">
-          {pessoas?.map((p) => (
+          {(limite ? pessoas?.slice(0, limite) : pessoas)?.map((p) => (
             <li key={p.id} className="flex items-center gap-3 py-3.5">
               <Avatar nome={p.nome} tamanho="sm" />
               <div className="min-w-0 flex-1">
@@ -78,6 +86,7 @@ function ListaPessoas({ aoMudarConexao }) {
           ))}
         </ul>
       )}
+      {rodape}
     </section>
   )
 }

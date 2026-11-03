@@ -77,7 +77,7 @@ function CartaoPublicacao({ publicacao, aoExcluir }) {
     'inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold text-tinta-2 transition-colors hover:bg-papel-2 hover:text-tinta'
 
   return (
-    <article className="border border-linha bg-branco p-5 sm:p-6" aria-label={`Publicação de ${dados.autora.nome}`}>
+    <article className="rounded-xl border border-linha bg-branco p-5 sm:p-6" aria-label={`Publicação de ${dados.autora.nome}`}>
       <header className="flex items-start gap-3">
         <Avatar nome={dados.autora.nome} />
         <div className="min-w-0 flex-1">

@@ -64,7 +64,7 @@ const comTratamento = (fn) => async (req, res) => {
   }
 };
 
-// GET /feed?filtro=todas|seguindo&tipo=dica&pagina=1
+// GET /feed?filtro=todas|seguindo&autora=eu&tipo=dica&pagina=1
 export const feed = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const pagina = Math.max(1, Number(req.query.pagina) || 1);
@@ -74,7 +74,10 @@ export const feed = comTratamento(async (req, res) => {
     if (!TIPOS.includes(req.query.tipo)) return erro(res, 400, "Tipo de publicação inválido.");
     where.tipo = req.query.tipo;
   }
-  if (req.query.filtro === "seguindo") {
+  // ?autora=eu — publicações da própria usuária (página "Meu perfil").
+  if (req.query.autora === "eu") {
+    where.usuariaId = meuId;
+  } else if (req.query.filtro === "seguindo") {
     const seguidas = await Conexao.findAll({ where: { seguidoraId: meuId } });
     where.usuariaId = { [Op.in]: [meuId, ...seguidas.map((c) => c.seguidaId)] };
   }

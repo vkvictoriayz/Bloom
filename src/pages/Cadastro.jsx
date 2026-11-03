@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cadastrarUsuaria, salvarSessao } from "../services/auth";
+import { destinoAposLogin } from "../services/destino";
 import { formatarCPF, formatarTelefone } from "../utils/documentos";
 import TelaAcesso, { GrupoCampos, LinkAcesso } from "../components/TelaAcesso";
 import { fotos } from "../data/imagens";
@@ -59,7 +60,7 @@ function Cadastro() {
         confirmarSenha,
       });
       salvarSessao(sessao);
-      navigate("/");
+      navigate(destinoAposLogin(sessao));
     } catch (erro) {
       setMensagem(erro.message);
       setTipoMensagem("erro");

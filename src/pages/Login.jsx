@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { entrarUsuaria, salvarSessao } from "../services/auth";
+import { destinoAposLogin } from "../services/destino";
 import TelaAcesso, { LinkAcesso } from "../components/TelaAcesso";
 import CampoSenha from "../components/CampoSenha";
 import Botao from "../components/ui/Botao";
@@ -33,7 +34,7 @@ function Login() {
     try {
       const sessao = await entrarUsuaria({ email, senha });
       salvarSessao(sessao);
-      navigate("/");
+      navigate(destinoAposLogin(sessao));
     } catch (erro) {
       setMensagem(erro.message);
       setTipoMensagem("erro");

@@ -27,9 +27,14 @@ export function candidaturaDaVaga(vagaId, lista = lerCandidaturas()) {
   return lista.find((item) => String(item.vagaId) === String(vagaId)) ?? null
 }
 
+export function buscarCandidatura(id, lista = lerCandidaturas()) {
+  return lista.find((item) => String(item.id) === String(id)) ?? null
+}
+
 // Registra a candidatura; não duplica se já existir.
+// "extras" guarda o que a candidata enviou (apresentação, links).
 // Retorna { ok, jaExistia, candidatura }.
-export function candidatar(vaga) {
+export function candidatar(vaga, extras = {}) {
   const atuais = lerCandidaturas()
   const existente = candidaturaDaVaga(vaga.id, atuais)
   if (existente) return { ok: true, jaExistia: true, candidatura: existente }
@@ -47,6 +52,11 @@ export function candidatar(vaga) {
     enviadaEm: agora.toISOString(),
     status: 'Pendente',
     confirmadaPeloServidor: false,
+    enviado: {
+      apresentacao: extras.apresentacao ?? '',
+      links: extras.links ?? [],
+      perfil: extras.perfil ?? null,
+    },
   }
 
   const ok = gravarJSON(CHAVE_CANDIDATURAS, [...atuais, nova], EVENTO_CANDIDATURAS)

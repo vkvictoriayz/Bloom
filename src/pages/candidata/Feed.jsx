@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
-import Icone from '../components/Icone'
-import Avatar from '../components/comunidade/Avatar'
-import CartaoPublicacao from '../components/comunidade/CartaoPublicacao'
-import ListaPessoas from '../components/comunidade/ListaPessoas'
-import PainelPerfil from '../components/comunidade/PainelPerfil'
-import CabecalhoPagina from '../components/layout/CabecalhoPagina'
-import Pagina from '../components/layout/Pagina'
-import Abas from '../components/ui/Abas'
-import Botao from '../components/ui/Botao'
-import { Aviso, AreaTexto, Selecao } from '../components/ui/Campo'
-import { Vazio, VazioDescricao, VazioIcone, VazioTitulo } from '../components/ui/Vazio'
-import { fotos } from '../data/imagens'
-import { useSessao } from '../hooks/useSessao'
-import { LIMITE_PUBLICACAO, TIPOS, lerFeed, lerMeuPerfil, publicar } from '../services/comunidade'
+import Icone from '../../components/Icone'
+import MarcaEmpresa from '../../components/MarcaEmpresa'
+import TituloPagina from '../../components/candidata/TituloPagina'
+import Avatar from '../../components/comunidade/Avatar'
+import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
+import ListaPessoas from '../../components/comunidade/ListaPessoas'
+import Abas from '../../components/ui/Abas'
+import Botao from '../../components/ui/Botao'
+import { Aviso, AreaTexto, Selecao } from '../../components/ui/Campo'
+import Esqueleto from '../../components/ui/Esqueleto'
+import { Vazio, VazioDescricao, VazioIcone, VazioTitulo } from '../../components/ui/Vazio'
+import { formatarPublicacao, listarVagas, recomendarVagas } from '../../data/vagas'
+import { useDadosLocais } from '../../hooks/useDadosLocais'
+import { primeiroNome, useSessao } from '../../hooks/useSessao'
+import { LIMITE_PUBLICACAO, TIPOS, lerFeed, publicar } from '../../services/comunidade'
+import { EVENTO_PERFIL, lerPerfil } from '../../services/perfil'
 
 const MODELOS = {
   dica: 'Compartilhe uma dica que ajudaria outra pessoa da área…',
@@ -24,9 +27,54 @@ const MODELOS = {
   duvida: 'Qual é a sua dúvida? Outras mulheres da área podem ajudar…',
 }
 
-function Comunidade() {
+// Vagas recomendadas pelas competências do perfil; sem competências,
+// mostramos as mais recentes e dizemos isso.
+function VagasSugeridas({ tecnicas }) {
+  const recomendadas = recomendarVagas(tecnicas)
+  const porPerfil = recomendadas?.length > 0
+  const itens = porPerfil
+    ? recomendadas.map((r) => r.vaga)
+    : [...listarVagas()].sort((a, b) => a.publicadaHaDias - b.publicadaHaDias).slice(0, 3)
+
+  return (
+    <section aria-labelledby="titulo-vagas-feed" className="rounded-xl border border-linha bg-branco p-5 sm:p-6">
+      <h2 id="titulo-vagas-feed" className="font-display text-xl text-tinta">
+        {porPerfil ? 'Vagas para você' : 'Vagas recentes'}
+      </h2>
+      {!porPerfil && (
+        <p className="mt-1 text-xs text-suave">
+          <Link to="/candidata/perfil/editar#competencias" className="font-semibold text-vinho hover:underline">
+            Adicione competências
+          </Link>{' '}
+          para receber recomendações.
+        </p>
+      )}
+      <ul className="mt-3 divide-y divide-linha">
+        {itens.map((vaga) => (
+          <li key={vaga.id}>
+            <Link to={`/vagas/${vaga.id}`} className="group flex items-center gap-3 py-3">
+              <MarcaEmpresa empresa={vaga.dadosEmpresa} tamanho="sm" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-tinta group-hover:text-vinho">{vaga.titulo}</span>
+                <span className="block truncate text-xs text-suave">
+                  {vaga.dadosEmpresa.nomeCurto} · {vaga.modalidade} · {formatarPublicacao(vaga.publicadaHaDias)}
+                </span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <Link to="/candidata/vagas" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-vinho hover:underline">
+        Ver todas as vagas <Icone nome="seta" tamanho={14} />
+      </Link>
+    </section>
+  )
+}
+
+function Feed() {
   const sessao = useSessao()
   const nome = sessao?.usuario?.nome ?? ''
+  const perfil = useDadosLocais(() => lerPerfil(sessao?.usuario), [EVENTO_PERFIL])
 
   const [aba, setAba] = useState('todas')
   const [tipoFiltro, setTipoFiltro] = useState('')
@@ -36,13 +84,11 @@ function Comunidade() {
   const [erroFeed, setErroFeed] = useState('')
   const [carregandoMais, setCarregandoMais] = useState(false)
 
-  const [meu, setMeu] = useState(null)
-  const [erroPerfil, setErroPerfil] = useState('')
-
   const [texto, setTexto] = useState('')
   const [tipo, setTipo] = useState('dica')
   const [publicando, setPublicando] = useState(false)
   const [erroPublicar, setErroPublicar] = useState('')
+  const [publicado, setPublicado] = useState(false)
 
   const carregarFeed = useCallback(async () => {
     setErroFeed('')
@@ -63,12 +109,6 @@ function Comunidade() {
     carregarFeed()
   }, [carregarFeed])
 
-  useEffect(() => {
-    lerMeuPerfil()
-      .then(setMeu)
-      .catch((e) => setErroPerfil(e.message))
-  }, [])
-
   async function maisPublicacoes() {
     setCarregandoMais(true)
     try {
@@ -88,12 +128,12 @@ function Comunidade() {
     if (!texto.trim() || publicando) return
     setPublicando(true)
     setErroPublicar('')
+    setPublicado(false)
     try {
       const r = await publicar({ texto, tipo })
       setTexto('')
-      const aparece = (!tipoFiltro || tipoFiltro === r.publicacao.tipo)
-      if (aparece) setPublicacoes((lista) => [r.publicacao, ...(lista ?? [])])
-      setMeu((m) => (m ? { ...m, numeros: { ...m.numeros, publicacoes: m.numeros.publicacoes + 1 } } : m))
+      setPublicado(true)
+      if (!tipoFiltro || tipoFiltro === r.publicacao.tipo) setPublicacoes((lista) => [r.publicacao, ...(lista ?? [])])
     } catch (e) {
       setErroPublicar(e.message)
     } finally {
@@ -103,33 +143,18 @@ function Comunidade() {
 
   function aoExcluir(id) {
     setPublicacoes((lista) => lista.filter((p) => p.id !== id))
-    setMeu((m) => (m ? { ...m, numeros: { ...m.numeros, publicacoes: Math.max(0, m.numeros.publicacoes - 1) } } : m))
-  }
-
-  function aoMudarConexao(seguindo) {
-    setMeu((m) => (m ? { ...m, numeros: { ...m.numeros, seguindo: m.numeros.seguindo + (seguindo ? 1 : -1) } } : m))
-    if (aba === 'seguindo') carregarFeed()
   }
 
   return (
-    <Pagina titulo="Comunidade">
-      <CabecalhoPagina
-        variante="retangular"
-        foto={fotos.comoFunciona}
-        rotulo="Comunidade"
-        titulo={
-          <>
-            Troque experiências com quem <em className="text-vinho">constrói</em> a tecnologia.
-          </>
-        }
-        descricao="Publique, converse e acompanhe outras mulheres da área: dicas, projetos, conquistas e oportunidades."
-      />
+    <>
+      <TituloPagina titulo={`Olá, ${primeiroNome(nome) || 'boas-vindas'}`} descricao="Compartilhe aprendizados e acompanhe outras mulheres da tecnologia." />
 
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:py-14">
-        <div className="flex flex-col gap-6 lg:col-span-8">
-          <form onSubmit={enviar} className="border border-linha bg-branco p-5 sm:p-6" aria-label="Nova publicação">
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          {/* Nova publicação */}
+          <form onSubmit={enviar} className="rounded-xl border border-linha bg-branco p-5 sm:p-6" aria-label="Nova publicação">
             <div className="flex gap-3">
-              <Avatar nome={nome} />
+              <Avatar nome={nome} foto={perfil.foto} />
               <div className="flex min-w-0 flex-1 flex-col gap-3">
                 <label htmlFor="nova-publicacao" className="sr-only">
                   Escreva sua publicação
@@ -137,12 +162,15 @@ function Comunidade() {
                 <AreaTexto
                   id="nova-publicacao"
                   value={texto}
-                  onChange={(e) => setTexto(e.target.value)}
+                  onChange={(e) => {
+                    setTexto(e.target.value)
+                    setPublicado(false)
+                  }}
                   maxLength={LIMITE_PUBLICACAO}
                   placeholder={MODELOS[tipo]}
                 />
                 <div className="flex flex-wrap items-center gap-3">
-                  <Selecao aria-label="Tipo de publicação" value={tipo} onChange={(e) => setTipo(e.target.value)} className="h-10 w-auto min-w-40">
+                  <Selecao aria-label="Tipo de publicação" value={tipo} onChange={(e) => setTipo(e.target.value)} className="h-10 w-auto min-w-36">
                     {TIPOS.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.rotulo}
@@ -157,22 +185,24 @@ function Comunidade() {
                   </Botao>
                 </div>
                 {erroPublicar && <Aviso tipo="erro">{erroPublicar}</Aviso>}
+                {publicado && <Aviso tipo="sucesso">Publicação enviada.</Aviso>}
               </div>
             </div>
           </form>
 
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-linha">
+          {/* Filtros do feed */}
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-linha">
             <Abas
               className="border-b-0"
               rotulo="Feed"
               ativa={aba}
               aoTrocar={setAba}
               abas={[
-                { id: 'todas', rotulo: 'Todas as publicações' },
+                { id: 'todas', rotulo: 'Todas' },
                 { id: 'seguindo', rotulo: 'Quem eu sigo' },
               ]}
             />
-            <Selecao aria-label="Filtrar por tipo" value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)} className="mb-2 h-9 w-auto min-w-40">
+            <Selecao aria-label="Filtrar por tipo" value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)} className="mb-2 h-9 w-auto min-w-36">
               <option value="">Todos os tipos</option>
               {TIPOS.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -193,9 +223,9 @@ function Comunidade() {
             )}
 
             {publicacoes === null ? (
-              <p className="py-10 text-center text-sm text-suave">Carregando publicações…</p>
+              [0, 1].map((i) => <Esqueleto key={i} className="h-40 rounded-xl" />)
             ) : publicacoes.length === 0 && !erroFeed ? (
-              <Vazio>
+              <Vazio className="bg-branco">
                 <VazioIcone>
                   <Icone nome="mensagem" />
                 </VazioIcone>
@@ -218,22 +248,23 @@ function Comunidade() {
           </div>
         </div>
 
-        <aside className="flex flex-col gap-6 lg:col-span-4" aria-label="Seu perfil e conexões">
-          {erroPerfil && <Aviso tipo="erro">{erroPerfil}</Aviso>}
-          {meu && (
-            <PainelPerfil
-              key={meu.perfil.id}
-              nome={nome}
-              perfil={meu.perfil}
-              numeros={meu.numeros}
-              aoSalvar={(perfil) => setMeu((m) => ({ ...m, perfil }))}
-            />
-          )}
-          <ListaPessoas aoMudarConexao={aoMudarConexao} />
+        {/* Coluna curta: pessoas e vagas */}
+        <aside className="flex flex-col gap-6" aria-label="Sugestões">
+          <ListaPessoas
+            limite={4}
+            comBusca={false}
+            aoMudarConexao={() => aba === 'seguindo' && carregarFeed()}
+            rodape={
+              <Link to="/candidata/explorar?categoria=profissionais" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-vinho hover:underline">
+                Ver mais profissionais <Icone nome="seta" tamanho={14} />
+              </Link>
+            }
+          />
+          <VagasSugeridas tecnicas={perfil.tecnicas} />
         </aside>
       </div>
-    </Pagina>
+    </>
   )
 }
 
-export default Comunidade
+export default Feed

@@ -26,8 +26,9 @@ const consulta = (params) => {
   return q ? `?${q}` : "";
 };
 
-export const lerFeed = ({ filtro, tipo, pagina = 1 } = {}) =>
-  chamar(`/feed${consulta({ filtro, tipo, pagina: pagina > 1 ? pagina : "" })}`);
+// autora: "eu" traz só as publicações da própria usuária.
+export const lerFeed = ({ filtro, tipo, autora, pagina = 1 } = {}) =>
+  chamar(`/feed${consulta({ filtro, tipo, autora, pagina: pagina > 1 ? pagina : "" })}`);
 export const publicar = (corpo) => chamar("/publicacoes", { method: "POST", corpo });
 export const excluirPublicacao = (id) => chamar(`/publicacoes/${id}`, { method: "DELETE" });
 export const curtir = (id) => chamar(`/publicacoes/${id}/curtir`, { method: "POST" });

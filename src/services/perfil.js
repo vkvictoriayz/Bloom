@@ -19,7 +19,9 @@ export function perfilVazio(usuario = {}) {
     cargo: '',
     local: '',
     foto: '',
+    capa: '',
     sobre: '',
+    preferencias: { modalidades: [], areas: [], disponibilidade: '' },
     objetivo: '',
     links: { linkedin: '', github: '', portfolio: '' },
     tecnicas: [],
@@ -44,6 +46,12 @@ export function lerPerfil(usuario) {
     ...base,
     ...salvo,
     links: { ...base.links, ...salvo.links },
+    preferencias: {
+      ...base.preferencias,
+      ...salvo.preferencias,
+      modalidades: Array.isArray(salvo.preferencias?.modalidades) ? salvo.preferencias.modalidades : [],
+      areas: Array.isArray(salvo.preferencias?.areas) ? salvo.preferencias.areas : [],
+    },
     tecnicas: Array.isArray(salvo.tecnicas) ? salvo.tecnicas : [],
     comportamentais: Array.isArray(salvo.comportamentais) ? salvo.comportamentais : [],
     experiencias: Array.isArray(salvo.experiencias) ? salvo.experiencias : [],
@@ -61,14 +69,14 @@ export function salvarPerfil(perfil) {
 export function itensCompletude(perfil) {
   const temLink = Object.values(perfil.links ?? {}).some((valor) => valor?.trim())
   return [
-    { id: 'foto', rotulo: 'Foto de perfil', feito: Boolean(perfil.foto), ancora: 'apresentacao' },
-    { id: 'cargo', rotulo: 'Cargo ou área desejada', feito: Boolean(perfil.cargo?.trim()), ancora: 'apresentacao' },
-    { id: 'local', rotulo: 'Localização', feito: Boolean(perfil.local?.trim()), ancora: 'apresentacao' },
-    { id: 'sobre', rotulo: 'Apresentação profissional', feito: Boolean(perfil.sobre?.trim()), ancora: 'sobre' },
+    { id: 'foto', rotulo: 'Foto de perfil', feito: Boolean(perfil.foto), ancora: 'imagens' },
+    { id: 'cargo', rotulo: 'Cargo ou área desejada', feito: Boolean(perfil.cargo?.trim()), ancora: 'dados' },
+    { id: 'local', rotulo: 'Localização', feito: Boolean(perfil.local?.trim()), ancora: 'dados' },
+    { id: 'sobre', rotulo: 'Apresentação profissional', feito: Boolean(perfil.sobre?.trim()), ancora: 'resumo' },
     { id: 'tecnicas', rotulo: 'Três competências técnicas', feito: perfil.tecnicas.length >= 3, ancora: 'competencias' },
     { id: 'experiencias', rotulo: 'Uma experiência', feito: perfil.experiencias.length > 0, ancora: 'experiencias' },
     { id: 'formacoes', rotulo: 'Formação acadêmica', feito: perfil.formacoes.length > 0, ancora: 'formacao' },
-    { id: 'links', rotulo: 'Um link profissional', feito: temLink, ancora: 'apresentacao' },
+    { id: 'links', rotulo: 'Um link profissional', feito: temLink, ancora: 'dados' },
   ]
 }
 

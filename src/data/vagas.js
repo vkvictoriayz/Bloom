@@ -177,6 +177,7 @@ function unicos(lista) {
 export const opcoesFiltro = {
   areas: unicos(vagas.map((v) => v.area)),
   modalidades: unicos(vagas.map((v) => v.modalidade)),
+  contratos: unicos(vagas.map((v) => v.contrato)),
   niveis: unicos(vagas.map((v) => v.nivel)),
   locais: unicos(vagas.map((v) => `${v.cidade}, ${v.uf}`)),
   tecnologias: unicos(vagas.flatMap((v) => v.competencias)),
@@ -199,4 +200,16 @@ export function correspondeBusca(vaga, termo) {
     .join(' ')
     .toLowerCase()
     .includes(alvo)
+}
+
+// Recomendação pela sobreposição real entre as competências técnicas do
+// perfil e as tecnologias da vaga. Sem competências no perfil, devolve null.
+export function recomendarVagas(tecnicas = [], limite = 3) {
+  const minhas = new Set(tecnicas.map((t) => t.toLowerCase()))
+  if (!minhas.size) return null
+  return listarVagas()
+    .map((vaga) => ({ vaga, comuns: vaga.competencias.filter((c) => minhas.has(c.toLowerCase())) }))
+    .filter((item) => item.comuns.length > 0)
+    .sort((a, b) => b.comuns.length - a.comuns.length || a.vaga.publicadaHaDias - b.vaga.publicadaHaDias)
+    .slice(0, limite)
 }

@@ -1,12 +1,14 @@
+import { Navigate } from 'react-router-dom'
+
 import HomePublica from './HomePublica'
-import Painel from './Painel'
 import { useSessao } from '../hooks/useSessao'
 
-// "/" mostra duas experiências diferentes: a apresentação da Bloom para
-// visitantes e o painel de trabalho para quem já entrou.
+// "/" é a landing pública. A candidata autenticada vai direto para o feed
+// da área privada.
 function Home() {
   const sessao = useSessao()
-  return sessao?.usuario?.tipo === 'usuaria' || (sessao?.usuario && !sessao.usuario.tipo) ? <Painel /> : <HomePublica />
+  if (sessao?.usuario?.tipo === 'usuaria') return <Navigate to="/candidata/feed" replace />
+  return <HomePublica />
 }
 
 export default Home

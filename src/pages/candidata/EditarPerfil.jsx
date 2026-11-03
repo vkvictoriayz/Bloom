@@ -1,0 +1,495 @@
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+
+import Icone from '../../components/Icone'
+import Capa from '../../components/candidata/Capa'
+import TituloPagina from '../../components/candidata/TituloPagina'
+import { enderecoSeguro, LINKS, periodo } from '../../components/candidata/utilPerfil'
+import Avatar from '../../components/comunidade/Avatar'
+import EditorEtiquetas from '../../components/perfil/EditorEtiquetas'
+import EditorItens from '../../components/perfil/EditorItens'
+import Botao from '../../components/ui/Botao'
+import { AreaTexto, Aviso, Campo, Entrada } from '../../components/ui/Campo'
+import { opcoesFiltro } from '../../data/vagas'
+import { useSessao } from '../../hooks/useSessao'
+import { lerMeuPerfil, salvarMeuPerfil } from '../../services/comunidade'
+import { completude, lerPerfil, salvarPerfil } from '../../services/perfil'
+import { cn } from '../../lib/cn'
+
+const LIMITE_IMAGEM = 1024 * 1024 // 1 MB, para caber no armazenamento do navegador
+
+const SECOES = [
+  { id: 'dados', rotulo: 'Dados básicos' },
+  { id: 'imagens', rotulo: 'Foto e capa' },
+  { id: 'resumo', rotulo: 'Resumo' },
+  { id: 'competencias', rotulo: 'Competências' },
+  { id: 'experiencias', rotulo: 'Experiência' },
+  { id: 'formacao', rotulo: 'Formação' },
+  { id: 'cursos', rotulo: 'Cursos' },
+  { id: 'projetos', rotulo: 'Projetos' },
+  { id: 'preferencias', rotulo: 'Preferências' },
+  { id: 'curriculo', rotulo: 'Currículo' },
+]
+
+function Secao({ id, titulo, descricao, origem, children }) {
+  return (
+    <section id={id} aria-labelledby={`titulo-${id}`} className="scroll-mt-24 rounded-xl border border-linha bg-branco p-6 sm:p-7">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 id={`titulo-${id}`} className="font-display text-2xl text-tinta">
+            {titulo}
+          </h2>
+          {descricao && <p className="mt-1 text-sm text-suave">{descricao}</p>}
+        </div>
+        {origem && (
+          <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', origem === 'servidor' ? 'bg-sucesso-claro text-sucesso' : 'bg-papel-2 text-suave')}>
+            {origem === 'servidor' ? 'Salvo no servidor' : 'Salvo neste navegador'}
+          </span>
+        )}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function EditarPerfil() {
+  const sessao = useSessao()
+  const { hash } = useLocation()
+  const [perfil, setPerfil] = useState(() => lerPerfil(sessao?.usuario))
+  const [mensagens, setMensagens] = useState({})
+  const [curriculo, setCurriculo] = useState(null)
+
+  const [dados, setDados] = useState(() => ({
+    nome: perfil.nome,
+    cargo: perfil.cargo,
+    local: perfil.local,
+    telefone: perfil.telefone,
+    links: { ...perfil.links },
+  }))
+  const [erros, setErros] = useState({})
+  const [resumo, setResumo] = useState({ sobre: perfil.sobre, objetivo: perfil.objetivo })
+  const [preferencias, setPreferencias] = useState(perfil.preferencias)
+
+  // Área, interesses e apresentação curta vêm da API da comunidade.
+  const [comunidade, setComunidade] = useState(null)
+  const [erroComunidade, setErroComunidade] = useState('')
+  const [salvandoComunidade, setSalvandoComunidade] = useState(false)
+
+  const arquivoFoto = useRef(null)
+  const arquivoCapa = useRef(null)
+  const arquivoCurriculo = useRef(null)
+
+  useEffect(() => {
+    document.title = 'Editar perfil · BLOOM'
+    lerMeuPerfil()
+      .then((r) => setComunidade({ area: r.perfil.area, interesses: r.perfil.interesses.join(', '), bio: r.perfil.bio }))
+      .catch((e) => setErroComunidade(e.message))
+  }, [])
+
+  // Links do tipo /candidata/perfil/editar#competencias rolam até a seção.
+  useEffect(() => {
+    if (hash) document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' })
+  }, [hash])
+
+  function avisar(secao, tipo, texto) {
+    setMensagens((m) => ({ ...m, [secao]: { tipo, texto } }))
+  }
+
+  function gravar(secao, mudancas, texto = 'Alterações salvas.') {
+    const novo = { ...perfil, ...mudancas }
+    if (salvarPerfil(novo)) {
+      setPerfil(novo)
+      avisar(secao, 'sucesso', texto)
+      return true
+    }
+    avisar(secao, 'erro', 'Não foi possível salvar neste navegador. Libere o armazenamento do site e tente de novo.')
+    return false
+  }
+
+  function salvarDados(e) {
+    e.preventDefault()
+    const novosErros = {}
+    if (dados.nome.trim().length < 2) novosErros.nome = 'Informe seu nome (ao menos 2 letras).'
+    const digitos = dados.telefone.replace(/\D/g, '')
+    if (dados.telefone.trim() && (digitos.length < 10 || digitos.length > 11)) novosErros.telefone = 'Use DDD + número, com 10 ou 11 dígitos.'
+    LINKS.forEach(({ chave }) => {
+      if (dados.links[chave].trim() && !enderecoSeguro(dados.links[chave].trim())) novosErros[chave] = 'Endereço inválido. Ex.: https://github.com/seu-usuario'
+    })
+    setErros(novosErros)
+    if (Object.keys(novosErros).length) {
+      avisar('dados', 'erro', 'Corrija os campos destacados.')
+      return
+    }
+    gravar('dados', {
+      nome: dados.nome.trim(),
+      cargo: dados.cargo.trim(),
+      local: dados.local.trim(),
+      telefone: dados.telefone.trim(),
+      links: Object.fromEntries(LINKS.map(({ chave }) => [chave, enderecoSeguro(dados.links[chave].trim()) ?? ''])),
+    })
+  }
+
+  async function salvarComunidade(e) {
+    e.preventDefault()
+    setSalvandoComunidade(true)
+    try {
+      const r = await salvarMeuPerfil({
+        area: comunidade.area,
+        bio: comunidade.bio,
+        interesses: comunidade.interesses.split(',').map((i) => i.trim()).filter(Boolean),
+      })
+      setComunidade({ area: r.perfil.area, interesses: r.perfil.interesses.join(', '), bio: r.perfil.bio })
+      avisar('comunidade', 'sucesso', 'Salvo no servidor.')
+    } catch (erro) {
+      avisar('comunidade', 'erro', erro.message)
+    } finally {
+      setSalvandoComunidade(false)
+    }
+  }
+
+  function escolherImagem(campo, secao) {
+    return (e) => {
+      const arquivo = e.target.files?.[0]
+      e.target.value = ''
+      if (!arquivo) return
+      if (!arquivo.type.startsWith('image/')) return avisar(secao, 'erro', 'Escolha um arquivo de imagem (JPG, PNG ou WebP).')
+      if (arquivo.size > LIMITE_IMAGEM) return avisar(secao, 'erro', 'A imagem deve ter até 1 MB.')
+      const leitor = new FileReader()
+      leitor.onload = () => gravar(secao, { [campo]: leitor.result }, campo === 'foto' ? 'Foto atualizada.' : 'Capa atualizada.')
+      leitor.readAsDataURL(arquivo)
+    }
+  }
+
+  function escolherCurriculo(e) {
+    const arquivo = e.target.files?.[0]
+    if (!arquivo) return
+    if (!/\.(pdf|doc|docx)$/i.test(arquivo.name)) {
+      e.target.value = ''
+      return avisar('curriculo', 'erro', 'Selecione um arquivo PDF, DOC ou DOCX.')
+    }
+    setCurriculo(arquivo)
+    avisar('curriculo', 'info', 'Currículo selecionado nesta sessão.')
+  }
+
+  function alternarPreferencia(lista, valor) {
+    setPreferencias((p) => ({ ...p, [lista]: p[lista].includes(valor) ? p[lista].filter((v) => v !== valor) : [...p[lista], valor] }))
+  }
+
+  const mensagem = (secao) =>
+    mensagens[secao] ? (
+      <Aviso tipo={mensagens[secao].tipo} className="mt-4">
+        {mensagens[secao].texto}
+      </Aviso>
+    ) : null
+
+  const { percentual } = completude(perfil)
+
+  return (
+    <>
+      <TituloPagina
+        titulo="Editar perfil"
+        descricao={`Seu perfil está ${percentual}% completo. Cada seção é salva separadamente.`}
+        voltar={{ para: '/candidata/perfil', rotulo: 'Ver meu perfil' }}
+      />
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[200px_minmax(0,1fr)]">
+        <nav aria-label="Seções do perfil" className="hidden lg:block">
+          <ul className="sticky top-24 flex flex-col gap-0.5 border-l border-linha">
+            {SECOES.map((s) => (
+              <li key={s.id}>
+                <a href={`#${s.id}`} className="-ml-px block border-l-2 border-transparent py-1.5 pl-4 text-sm text-suave hover:border-vinho hover:text-tinta">
+                  {s.rotulo}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="flex min-w-0 flex-col gap-6">
+          <Secao id="dados" titulo="Dados básicos" origem="local">
+            <form onSubmit={salvarDados} noValidate className="grid gap-4 sm:grid-cols-2">
+              <Campo rotulo="Nome completo" erro={erros.nome}>
+                {(p) => <Entrada {...p} maxLength={100} value={dados.nome} onChange={(e) => setDados({ ...dados, nome: e.target.value })} />}
+              </Campo>
+              <Campo rotulo="Título profissional" opcional>
+                {(p) => <Entrada {...p} maxLength={100} placeholder="Ex.: Desenvolvedora front-end" value={dados.cargo} onChange={(e) => setDados({ ...dados, cargo: e.target.value })} />}
+              </Campo>
+              <Campo rotulo="Localização" opcional>
+                {(p) => <Entrada {...p} maxLength={100} placeholder="Cidade, UF" value={dados.local} onChange={(e) => setDados({ ...dados, local: e.target.value })} />}
+              </Campo>
+              <Campo rotulo="Telefone" opcional erro={erros.telefone}>
+                {(p) => <Entrada {...p} type="tel" maxLength={20} placeholder="(11) 99999-0000" value={dados.telefone} onChange={(e) => setDados({ ...dados, telefone: e.target.value })} />}
+              </Campo>
+              {LINKS.map(({ chave, rotulo }) => (
+                <Campo key={chave} rotulo={rotulo} opcional erro={erros[chave]}>
+                  {(p) => (
+                    <Entrada
+                      {...p}
+                      type="url"
+                      inputMode="url"
+                      maxLength={200}
+                      placeholder="https://"
+                      value={dados.links[chave]}
+                      onChange={(e) => setDados({ ...dados, links: { ...dados.links, [chave]: e.target.value } })}
+                    />
+                  )}
+                </Campo>
+              ))}
+              <div className="sm:col-span-2">
+                <Botao type="submit">Salvar dados básicos</Botao>
+                {mensagem('dados')}
+              </div>
+            </form>
+          </Secao>
+
+          <Secao id="imagens" titulo="Foto e capa" descricao="Imagens de até 1 MB (JPG, PNG ou WebP)." origem="local">
+            <div className="overflow-hidden rounded-xl border border-linha">
+              <Capa imagem={perfil.capa} className="rounded-none" />
+              <div className="flex flex-wrap items-end gap-4 px-5 pb-5">
+                <Avatar nome={perfil.nome} foto={perfil.foto} tamanho="xl" className="-mt-12 ring-4 ring-branco" />
+                <div className="flex flex-wrap gap-2 pb-1">
+                  <input ref={arquivoFoto} type="file" accept="image/*" hidden onChange={escolherImagem('foto', 'imagens')} />
+                  <input ref={arquivoCapa} type="file" accept="image/*" hidden onChange={escolherImagem('capa', 'imagens')} />
+                  <Botao variante="secundario" tamanho="sm" onClick={() => arquivoFoto.current?.click()}>
+                    <Icone nome="camera" tamanho={16} /> {perfil.foto ? 'Trocar foto' : 'Adicionar foto'}
+                  </Botao>
+                  <Botao variante="secundario" tamanho="sm" onClick={() => arquivoCapa.current?.click()}>
+                    <Icone nome="imagem" tamanho={16} /> {perfil.capa ? 'Trocar capa' : 'Adicionar capa'}
+                  </Botao>
+                  {perfil.foto && (
+                    <Botao variante="fantasma" tamanho="sm" onClick={() => gravar('imagens', { foto: '' }, 'Foto removida.')}>
+                      Remover foto
+                    </Botao>
+                  )}
+                  {perfil.capa && (
+                    <Botao variante="fantasma" tamanho="sm" onClick={() => gravar('imagens', { capa: '' }, 'Capa removida.')}>
+                      Remover capa
+                    </Botao>
+                  )}
+                </div>
+              </div>
+            </div>
+            {mensagem('imagens')}
+          </Secao>
+
+          <Secao id="resumo" titulo="Resumo profissional" origem="local">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                gravar('resumo', { sobre: resumo.sobre.trim(), objetivo: resumo.objetivo.trim() })
+              }}
+              className="flex flex-col gap-4"
+            >
+              <Campo rotulo="Resumo" ajuda={`${resumo.sobre.length}/1000 · Quem você é, no que trabalha e o que busca.`}>
+                {(p) => <AreaTexto {...p} rows={5} maxLength={1000} value={resumo.sobre} onChange={(e) => setResumo({ ...resumo, sobre: e.target.value })} />}
+              </Campo>
+              <Campo rotulo="Objetivo de carreira" opcional>
+                {(p) => <AreaTexto {...p} rows={3} maxLength={500} value={resumo.objetivo} onChange={(e) => setResumo({ ...resumo, objetivo: e.target.value })} />}
+              </Campo>
+              <div>
+                <Botao type="submit">Salvar resumo</Botao>
+                {mensagem('resumo')}
+              </div>
+            </form>
+          </Secao>
+
+          <Secao id="comunidade" titulo="Área de atuação e interesses" descricao="É assim que você aparece para outras integrantes no feed." origem="servidor">
+            {erroComunidade ? (
+              <Aviso tipo="erro">Não foi possível carregar estes dados: {erroComunidade}</Aviso>
+            ) : !comunidade ? (
+              <p className="text-sm text-suave">Carregando…</p>
+            ) : (
+              <form onSubmit={salvarComunidade} className="grid gap-4 sm:grid-cols-2">
+                <Campo rotulo="Área de atuação" ajuda={`${comunidade.area.length}/80`}>
+                  {(p) => <Entrada {...p} maxLength={80} placeholder="Ex.: Engenharia de dados" value={comunidade.area} onChange={(e) => setComunidade({ ...comunidade, area: e.target.value })} />}
+                </Campo>
+                <Campo rotulo="Interesses" ajuda="Separe por vírgula (até 10).">
+                  {(p) => <Entrada {...p} placeholder="Ex.: React, carreira, dados" value={comunidade.interesses} onChange={(e) => setComunidade({ ...comunidade, interesses: e.target.value })} />}
+                </Campo>
+                <Campo rotulo="Apresentação curta" ajuda={`${comunidade.bio.length}/280`} className="sm:col-span-2">
+                  {(p) => <AreaTexto {...p} rows={3} maxLength={280} value={comunidade.bio} onChange={(e) => setComunidade({ ...comunidade, bio: e.target.value })} />}
+                </Campo>
+                <div className="sm:col-span-2">
+                  <Botao type="submit" disabled={salvandoComunidade}>
+                    {salvandoComunidade ? 'Salvando…' : 'Salvar no perfil público'}
+                  </Botao>
+                  {mensagem('comunidade')}
+                </div>
+              </form>
+            )}
+          </Secao>
+
+          <Secao id="competencias" titulo="Competências" descricao="As técnicas são usadas para recomendar vagas." origem="local">
+            <div className="grid gap-8 md:grid-cols-2">
+              <EditorEtiquetas
+                rotulo="Técnicas"
+                variante="cheia"
+                itens={perfil.tecnicas}
+                sugestao="Ex.: React, SQL — Enter para incluir"
+                vazio="Nenhuma competência técnica."
+                aoMudar={(tecnicas) => gravar('competencias', { tecnicas }, 'Competências salvas.')}
+              />
+              <EditorEtiquetas
+                rotulo="Comportamentais"
+                itens={perfil.comportamentais}
+                sugestao="Ex.: Comunicação — Enter para incluir"
+                vazio="Nenhuma competência comportamental."
+                aoMudar={(comportamentais) => gravar('competencias', { comportamentais }, 'Competências salvas.')}
+              />
+            </div>
+            {mensagem('competencias')}
+          </Secao>
+
+          <Secao id="experiencias" titulo="Experiência profissional" origem="local">
+            <EditorItens
+              itens={perfil.experiencias}
+              layout="linha"
+              rotuloAdicionar="Adicionar experiência"
+              vazio={<p className="text-sm text-suave">Inclua estágios, empregos, voluntariado ou freelas.</p>}
+              aoMudar={(experiencias) => gravar('experiencias', { experiencias }, 'Experiências salvas.')}
+              campos={[
+                { nome: 'cargo', rotulo: 'Cargo', obrigatorio: true, max: 100 },
+                { nome: 'empresa', rotulo: 'Empresa', obrigatorio: true, max: 100 },
+                { nome: 'inicio', rotulo: 'Início', tipo: 'month' },
+                { nome: 'fim', rotulo: 'Fim (vazio se atual)', tipo: 'month' },
+                { nome: 'descricao', rotulo: 'O que você fez', tipo: 'textarea', largo: true, max: 250 },
+              ]}
+              renderizar={(item) => (
+                <div>
+                  <p className="font-semibold text-tinta">{item.cargo}</p>
+                  <p className="text-sm text-vinho">{item.empresa}</p>
+                  <p className="text-xs text-suave">{periodo(item.inicio, item.fim)}</p>
+                </div>
+              )}
+            />
+            {mensagem('experiencias')}
+          </Secao>
+
+          <Secao id="formacao" titulo="Formação acadêmica" origem="local">
+            <EditorItens
+              itens={perfil.formacoes}
+              layout="linha"
+              rotuloAdicionar="Adicionar formação"
+              vazio={<p className="text-sm text-suave">Adicione graduação, curso técnico ou ensino médio.</p>}
+              aoMudar={(formacoes) => gravar('formacao', { formacoes }, 'Formação salva.')}
+              campos={[
+                { nome: 'curso', rotulo: 'Curso', obrigatorio: true },
+                { nome: 'instituicao', rotulo: 'Instituição', obrigatorio: true },
+                { nome: 'nivel', rotulo: 'Nível', placeholder: 'Ex.: Graduação, Técnico', max: 50 },
+                { nome: 'inicio', rotulo: 'Início', tipo: 'month' },
+                { nome: 'conclusao', rotulo: 'Conclusão (vazio se cursando)', tipo: 'month' },
+              ]}
+              renderizar={(item) => (
+                <div>
+                  <p className="font-semibold text-tinta">{item.curso}</p>
+                  <p className="text-sm text-vinho">{item.instituicao}</p>
+                  <p className="text-xs text-suave">{periodo(item.inicio, item.conclusao, 'cursando')}</p>
+                </div>
+              )}
+            />
+            {mensagem('formacao')}
+          </Secao>
+
+          <Secao id="cursos" titulo="Cursos e certificações" origem="local">
+            <EditorItens
+              itens={perfil.cursos}
+              rotuloAdicionar="Adicionar curso"
+              vazio={<p className="text-sm text-suave">Bootcamps, cursos livres e certificações contam muito.</p>}
+              aoMudar={(cursos) => gravar('cursos', { cursos }, 'Cursos salvos.')}
+              campos={[
+                { nome: 'nome', rotulo: 'Curso ou certificação', obrigatorio: true },
+                { nome: 'instituicao', rotulo: 'Instituição' },
+                { nome: 'ano', rotulo: 'Ano', tipo: 'number', placeholder: '2025', max: 4 },
+                { nome: 'link', rotulo: 'Link da credencial', tipo: 'url', placeholder: 'https://' },
+              ]}
+              renderizar={(item) => (
+                <div>
+                  <p className="font-semibold text-tinta">{item.nome}</p>
+                  <p className="text-sm text-suave">{[item.instituicao, item.ano].filter(Boolean).join(' · ')}</p>
+                </div>
+              )}
+            />
+            {mensagem('cursos')}
+          </Secao>
+
+          <Secao id="projetos" titulo="Projetos e portfólio">
+            <p className="text-sm text-tinta-2">
+              Seus projetos têm uma página própria, com imagem, tecnologias e links de repositório e demonstração.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Botao as={Link} to="/candidata/projetos">
+                Gerenciar projetos
+              </Botao>
+              <Botao as={Link} to="/candidata/projetos/criar" variante="secundario">
+                <Icone nome="mais" tamanho={16} /> Novo projeto
+              </Botao>
+            </div>
+          </Secao>
+
+          <Secao id="preferencias" titulo="Preferências profissionais" descricao="O que você procura na próxima oportunidade." origem="local">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                gravar('preferencias', { preferencias: { ...preferencias, disponibilidade: preferencias.disponibilidade.trim() } }, 'Preferências salvas.')
+              }}
+              className="flex flex-col gap-6"
+            >
+              {[
+                ['modalidades', 'Modalidades', opcoesFiltro.modalidades],
+                ['areas', 'Áreas de interesse', opcoesFiltro.areas],
+              ].map(([lista, rotulo, opcoes]) => (
+                <fieldset key={lista}>
+                  <legend className="mb-3 text-sm font-semibold text-tinta-2">{rotulo}</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {opcoes.map((op) => {
+                      const ativo = preferencias[lista].includes(op)
+                      return (
+                        <button
+                          key={op}
+                          type="button"
+                          aria-pressed={ativo}
+                          onClick={() => alternarPreferencia(lista, op)}
+                          className={cn(
+                            'rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors',
+                            ativo ? 'border-vinho bg-vinho text-white' : 'border-linha-forte bg-branco text-tinta-2 hover:border-tinta'
+                          )}
+                        >
+                          {op}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </fieldset>
+              ))}
+              <Campo rotulo="Disponibilidade" opcional className="max-w-md">
+                {(p) => (
+                  <Entrada {...p} maxLength={100} placeholder="Ex.: início imediato" value={preferencias.disponibilidade} onChange={(e) => setPreferencias({ ...preferencias, disponibilidade: e.target.value })} />
+                )}
+              </Campo>
+              <div>
+                <Botao type="submit">Salvar preferências</Botao>
+                {mensagem('preferencias')}
+              </div>
+            </form>
+          </Secao>
+
+          <Secao id="curriculo" titulo="Currículo" descricao="PDF, DOC ou DOCX. Fica disponível só nesta sessão até o envio ao servidor existir.">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="grid size-11 place-items-center rounded-md bg-blush text-vinho" aria-hidden="true">
+                <Icone nome="documento" tamanho={20} />
+              </span>
+              <p className="min-w-0 flex-1 truncate font-semibold text-tinta">{curriculo ? curriculo.name : 'Nenhum arquivo selecionado'}</p>
+              <input ref={arquivoCurriculo} type="file" accept=".pdf,.doc,.docx" hidden onChange={escolherCurriculo} />
+              <Botao variante="secundario" onClick={() => arquivoCurriculo.current?.click()}>
+                {curriculo ? 'Trocar' : 'Selecionar arquivo'}
+              </Botao>
+            </div>
+            {mensagem('curriculo')}
+          </Secao>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export default EditarPerfil
