@@ -44,7 +44,7 @@ function PainelPerfil({ nome, perfil, numeros, aoSalvar }) {
   return (
     <section aria-labelledby="titulo-meu-perfil" className="border border-linha bg-branco p-5 sm:p-6">
       <div className="flex items-center gap-4">
-        <Avatar nome={nome} tamanho="lg" />
+        <Avatar nome={nome} foto={perfil.foto} tamanho="lg" />
         <div className="min-w-0">
           <h2 id="titulo-meu-perfil" className="truncate font-display text-xl text-tinta">
             {nome}

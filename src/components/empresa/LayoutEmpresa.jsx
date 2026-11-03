@@ -1,7 +1,7 @@
 import LayoutPrivado from '../layout/LayoutPrivado'
 import { useCarregar } from './useCarregar'
 import { useSessao } from '../../hooks/useSessao'
-import { lerPerfilEmpresa } from '../../services/empresa'
+import { fotoEmpresa, lerPerfilEmpresa } from '../../services/empresa'
 
 // Layout da área privada da empresa (/empresa/* depois do login): a mesma
 // moldura da candidata, com o menu da empresa. Os 12 itens seguem a ordem
@@ -74,7 +74,7 @@ function LayoutEmpresa() {
     <LayoutPrivado
       config={CONFIG}
       usuario={dados ? { nome: dados.empresa.nome, email: dados.empresa.email } : sessao?.usuario}
-      foto={dados?.perfil.logo}
+      foto={fotoEmpresa(dados)}
       contexto={{ perfil: dados, erroPerfil: perfil.tipo === 'erro' ? perfil.erro : '', recarregarPerfil: perfil.recarregar }}
     />
   )

@@ -72,7 +72,7 @@ function Candidaturas() {
               return (
                 <li key={c.id}>
                   <Link to={`/empresa/candidaturas/${c.id}`} className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 p-5 hover:bg-papel sm:grid-cols-[auto_1fr_auto_auto]">
-                    <Avatar nome={c.candidata.nome} />
+                    <Avatar nome={c.candidata.nome} foto={c.candidata.foto} />
                     <span className="min-w-0">
                       <span className="block truncate font-semibold text-tinta">{c.candidata.nome}</span>
                       <span className="block truncate text-sm text-suave">

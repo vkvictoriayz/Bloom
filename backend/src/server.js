@@ -2,6 +2,7 @@ import app from "./app.js";
 import { sequelize } from "./config/database.js";
 import { prepararComunidade } from "./models/Comunidade.js";
 import { prepararEmpresarial } from "./models/Empresarial.js";
+import { prepararImagens } from "./models/Imagem.js";
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16) {
   console.error("Defina JWT_SECRET (mínimo 16 caracteres) no arquivo .env");
@@ -13,6 +14,7 @@ try {
   console.log("Conectado ao MySQL.");
   await prepararComunidade(); // cria as tabelas da comunidade, se ainda não existirem
   await prepararEmpresarial(); // idem para perfil da empresa, vagas e candidaturas
+  await prepararImagens(); // idem para foto e capa de perfil
 } catch (e) {
   console.error("Não foi possível conectar ao MySQL. Confira o .env e se o banco BLOOM existe.");
   console.error(e.message);

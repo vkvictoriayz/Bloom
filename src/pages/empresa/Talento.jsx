@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom'
 
+import Capa from '../../components/candidata/Capa'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Avatar from '../../components/comunidade/Avatar'
 import { ICONE_TIPO } from '../../components/comunidade/tipos'
@@ -9,8 +10,8 @@ import { useCarregar } from '../../components/empresa/useCarregar'
 import { TIPOS, tempoRelativo } from '../../services/comunidade'
 import { lerTalento } from '../../services/empresa'
 
-// Perfil público de uma profissional, visto pela empresa: nome, área,
-// interesses, apresentação e publicações na comunidade. Sem contato
+// Perfil público de uma profissional, visto pela empresa: foto, capa, nome,
+// área, interesses, apresentação e publicações na comunidade. Sem contato
 // pessoal: e-mail só aparece quando ela se candidata a uma vaga da empresa.
 function Talento() {
   const { id } = useParams()
@@ -31,23 +32,26 @@ function Talento() {
     <>
       <TituloPagina titulo={talento.nome} voltar={{ para: '/empresa/talentos', rotulo: 'Banco de talentos' }} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <section className="cartao p-6 lg:self-start">
-          <Avatar nome={talento.nome} tamanho="xl" />
-          <h2 className="mt-4 font-display text-2xl text-tinta">{talento.nome}</h2>
-          <p className="text-vinho">{talento.area || 'Área não informada'}</p>
-          <p className="mt-4 text-sm leading-relaxed text-tinta-2">{talento.bio || 'Sem apresentação publicada.'}</p>
-          {talento.interesses.length > 0 && (
-            <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Interesses">
-              {talento.interesses.map((i) => (
-                <li key={i} className="rounded-full bg-papel-2 px-2.5 py-1 text-xs font-semibold text-tinta-2">
-                  {i}
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-6 border-t border-linha pt-4 text-xs text-suave">
-            Contato e dados pessoais não são exibidos. Eles chegam à empresa quando a profissional se candidata a uma vaga.
-          </p>
+        <section className="cartao overflow-hidden lg:self-start">
+          <Capa imagem={talento.capa} className="h-28 rounded-none sm:h-28" />
+          <div className="px-6 pb-6">
+            <Avatar nome={talento.nome} foto={talento.foto} tamanho="xl" className="relative z-10 -mt-14 ring-4 ring-branco" />
+            <h2 className="mt-4 font-display text-2xl text-tinta">{talento.nome}</h2>
+            <p className="text-vinho">{talento.area || 'Área não informada'}</p>
+            <p className="mt-4 text-sm leading-relaxed text-tinta-2">{talento.bio || 'Sem apresentação publicada.'}</p>
+            {talento.interesses.length > 0 && (
+              <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Interesses">
+                {talento.interesses.map((i) => (
+                  <li key={i} className="rounded-full bg-papel-2 px-2.5 py-1 text-xs font-semibold text-tinta-2">
+                    {i}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-6 border-t border-linha pt-4 text-xs text-suave">
+              Contato e dados pessoais não são exibidos. Eles chegam à empresa quando a profissional se candidata a uma vaga.
+            </p>
+          </div>
         </section>
         <section aria-labelledby="titulo-pubs-talento">
           <h2 id="titulo-pubs-talento" className="mb-3 font-display text-2xl text-tinta">

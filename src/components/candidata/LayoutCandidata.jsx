@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
+
 import LayoutPrivado from '../layout/LayoutPrivado'
 import { useDadosLocais } from '../../hooks/useDadosLocais'
 import { useSessao } from '../../hooks/useSessao'
+import { lerMinhasImagens, sincronizarImagensLocais } from '../../services/imagens'
 import { EVENTO_PERFIL, lerPerfil } from '../../services/perfil'
 
 // Layout da área privada da candidata (/candidata/*, /vagas/:id,
@@ -59,6 +62,14 @@ function LayoutCandidata() {
   const sessao = useSessao()
   const usuario = sessao?.usuario
   const perfil = useDadosLocais(() => lerPerfil(usuario), [EVENTO_PERFIL])
+
+  // Foto e capa ficam no servidor; o perfil local acompanha (outro navegador,
+  // troca feita em outra aba etc.). Sem servidor, segue o que está salvo aqui.
+  useEffect(() => {
+    lerMinhasImagens()
+      .then((r) => sincronizarImagensLocais(usuario, r.imagens))
+      .catch(() => {})
+  }, [usuario])
   return <LayoutPrivado config={CONFIG} usuario={usuario} foto={perfil.foto} />
 }
 

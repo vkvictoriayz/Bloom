@@ -7,15 +7,14 @@ import MarcaEmpresa from '../components/MarcaEmpresa'
 import Pagina from '../components/layout/Pagina'
 import Botao from '../components/ui/Botao'
 import FaixaMarcas from '../components/ui/FaixaMarcas'
-import Foto from '../components/ui/Foto'
 import Perguntas from '../components/ui/Perguntas'
 import TextoEscalonado from '../components/ui/TextoEscalonado'
 import { areasTI } from '../data/areas'
 import { empresas } from '../data/empresas'
-import { fotos } from '../data/imagens'
 import { cn } from '../lib/cn'
 
-import bannerBloom from '../assets/banner-bloom.png'
+import imgAbertura from '../assets/ilustracoes/home-abertura.webp'
+import imgComoFunciona from '../assets/ilustracoes/como-funciona.webp'
 
 // O que a plataforma realmente oferece hoje (nada de números inventados).
 const recursos = [
@@ -120,12 +119,11 @@ function HomePublica() {
           </div>
           <div className="p-3 pt-0 lg:pt-3 lg:pl-0">
             <img
-              src={bannerBloom}
-              alt="Três mulheres sorrindo e trabalhando juntas em notebooks"
-              className="aspect-[4/3] h-full w-full rounded-xl object-cover lg:aspect-auto"
-              style={{ objectPosition: '9% center' }}
-              width="1400"
-              height="1152"
+              src={imgAbertura}
+              alt="Borboleta da BLOOM ligada a trilhas de circuito, representando a conexão entre mulheres e a tecnologia"
+              className="aspect-[3/2] h-full w-full rounded-xl bg-papel object-contain lg:aspect-auto"
+              width="1536"
+              height="1024"
             />
           </div>
         </section>
@@ -167,8 +165,15 @@ function HomePublica() {
 
         {/* ── Como funciona ────────────────────────────────────── */}
         <section aria-labelledby="titulo-passos" className="grid gap-4 lg:grid-cols-2">
-          <div className="min-h-64 overflow-hidden rounded-2xl border border-linha">
-            <Foto foto={fotos.comoFunciona} sizes="(min-width: 1024px) 45vw, 100vw" posicao="center 30%" />
+          <div className="flex items-center overflow-hidden rounded-2xl border border-linha bg-papel">
+            <img
+              src={imgComoFunciona}
+              alt="Etapas na BLOOM: crie seu perfil, busque vagas, candidate-se com facilidade e conquiste sua vaga"
+              className="aspect-[3/2] w-full object-contain"
+              loading="lazy"
+              width="1536"
+              height="1024"
+            />
           </div>
           <div className="rounded-2xl border border-linha bg-branco p-6 sm:p-10">
             <h2 id="titulo-passos" className="font-display text-3xl leading-tight text-tinta sm:text-4xl">

@@ -84,7 +84,7 @@ function DetalheComunidade() {
             <ul className="mt-3 divide-y divide-linha">
               {participantes.map((p) => (
                 <li key={p.id} className="flex items-center gap-3 py-2.5">
-                  <Avatar nome={p.nome} tamanho="sm" />
+                  <Avatar nome={p.nome} foto={p.foto} tamanho="sm" />
                   <span className="truncate text-sm font-semibold">{p.nome}</span>
                 </li>
               ))}

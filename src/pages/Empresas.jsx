@@ -9,9 +9,16 @@ import Botao from '../components/ui/Botao'
 import { Selecao, estiloControle } from '../components/ui/Campo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../components/ui/Vazio'
 import { empresas, segmentos } from '../data/empresas'
-import { fotos } from '../data/imagens'
 import { listarVagas } from '../data/vagas'
 import { cn } from '../lib/cn'
+import imgEmpresas from '../assets/ilustracoes/para-empresas.webp'
+
+// Ilustração do cabeçalho (um único arquivo serve às duas larguras).
+const ilustracao = {
+  pequena: imgEmpresas,
+  grande: imgEmpresas,
+  alt: 'Borboleta da BLOOM cercada por comunidade, código, vagas e currículos aprovados',
+}
 
 const sedes = [...new Set(empresas.map((e) => e.sede))].sort((a, b) => a.localeCompare(b, 'pt-BR'))
 
@@ -104,7 +111,7 @@ function Empresas() {
     <Pagina titulo="Empresas">
       <CabecalhoPagina
         variante="retangular"
-        foto={fotos.empresas}
+        foto={ilustracao}
         rotulo="Empresas"
         titulo={
           <>

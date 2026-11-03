@@ -1,6 +1,7 @@
 import { Op } from "sequelize";
 import { Empresa, Usuaria } from "../models/index.js";
 import { PerfilComunidade, Publicacao, Comentario, Curtida } from "../models/Comunidade.js";
+import { imagensDe } from "../models/Imagem.js";
 import {
   Candidatura,
   CandidaturaEnvio,
@@ -113,13 +114,15 @@ export const perfil = comTratamento(async (req, res) => {
   if (!empresa) return erro(res, 401, "Sessão inválida. Faça login novamente.");
   const p = await meuPerfil(eu(req));
   const vagas = p ? await Vaga.findAll({ where: { perfilEmpresaId: p.id } }) : [];
-  const [candidaturas, pendentes, publicacoes] = await Promise.all([
+  const [candidaturas, pendentes, publicacoes, imagens] = await Promise.all([
     vagas.length ? Candidatura.count({ where: { vagaId: { [Op.in]: vagas.map((v) => v.id) } } }) : 0,
     vagas.length ? Candidatura.count({ where: { vagaId: { [Op.in]: vagas.map((v) => v.id) }, status: "Pendente" } }) : 0,
     PublicacaoEmpresa.count({ where: { empresaId: eu(req) } }),
+    imagensDe("empresa", [eu(req)]),
   ]);
   return res.json({
     empresa: { id: empresa.id, nome: empresa.nome, email: empresa.email, telefone: empresa.telefone ?? "" },
+    imagens: imagens.get(eu(req)),
     perfil: { logo: p?.logo ?? "", descricao: p?.descricao ?? "", localizacao: p?.localizacao ?? "", site: p?.site ?? "" },
     numeros: {
       vagasAbertas: vagas.filter((v) => (v.status ?? "Aberta") === "Aberta").length,
@@ -206,15 +209,17 @@ export const mudarStatusVaga = comTratamento(async (req, res) => {
 async function perfisPublicos(ids) {
   const unicos = [...new Set(ids)];
   if (!unicos.length) return new Map();
-  const [contas, perfis] = await Promise.all([
+  const [contas, perfis, imagens] = await Promise.all([
     Usuaria.findAll({ where: { id: { [Op.in]: unicos } } }),
     PerfilComunidade.findAll({ where: { usuariaId: { [Op.in]: unicos } } }),
+    imagensDe("usuaria", unicos),
   ]);
   const porId = new Map(perfis.map((p) => [p.usuariaId, p]));
   return new Map(
     contas.map((c) => {
       const p = porId.get(c.id);
-      return [c.id, { id: c.id, nome: c.nome, area: p?.area ?? "", interesses: lista(p?.interesses), bio: p?.bio ?? "" }];
+      const { foto, capa } = imagens.get(c.id);
+      return [c.id, { id: c.id, nome: c.nome, area: p?.area ?? "", interesses: lista(p?.interesses), bio: p?.bio ?? "", foto, capa }];
     })
   );
 }
@@ -368,9 +373,11 @@ export const feed = comTratamento(async (req, res) => {
     Publicacao.findAll({ order: [["criadaEm", "DESC"], ["id", "DESC"]], limit: limite }),
     PublicacaoEmpresa.findAll({ order: [["criadaEm", "DESC"], ["id", "DESC"]], limit: limite }),
   ]);
-  const [autoras, empresas] = await Promise.all([
+  const idsEmpresas = [...new Set(dasEmpresas.map((p) => p.empresaId))];
+  const [autoras, empresas, fotosEmpresas] = await Promise.all([
     perfisPublicos(dasIntegrantes.map((p) => p.usuariaId)),
-    Empresa.findAll({ where: { id: { [Op.in]: [...new Set(dasEmpresas.map((p) => p.empresaId))] } } }),
+    Empresa.findAll({ where: { id: { [Op.in]: idsEmpresas } } }),
+    imagensDe("empresa", idsEmpresas),
   ]);
   const nomeEmpresa = new Map(empresas.map((e) => [e.id, e.nome]));
   const ids = dasIntegrantes.map((p) => p.id);
@@ -390,7 +397,7 @@ export const feed = comTratamento(async (req, res) => {
         tipo: p.tipo,
         texto: p.texto,
         criadaEm: p.criadaEm,
-        autor: { id: p.usuariaId, nome: a?.nome ?? "Integrante", detalhe: a?.area ?? "" },
+        autor: { id: p.usuariaId, nome: a?.nome ?? "Integrante", detalhe: a?.area ?? "", foto: a?.foto ?? null },
         curtidas: curtidas.filter((c) => c.publicacaoId === p.id).length,
         comentarios: comentarios.filter((c) => c.publicacaoId === p.id).length,
         minha: false,
@@ -402,7 +409,7 @@ export const feed = comTratamento(async (req, res) => {
       tipo: p.tipo,
       texto: p.texto,
       criadaEm: p.criadaEm,
-      autor: { id: p.empresaId, nome: nomeEmpresa.get(p.empresaId) ?? "Empresa", detalhe: "Empresa" },
+      autor: { id: p.empresaId, nome: nomeEmpresa.get(p.empresaId) ?? "Empresa", detalhe: "Empresa", foto: fotosEmpresas.get(p.empresaId)?.foto ?? null },
       minha: p.empresaId === eu(req),
     })),
   ].sort((x, y) => new Date(y.criadaEm) - new Date(x.criadaEm));

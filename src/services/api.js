@@ -36,3 +36,10 @@ export async function api(caminho, { method = "GET", corpo, token } = {}) {
 
   return dados;
 }
+
+// Endereço de uma imagem guardada no servidor ("/imagens/<chave>", como a API
+// devolve). Fotos de outra origem (data:, https:) passam sem mudança.
+export function urlImagem(caminho) {
+  if (typeof caminho === "string" && caminho.startsWith("/imagens/")) return `${API_URL}${caminho}`;
+  return caminho || "";
+}

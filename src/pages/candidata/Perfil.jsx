@@ -78,7 +78,7 @@ function Perfil() {
         <Capa imagem={perfil.capa} className="rounded-none" />
         <div className="px-6 pb-7 sm:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <Avatar nome={perfil.nome} foto={perfil.foto} tamanho="xl" className="-mt-14 ring-4 ring-branco sm:-mt-16" />
+            <Avatar nome={perfil.nome} foto={perfil.foto} tamanho="xl" className="relative z-10 -mt-14 ring-4 ring-branco sm:-mt-16" />
             <Botao as={Link} to="/candidata/perfil/editar" variante="secundario" className="self-start sm:self-auto">
               <Icone nome="editar" tamanho={16} /> Editar perfil
             </Botao>

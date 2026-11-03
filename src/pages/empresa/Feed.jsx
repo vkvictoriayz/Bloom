@@ -9,7 +9,7 @@ import { useCarregar } from '../../components/empresa/useCarregar'
 import { IlustracaoConexoes } from '../../components/ilustracoes/Ilustracoes'
 import Botao from '../../components/ui/Botao'
 import { Vazio, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
-import { lerFeedEmpresa } from '../../services/empresa'
+import { fotoEmpresa, lerFeedEmpresa } from '../../services/empresa'
 
 // Feed da empresa: mesma estrutura do feed da candidata (coluna central,
 // caixa de publicação no topo), com o resumo do perfil e atalhos para
@@ -41,7 +41,7 @@ function Feed() {
       {/* Resumo da empresa + atalhos */}
       <section className="cartao p-5 sm:p-6">
         <div className="flex items-center gap-4">
-          <Avatar nome={dados?.empresa.nome} foto={dados?.perfil.logo} tamanho="lg" className="rounded-2xl" />
+          <Avatar nome={dados?.empresa.nome} foto={fotoEmpresa(dados)} tamanho="lg" className="rounded-2xl" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-display text-2xl text-tinta">{dados?.empresa.nome ?? 'Sua empresa'}</p>
             <p className="truncate text-sm text-suave">{dados?.perfil.localizacao || 'Localização não informada'}</p>
@@ -74,7 +74,7 @@ function Feed() {
 
       {/* Criar publicação */}
       <Link to="/empresa/publicacoes/criar" className="cartao flex items-center gap-4 p-5 hover:border-vinho/40">
-        <Avatar nome={dados?.empresa.nome} foto={dados?.perfil.logo} className="rounded-xl" />
+        <Avatar nome={dados?.empresa.nome} foto={fotoEmpresa(dados)} className="rounded-xl" />
         <span className="flex-1 rounded-xl bg-papel-2 px-4 py-3 text-[15px] text-suave">Compartilhe uma oportunidade, evento ou novidade…</span>
         <span className="hidden sm:block">
           <Botao as="span" className="pointer-events-none">

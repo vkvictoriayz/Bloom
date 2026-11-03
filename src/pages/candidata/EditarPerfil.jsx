@@ -13,10 +13,12 @@ import { AreaTexto, Aviso, Campo, Entrada } from '../../components/ui/Campo'
 import { opcoesFiltro } from '../../data/vagas'
 import { useSessao } from '../../hooks/useSessao'
 import { lerMeuPerfil, salvarMeuPerfil } from '../../services/comunidade'
-import { completude, lerPerfil, salvarPerfil } from '../../services/perfil'
+import { enviarImagem, removerImagem, soNesteNavegador } from '../../services/imagens'
+import { completude, EVENTO_PERFIL, lerPerfil, salvarPerfil } from '../../services/perfil'
 import { cn } from '../../lib/cn'
 
-const LIMITE_IMAGEM = 1024 * 1024 // 1 MB, para caber no armazenamento do navegador
+const LIMITE_IMAGEM = 1024 * 1024 // 1 MB, o mesmo limite do servidor
+const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp']
 
 const SECOES = [
   { id: 'dados', rotulo: 'Dados básicos' },
@@ -75,6 +77,8 @@ function EditarPerfil() {
   const [erroComunidade, setErroComunidade] = useState('')
   const [salvandoComunidade, setSalvandoComunidade] = useState(false)
 
+  const [enviandoImagem, setEnviandoImagem] = useState(false)
+
   const arquivoFoto = useRef(null)
   const arquivoCapa = useRef(null)
   const arquivoCurriculo = useRef(null)
@@ -86,6 +90,16 @@ function EditarPerfil() {
       .catch((e) => setErroComunidade(e.message))
   }, [])
 
+  // Foto e capa podem mudar fora desta tela (sincronização com o servidor).
+  useEffect(() => {
+    const atualizar = () => {
+      const atual = lerPerfil(sessao?.usuario)
+      setPerfil((p) => ({ ...p, foto: atual.foto, capa: atual.capa }))
+    }
+    window.addEventListener(EVENTO_PERFIL, atualizar)
+    return () => window.removeEventListener(EVENTO_PERFIL, atualizar)
+  }, [sessao?.usuario])
+
   // Links do tipo /candidata/perfil/editar#competencias rolam até a seção.
   useEffect(() => {
     if (hash) document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' })
@@ -96,7 +110,8 @@ function EditarPerfil() {
   }
 
   function gravar(secao, mudancas, texto = 'Alterações salvas.') {
-    const novo = { ...perfil, ...mudancas }
+    // Parte do que está salvo agora: foto e capa podem ter mudado por fora.
+    const novo = { ...lerPerfil(sessao?.usuario), ...mudancas }
     if (salvarPerfil(novo)) {
       setPerfil(novo)
       avisar(secao, 'sucesso', texto)
@@ -147,17 +162,49 @@ function EditarPerfil() {
     }
   }
 
-  function escolherImagem(campo, secao) {
+  // Foto e capa vão para o servidor (outras integrantes e empresas veem);
+  // o perfil local guarda o endereço devolvido, usado no menu e nas telas.
+  async function publicarImagem(campo, imagem) {
+    setEnviandoImagem(true)
+    try {
+      const r = await enviarImagem(campo, imagem)
+      gravar('imagens', { [campo]: r.imagens[campo] }, campo === 'foto' ? 'Foto atualizada.' : 'Capa atualizada.')
+    } catch (erro) {
+      avisar('imagens', 'erro', erro.message)
+    } finally {
+      setEnviandoImagem(false)
+    }
+  }
+
+  async function tirarImagem(campo) {
+    setEnviandoImagem(true)
+    try {
+      await removerImagem(campo)
+      gravar('imagens', { [campo]: '' }, campo === 'foto' ? 'Foto removida.' : 'Capa removida.')
+    } catch (erro) {
+      avisar('imagens', 'erro', erro.message)
+    } finally {
+      setEnviandoImagem(false)
+    }
+  }
+
+  function escolherImagem(campo) {
     return (e) => {
       const arquivo = e.target.files?.[0]
       e.target.value = ''
       if (!arquivo) return
-      if (!arquivo.type.startsWith('image/')) return avisar(secao, 'erro', 'Escolha um arquivo de imagem (JPG, PNG ou WebP).')
-      if (arquivo.size > LIMITE_IMAGEM) return avisar(secao, 'erro', 'A imagem deve ter até 1 MB.')
+      if (!TIPOS_IMAGEM.includes(arquivo.type)) return avisar('imagens', 'erro', 'Escolha uma imagem JPG, PNG ou WebP.')
+      if (arquivo.size > LIMITE_IMAGEM) return avisar('imagens', 'erro', 'A imagem deve ter até 1 MB.')
       const leitor = new FileReader()
-      leitor.onload = () => gravar(secao, { [campo]: leitor.result }, campo === 'foto' ? 'Foto atualizada.' : 'Capa atualizada.')
+      leitor.onload = () => publicarImagem(campo, leitor.result)
       leitor.readAsDataURL(arquivo)
     }
+  }
+
+  // Imagens escolhidas antes do envio ao servidor ficaram só neste navegador.
+  const imagensLocais = ['foto', 'capa'].filter((campo) => soNesteNavegador(perfil[campo]))
+  async function publicarImagensLocais() {
+    for (const campo of imagensLocais) await publicarImagem(campo, perfil[campo])
   }
 
   function escolherCurriculo(e) {
@@ -242,33 +289,48 @@ function EditarPerfil() {
             </form>
           </Secao>
 
-          <Secao id="imagens" titulo="Foto e capa" descricao="Imagens de até 1 MB (JPG, PNG ou WebP)." origem="local">
+          <Secao
+            id="imagens"
+            titulo="Foto e capa"
+            descricao="Imagens de até 1 MB (JPG, PNG ou WebP). Aparecem para outras integrantes e para as empresas."
+            origem="servidor"
+          >
             <div className="overflow-hidden rounded-xl border border-linha">
               <Capa imagem={perfil.capa} className="rounded-none" />
               <div className="flex flex-wrap items-end gap-4 px-5 pb-5">
-                <Avatar nome={perfil.nome} foto={perfil.foto} tamanho="xl" className="-mt-12 ring-4 ring-branco" />
+                <Avatar nome={perfil.nome} foto={perfil.foto} tamanho="xl" className="relative z-10 -mt-12 ring-4 ring-branco" />
                 <div className="flex flex-wrap gap-2 pb-1">
-                  <input ref={arquivoFoto} type="file" accept="image/*" hidden onChange={escolherImagem('foto', 'imagens')} />
-                  <input ref={arquivoCapa} type="file" accept="image/*" hidden onChange={escolherImagem('capa', 'imagens')} />
-                  <Botao variante="secundario" tamanho="sm" onClick={() => arquivoFoto.current?.click()}>
+                  <input ref={arquivoFoto} type="file" accept={TIPOS_IMAGEM.join(',')} hidden onChange={escolherImagem('foto')} />
+                  <input ref={arquivoCapa} type="file" accept={TIPOS_IMAGEM.join(',')} hidden onChange={escolherImagem('capa')} />
+                  <Botao variante="secundario" tamanho="sm" disabled={enviandoImagem} onClick={() => arquivoFoto.current?.click()}>
                     <Icone nome="camera" tamanho={16} /> {perfil.foto ? 'Trocar foto' : 'Adicionar foto'}
                   </Botao>
-                  <Botao variante="secundario" tamanho="sm" onClick={() => arquivoCapa.current?.click()}>
+                  <Botao variante="secundario" tamanho="sm" disabled={enviandoImagem} onClick={() => arquivoCapa.current?.click()}>
                     <Icone nome="imagem" tamanho={16} /> {perfil.capa ? 'Trocar capa' : 'Adicionar capa'}
                   </Botao>
                   {perfil.foto && (
-                    <Botao variante="fantasma" tamanho="sm" onClick={() => gravar('imagens', { foto: '' }, 'Foto removida.')}>
+                    <Botao variante="fantasma" tamanho="sm" disabled={enviandoImagem} onClick={() => tirarImagem('foto')}>
                       Remover foto
                     </Botao>
                   )}
                   {perfil.capa && (
-                    <Botao variante="fantasma" tamanho="sm" onClick={() => gravar('imagens', { capa: '' }, 'Capa removida.')}>
+                    <Botao variante="fantasma" tamanho="sm" disabled={enviandoImagem} onClick={() => tirarImagem('capa')}>
                       Remover capa
                     </Botao>
                   )}
                 </div>
               </div>
             </div>
+            {imagensLocais.length > 0 && (
+              <Aviso tipo="info" className="mt-4">
+                {imagensLocais.length === 2
+                  ? 'Sua foto e sua capa estão salvas só neste navegador, então outras pessoas ainda não as veem.'
+                  : `Sua ${imagensLocais[0]} está salva só neste navegador, então outras pessoas ainda não a veem.`}{' '}
+                <button type="button" onClick={publicarImagensLocais} disabled={enviandoImagem} className="font-semibold text-vinho underline underline-offset-4">
+                  Publicar no perfil
+                </button>
+              </Aviso>
+            )}
             {mensagem('imagens')}
           </Secao>
 

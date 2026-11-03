@@ -4,6 +4,7 @@ import { entrarUsuaria, salvarSessao } from "../services/auth";
 import { destinoAposLogin } from "../services/destino";
 import TelaAcesso, { LinkAcesso } from "../components/TelaAcesso";
 import CampoSenha from "../components/CampoSenha";
+import imgAcesso from "../assets/ilustracoes/acesso-candidata.webp";
 import Botao from "../components/ui/Botao";
 import { Aviso, Campo, Entrada } from "../components/ui/Campo";
 
@@ -48,6 +49,7 @@ function Login() {
       etiqueta="Bem-vinda de volta"
       titulo="Entre na sua conta"
       subtitulo="Florescer é voltar para você."
+      visual={{ imagem: imgAcesso }}
       aoEnviar={entrar}
       rodape={
         <>

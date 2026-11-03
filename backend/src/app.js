@@ -2,11 +2,14 @@ import cors from "cors";
 import express from "express";
 import authRoutes from "./routes/authRoutes.js";
 import comunidadeRoutes from "./routes/comunidadeRoutes.js";
+import imagemRoutes from "./routes/imagemRoutes.js";
 import { candidaturaRoutes, empresaRoutes, vagaRoutes } from "./routes/empresaRoutes.js";
 
 const app = express();
 
 app.use(cors({ origin: process.env.FRONTEND_URL ?? "http://localhost:5173" }));
+// Foto e capa vêm antes do limite geral: essa rota aceita até 1 MB de imagem.
+app.use("/api/imagens", imagemRoutes);
 app.use(express.json({ limit: "20kb" }));
 
 app.get("/api/saude", (req, res) => res.json({ ok: true }));
@@ -23,6 +26,9 @@ app.use((req, res) => res.status(404).json({ erro: "Rota não encontrada." }));
 app.use((err, req, res, next) => {
   if (err.type === "entity.parse.failed") {
     return res.status(400).json({ erro: "Requisição inválida." });
+  }
+  if (err.type === "entity.too.large") {
+    return res.status(413).json({ erro: "O conteúdo enviado é grande demais." });
   }
   console.error(err);
   res.status(500).json({ erro: "Erro interno. Tente novamente mais tarde." });

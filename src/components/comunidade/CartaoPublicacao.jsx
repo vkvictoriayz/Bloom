@@ -176,7 +176,7 @@ function CartaoPublicacao({ publicacao, aoExcluir }) {
     <article className="rounded-2xl border border-linha bg-branco" aria-label={`Publicação de ${dados.autora.nome}`}>
       <div className="p-5 sm:p-6">
         <header className="flex items-start gap-3">
-          <Avatar nome={dados.autora.nome} tamanho="md" />
+          <Avatar nome={dados.autora.nome} foto={dados.autora.foto} tamanho="md" />
           <div className="min-w-0 flex-1">
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span className="truncate font-bold text-tinta">{dados.autora.nome}</span>
@@ -251,7 +251,7 @@ function CartaoPublicacao({ publicacao, aoExcluir }) {
             <ul className="flex flex-col gap-4">
               {comentarios.map((c) => (
                 <li key={c.id} className="flex gap-3">
-                  <Avatar nome={c.autora.nome} tamanho="sm" />
+                  <Avatar nome={c.autora.nome} foto={c.autora.foto} tamanho="sm" />
                   <div className="min-w-0 flex-1 rounded-xl bg-branco px-3.5 py-2.5">
                     <p className="text-sm">
                       <span className="font-semibold text-tinta">{c.autora.nome}</span> <span className="text-suave">· {tempoRelativo(c.criadoEm)}</span>

@@ -34,7 +34,7 @@ export function CartaoTalento({ talento, acao }) {
   return (
     <article className="cartao flex h-full flex-col p-5">
       <div className="flex items-center gap-3">
-        <Avatar nome={talento.nome} tamanho="md" />
+        <Avatar nome={talento.nome} foto={talento.foto} tamanho="md" />
         <div className="min-w-0">
           <h3 className="truncate font-bold text-tinta">{talento.nome}</h3>
           <p className="truncate text-sm text-suave">{talento.area || 'Área não informada'}</p>

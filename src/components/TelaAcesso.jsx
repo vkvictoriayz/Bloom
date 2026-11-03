@@ -3,13 +3,12 @@ import { Link, useLocation } from 'react-router-dom'
 
 import Icone from './Icone'
 import Logo from './Logo'
-import { IlustracaoCodigo, IlustracaoConexoes, IlustracaoCrescimento, IlustracaoEmpresa } from './ilustracoes/Ilustracoes'
+import { IlustracaoCodigo, IlustracaoConexoes, IlustracaoEmpresa } from './ilustracoes/Ilustracoes'
 import { cn } from '../lib/cn'
 
 const ILUSTRACOES = {
   codigo: IlustracaoCodigo,
   conexoes: IlustracaoConexoes,
-  crescimento: IlustracaoCrescimento,
   empresa: IlustracaoEmpresa,
 }
 
@@ -59,9 +58,10 @@ function SeletorPublico({ troca }) {
 // Moldura das telas de acesso (login, cadastro, recuperação de senha e área
 // da empresa), no mesmo visual da área logada: barra superior branca, fundo
 // claro e um cartão com o formulário ao lado do painel visual da marca
-// (ilustração vetorial: codigo, conexoes, crescimento ou empresa).
+// (ilustração vetorial: codigo, conexoes ou empresa, ou uma imagem).
+// Em vez da ilustração vetorial, a tela pode usar uma imagem (visual.imagem).
 function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, visual = {} }) {
-  const { ilustracao, frase, itens } = { ...VISUAL_PADRAO, ...visual }
+  const { ilustracao, imagem, frase, itens } = { ...VISUAL_PADRAO, ...visual }
   const Ilustracao = ILUSTRACOES[ilustracao] ?? IlustracaoCodigo
   const { pathname } = useLocation()
   const troca = TROCAS[pathname]
@@ -93,9 +93,13 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
           {/* Formulário */}
           <section className="px-6 py-8 sm:px-10 sm:py-10 lg:px-12">
             {troca && <SeletorPublico troca={troca} />}
-            <div className="mb-6 rounded-xl bg-papel px-6 py-4 lg:hidden">
-              <Ilustracao className="mx-auto max-w-[260px]" />
-            </div>
+            {imagem ? (
+              <img src={imagem} alt="" className="mb-6 h-40 w-full rounded-xl bg-papel object-cover lg:hidden" width="1024" height="1536" />
+            ) : (
+              <div className="mb-6 rounded-xl bg-papel px-6 py-4 lg:hidden">
+                <Ilustracao className="mx-auto max-w-[260px]" />
+              </div>
+            )}
             {etiqueta && <p className="mb-2 text-xs font-bold tracking-[0.16em] text-vinho uppercase">{etiqueta}</p>}
             <h1 className="font-display text-3xl leading-tight text-tinta sm:text-[2.4rem]">{titulo}</h1>
             {subtitulo && <p className="mt-2 text-[15px] text-suave">{subtitulo}</p>}
@@ -110,7 +114,22 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
           {/* Painel visual da marca: ilustração vetorial, frase e o que a pessoa encontra */}
           <aside className="hidden p-3 lg:block">
             <div className="flex h-full min-h-[560px] flex-col justify-between rounded-xl bg-papel p-8">
-              <Ilustracao className="mx-auto max-w-[400px]" />
+              {imagem ? (
+                // A imagem ocupa o espaço livre sem aumentar a altura do cartão,
+                // que continua definida pelo formulário.
+                <div className="relative -mx-8 -mt-8 mb-6 min-h-[320px] flex-1 overflow-hidden rounded-t-xl">
+                  <img
+                    src={imagem}
+                    alt=""
+                    className="absolute inset-0 size-full object-cover"
+                    style={{ objectPosition: 'center 45%' }}
+                    width="1024"
+                    height="1536"
+                  />
+                </div>
+              ) : (
+                <Ilustracao className="mx-auto max-w-[400px]" />
+              )}
               <div>
                 <p className="max-w-sm font-display text-3xl leading-tight text-vinho-escuro italic">{frase}</p>
                 <ul className="mt-5 flex flex-col gap-2 text-sm text-tinta-2">

@@ -1,5 +1,6 @@
 import { Op } from "sequelize";
 import { Comentario, Conexao, Curtida, PerfilComunidade, Publicacao } from "../models/Comunidade.js";
+import { imagensDe } from "../models/Imagem.js";
 import { Usuaria } from "../models/index.js";
 
 export const TIPOS = ["dica", "experiencia", "projeto", "conquista", "oportunidade", "duvida"];
@@ -18,15 +19,17 @@ function eu(req) {
 async function perfisPor(ids) {
   const unicos = [...new Set(ids)];
   if (!unicos.length) return new Map();
-  const [contas, perfis] = await Promise.all([
+  const [contas, perfis, imagens] = await Promise.all([
     Usuaria.findAll({ where: { id: { [Op.in]: unicos } } }),
     PerfilComunidade.findAll({ where: { usuariaId: { [Op.in]: unicos } } }),
+    imagensDe("usuaria", unicos),
   ]);
   const porId = new Map(perfis.map((p) => [p.usuariaId, p]));
   return new Map(
     contas.map((c) => {
       const p = porId.get(c.id);
-      return [c.id, { id: c.id, nome: c.nome, area: p?.area ?? "", interesses: listaInteresses(p?.interesses), bio: p?.bio ?? "" }];
+      const { foto, capa } = imagens.get(c.id);
+      return [c.id, { id: c.id, nome: c.nome, area: p?.area ?? "", interesses: listaInteresses(p?.interesses), bio: p?.bio ?? "", foto, capa }];
     })
   );
 }

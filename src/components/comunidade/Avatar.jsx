@@ -1,5 +1,6 @@
 import { iniciais } from '../../hooks/useSessao'
 import { cn } from '../../lib/cn'
+import { urlImagem } from '../../services/api'
 
 // Foto da integrante: a foto enviada, quando existe; senão, as iniciais
 // sobre um fundo de marca.
@@ -7,7 +8,7 @@ const TAMANHOS = { sm: 'size-9 text-xs', md: 'size-11 text-sm', lg: 'size-16 tex
 
 function Avatar({ nome, foto, tamanho = 'md', className }) {
   if (foto) {
-    return <img src={foto} alt="" className={cn('shrink-0 rounded-full object-cover ring-1 ring-linha-forte', TAMANHOS[tamanho], className)} />
+    return <img src={urlImagem(foto)} alt="" className={cn('shrink-0 rounded-full object-cover ring-1 ring-linha-forte', TAMANHOS[tamanho], className)} />
   }
   return (
     <span

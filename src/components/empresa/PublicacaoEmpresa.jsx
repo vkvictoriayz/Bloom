@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 
 import Icone from '../Icone'
 import Avatar from '../comunidade/Avatar'
 import { ICONE_TIPO } from '../comunidade/tipos'
 import Botao from '../ui/Botao'
 import { AreaTexto, Aviso, Selecao } from '../ui/Campo'
-import { editarPublicacaoEmpresa, excluirPublicacaoEmpresa } from '../../services/empresa'
+import { editarPublicacaoEmpresa, excluirPublicacaoEmpresa, fotoEmpresa } from '../../services/empresa'
 import { LIMITE_PUBLICACAO, TIPOS, tempoRelativo } from '../../services/comunidade'
 
 const rotuloTipo = (id) => TIPOS.find((t) => t.id === id)?.rotulo ?? id
@@ -22,7 +23,9 @@ function PublicacaoEmpresa({ publicacao, gerenciavel = false, aoMudar, aoExcluir
   const [ocupado, setOcupado] = useState(false)
   const [erro, setErro] = useState('')
 
-  const autor = dados.autor ?? { nome: dados.empresa?.nome, detalhe: 'Empresa' }
+  // Publicações da própria empresa não trazem autor: usa o perfil carregado.
+  const contexto = useOutletContext()
+  const autor = dados.autor ?? { nome: dados.empresa?.nome, foto: fotoEmpresa(contexto?.perfil), detalhe: 'Empresa' }
   const daEmpresa = (dados.origem ?? 'empresa') === 'empresa'
 
   async function salvar(e) {
@@ -58,7 +61,7 @@ function PublicacaoEmpresa({ publicacao, gerenciavel = false, aoMudar, aoExcluir
   return (
     <article className="cartao p-5 sm:p-6" aria-label={`Publicação de ${autor.nome}`}>
       <header className="flex items-start gap-3">
-        <Avatar nome={autor.nome} className={daEmpresa ? 'rounded-xl' : undefined} />
+        <Avatar nome={autor.nome} foto={autor.foto} className={daEmpresa ? 'rounded-xl' : undefined} />
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="truncate font-bold text-tinta">{autor.nome}</span>

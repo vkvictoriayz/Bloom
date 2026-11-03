@@ -49,6 +49,8 @@ export function converterVaga(v) {
       cor: '#85243d',
       corTexto: '#ffffff',
       logo: empresa.logo || null,
+      foto: empresa.foto || null,
+      capa: empresa.capa || null,
       site: empresa.site || '',
     },
     area: v.area || 'Não informada',

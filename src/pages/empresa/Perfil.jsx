@@ -8,7 +8,7 @@ import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
 import { useCarregar } from '../../components/empresa/useCarregar'
 import Botao from '../../components/ui/Botao'
 import Selo from '../../components/ui/Selo'
-import { dataCurta, listarPublicacoesEmpresa, listarVagasEmpresa, VISUAL_VAGA } from '../../services/empresa'
+import { dataCurta, fotoEmpresa, listarPublicacoesEmpresa, listarVagasEmpresa, VISUAL_VAGA } from '../../services/empresa'
 import { tempoRelativo } from '../../services/comunidade'
 
 // Perfil da empresa (visão profissional). Dados de CADASTRO_EMPRESA e
@@ -41,10 +41,10 @@ function Perfil() {
       <TituloPagina titulo="Perfil da empresa" descricao="É assim que sua empresa aparece na Bloom." />
 
       <section className="cartao overflow-hidden">
-        <Capa className="rounded-none" />
+        <Capa imagem={dados.imagens?.capa} className="rounded-none" />
         <div className="px-6 pb-7 sm:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <Avatar nome={empresa.nome} foto={perfil.logo} tamanho="xl" className="-mt-14 rounded-2xl bg-branco ring-4 ring-branco sm:-mt-16 [&]:rounded-2xl" />
+            <Avatar nome={empresa.nome} foto={fotoEmpresa(dados)} tamanho="xl" className="relative z-10 -mt-14 rounded-2xl bg-branco ring-4 ring-branco sm:-mt-16 [&]:rounded-2xl" />
             <Botao as={Link} to="/empresa/perfil/editar" variante="secundario" className="self-start sm:self-auto">
               <Icone nome="editar" tamanho={16} /> Editar perfil
             </Botao>

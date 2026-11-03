@@ -1,11 +1,18 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 
+import Icone from '../../components/Icone'
+import Capa from '../../components/candidata/Capa'
 import TituloPagina from '../../components/candidata/TituloPagina'
+import Avatar from '../../components/comunidade/Avatar'
 import { Carregando } from '../../components/empresa/Estados'
 import Botao from '../../components/ui/Botao'
 import { AreaTexto, Aviso, Campo, Entrada } from '../../components/ui/Campo'
-import { salvarPerfilEmpresa } from '../../services/empresa'
+import { fotoEmpresa, salvarPerfilEmpresa } from '../../services/empresa'
+import { enviarImagem, removerImagem } from '../../services/imagens'
+
+const LIMITE_IMAGEM = 1024 * 1024 // 1 MB, o mesmo limite do servidor
+const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp']
 
 function urlValida(valor) {
   if (!valor) return true
@@ -17,8 +24,87 @@ function urlValida(valor) {
   }
 }
 
+// Foto e capa da empresa: enviadas ao servidor na hora (como na candidata) e
+// vistas pelas candidatas nas vagas e por quem acessa o perfil da empresa.
+function ImagensEmpresa({ dados, aoMudar }) {
+  const [ocupado, setOcupado] = useState(false)
+  const [aviso, setAviso] = useState(null)
+  const arquivoFoto = useRef(null)
+  const arquivoCapa = useRef(null)
+  const foto = fotoEmpresa(dados)
+  const capa = dados.imagens?.capa
+
+  async function executar(acao, texto) {
+    setOcupado(true)
+    setAviso(null)
+    try {
+      await acao()
+      setAviso({ tipo: 'sucesso', texto })
+      aoMudar()
+    } catch (erro) {
+      setAviso({ tipo: 'erro', texto: erro.message })
+    } finally {
+      setOcupado(false)
+    }
+  }
+
+  function escolher(campo) {
+    return (e) => {
+      const arquivo = e.target.files?.[0]
+      e.target.value = ''
+      if (!arquivo) return
+      if (!TIPOS_IMAGEM.includes(arquivo.type)) return setAviso({ tipo: 'erro', texto: 'Escolha uma imagem JPG, PNG ou WebP.' })
+      if (arquivo.size > LIMITE_IMAGEM) return setAviso({ tipo: 'erro', texto: 'A imagem deve ter até 1 MB.' })
+      const leitor = new FileReader()
+      leitor.onload = () => executar(() => enviarImagem(campo, leitor.result), campo === 'foto' ? 'Foto atualizada.' : 'Capa atualizada.')
+      leitor.readAsDataURL(arquivo)
+    }
+  }
+
+  return (
+    <section aria-labelledby="titulo-imagens-empresa" className="cartao max-w-3xl overflow-hidden">
+      <Capa imagem={capa} className="rounded-none" />
+      <div className="flex flex-wrap items-end gap-4 px-6 pb-6 sm:px-8">
+        <Avatar nome={dados.empresa.nome} foto={foto} tamanho="xl" className="relative z-10 -mt-12 rounded-2xl bg-branco ring-4 ring-branco" />
+        <div className="min-w-0 flex-1 pb-1">
+          <h2 id="titulo-imagens-empresa" className="font-semibold text-tinta">
+            Foto e capa
+          </h2>
+          <p className="text-sm text-suave">Imagens de até 1 MB (JPG, PNG ou WebP). Aparecem para as candidatas.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <input ref={arquivoFoto} type="file" accept={TIPOS_IMAGEM.join(',')} hidden onChange={escolher('foto')} />
+            <input ref={arquivoCapa} type="file" accept={TIPOS_IMAGEM.join(',')} hidden onChange={escolher('capa')} />
+            <Botao variante="secundario" tamanho="sm" disabled={ocupado} onClick={() => arquivoFoto.current?.click()}>
+              <Icone nome="camera" tamanho={16} /> {dados.imagens?.foto ? 'Trocar foto' : 'Adicionar foto'}
+            </Botao>
+            <Botao variante="secundario" tamanho="sm" disabled={ocupado} onClick={() => arquivoCapa.current?.click()}>
+              <Icone nome="imagem" tamanho={16} /> {capa ? 'Trocar capa' : 'Adicionar capa'}
+            </Botao>
+            {dados.imagens?.foto && (
+              <Botao variante="fantasma" tamanho="sm" disabled={ocupado} onClick={() => executar(() => removerImagem('foto'), 'Foto removida.')}>
+                Remover foto
+              </Botao>
+            )}
+            {capa && (
+              <Botao variante="fantasma" tamanho="sm" disabled={ocupado} onClick={() => executar(() => removerImagem('capa'), 'Capa removida.')}>
+                Remover capa
+              </Botao>
+            )}
+          </div>
+        </div>
+      </div>
+      {aviso && (
+        <div className="px-6 pb-6 sm:px-8">
+          <Aviso tipo={aviso.tipo}>{aviso.texto}</Aviso>
+        </div>
+      )}
+    </section>
+  )
+}
+
 // Edição do perfil da empresa (PERFIL_EMPRESA): só os campos que o banco
-// tem. O logo é um endereço de imagem (ainda não há envio de arquivos).
+// tem. A foto e a capa são enviadas à parte (ImagensEmpresa); o logo por
+// endereço, de versões anteriores, continua valendo quando não há foto.
 function FormularioPerfil({ inicial, aoSalvar }) {
   const [dados, setDados] = useState(inicial)
   const [erros, setErros] = useState({})
@@ -32,7 +118,6 @@ function FormularioPerfil({ inicial, aoSalvar }) {
     if (dados.descricao.length > 500) novos.descricao = 'Use até 500 caracteres.'
     if (dados.localizacao.length > 150) novos.localizacao = 'Use até 150 caracteres.'
     if (!urlValida(dados.site.trim())) novos.site = 'Use um endereço completo, como https://empresa.com.br'
-    if (!urlValida(dados.logo.trim())) novos.logo = 'Use um endereço de imagem completo (https://…).'
     setErros(novos)
     if (Object.keys(novos).length) return setEstado({ tipo: 'erro', texto: 'Corrija os campos destacados.' })
 
@@ -64,9 +149,6 @@ function FormularioPerfil({ inicial, aoSalvar }) {
           {(p) => <Entrada {...p} type="url" maxLength={255} placeholder="https://" value={dados.site} onChange={campo('site')} />}
         </Campo>
       </div>
-      <Campo rotulo="Endereço do logotipo" opcional erro={erros.logo} ajuda={!erros.logo ? 'Link para uma imagem do logo (PNG, JPG ou SVG).' : undefined}>
-        {(p) => <Entrada {...p} type="url" maxLength={255} placeholder="https://" value={dados.logo} onChange={campo('logo')} />}
-      </Campo>
       {estado.tipo === 'erro' && <Aviso tipo="erro">{estado.texto}</Aviso>}
       {estado.tipo === 'sucesso' && <Aviso tipo="sucesso">{estado.texto}</Aviso>}
       <div className="flex flex-wrap gap-2 border-t border-linha pt-5">
@@ -90,7 +172,14 @@ function EditarPerfil() {
         descricao={dados ? `Nome e e-mail vêm do cadastro de ${dados.empresa.nome}.` : undefined}
         voltar={{ para: '/empresa/perfil', rotulo: 'Perfil da empresa' }}
       />
-      {dados ? <FormularioPerfil inicial={dados.perfil} aoSalvar={recarregarPerfil} /> : <Carregando quantidade={1} altura="h-80" />}
+      {dados ? (
+        <div className="flex flex-col gap-6">
+          <ImagensEmpresa dados={dados} aoMudar={recarregarPerfil} />
+          <FormularioPerfil inicial={dados.perfil} aoSalvar={recarregarPerfil} />
+        </div>
+      ) : (
+        <Carregando quantidade={1} altura="h-80" />
+      )}
     </>
   )
 }

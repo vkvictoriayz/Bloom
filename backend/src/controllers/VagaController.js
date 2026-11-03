@@ -1,6 +1,7 @@
 import { Op } from "sequelize";
 import { Empresa } from "../models/index.js";
 import { Candidatura, CandidaturaEnvio, PerfilEmpresa, Vaga } from "../models/Empresarial.js";
+import { imagensDe } from "../models/Imagem.js";
 
 // Vagas publicadas pelas empresas, vistas pela candidata, e as candidaturas
 // dela. Rotas exigem login de usuária (exigirLogin(["usuaria"])).
@@ -25,8 +26,12 @@ async function empresasDas(vagas) {
   const perfis = await PerfilEmpresa.findAll({ where: { id: { [Op.in]: [...new Set(vagas.map((v) => v.perfilEmpresaId))] } } });
   const contas = await Empresa.findAll({ where: { id: { [Op.in]: perfis.map((p) => p.empresaId) } } });
   const nome = new Map(contas.map((c) => [c.id, c.nome]));
+  const imagens = await imagensDe("empresa", perfis.map((p) => p.empresaId));
   return new Map(
-    perfis.map((p) => [p.id, { id: p.empresaId, nome: nome.get(p.empresaId) ?? "Empresa", logo: p.logo ?? "", site: p.site ?? "", localizacao: p.localizacao ?? "" }])
+    perfis.map((p) => {
+      const { foto, capa } = imagens.get(p.empresaId);
+      return [p.id, { id: p.empresaId, nome: nome.get(p.empresaId) ?? "Empresa", logo: p.logo ?? "", foto, capa, site: p.site ?? "", localizacao: p.localizacao ?? "" }];
+    })
   );
 }
 

@@ -74,7 +74,7 @@ function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: 
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {(limite ? pessoas?.slice(0, limite) : pessoas)?.map((p) => (
             <li key={p.id} className="flex flex-col items-center rounded-xl border border-linha p-4 text-center">
-              <Avatar nome={p.nome} tamanho="lg" />
+              <Avatar nome={p.nome} foto={p.foto} tamanho="lg" />
               <p className="mt-3 w-full truncate text-sm font-semibold text-tinta">{p.nome}</p>
               <p className="w-full truncate text-xs text-suave">{p.area || 'Área não informada'}</p>
               <Botao
@@ -94,7 +94,7 @@ function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: 
         <ul className="mt-2 divide-y divide-linha">
           {(limite ? pessoas?.slice(0, limite) : pessoas)?.map((p) => (
             <li key={p.id} className="flex items-center gap-3 py-3.5">
-              <Avatar nome={p.nome} tamanho="sm" />
+              <Avatar nome={p.nome} foto={p.foto} tamanho="sm" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-tinta">{p.nome}</p>
                 <p className="truncate text-xs text-suave">{p.area || 'Área não informada'}</p>

@@ -54,7 +54,7 @@ function BancoTalentos() {
               {pessoas.map((p) => (
                 <li key={p.id}>
                   <Link to={`/empresa/talentos/${p.id}`} className="flex items-center gap-3 py-3 hover:text-vinho">
-                    <Avatar nome={p.nome} tamanho="sm" />
+                    <Avatar nome={p.nome} foto={p.foto} tamanho="sm" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold">{p.nome}</span>
                       <span className="block truncate text-xs text-suave">{p.interesses.join(' · ') || 'Interesses não informados'}</span>

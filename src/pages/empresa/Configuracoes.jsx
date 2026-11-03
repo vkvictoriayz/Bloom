@@ -76,7 +76,7 @@ function Configuracoes() {
 
         <Secao icone="olho" titulo="Privacidade" descricao="O que as candidatas veem.">
           <p className="text-sm text-tinta-2">
-            Candidatas autenticadas veem o nome da empresa e as vagas abertas. O perfil (descrição, localização, site e logotipo) aparece no
+            Candidatas autenticadas veem o nome da empresa e as vagas abertas. O perfil (foto, capa, descrição, localização e site) aparece no
             perfil da empresa. A empresa vê apenas dados públicos das profissionais e, nas candidaturas, o que cada candidata enviou.
           </p>
         </Secao>

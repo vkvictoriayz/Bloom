@@ -56,7 +56,7 @@ function DetalheCandidatura() {
         <div className="flex flex-col gap-6">
           <section className="cartao p-6">
             <div className="flex items-center gap-4">
-              <Avatar nome={candidata.nome} tamanho="lg" />
+              <Avatar nome={candidata.nome} foto={candidata.foto} tamanho="lg" />
               <div className="min-w-0">
                 <h2 className="font-display text-2xl text-tinta">{candidata.nome}</h2>
                 <p className="text-vinho">{envio.titulo || candidata.area || 'Título não informado'}</p>

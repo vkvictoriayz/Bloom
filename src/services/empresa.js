@@ -66,3 +66,9 @@ export function dataCurta(valor) {
   const [a, m, d] = String(valor).slice(0, 10).split('-')
   return a && m && d ? `${d}/${m}/${a}` : String(valor)
 }
+
+// Foto da empresa: a enviada pela própria empresa ou, sem ela, o logo
+// informado por endereço (PERFIL_EMPRESA.logo).
+export function fotoEmpresa(dados) {
+  return dados?.imagens?.foto || dados?.perfil?.logo || ''
+}
