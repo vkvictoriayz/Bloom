@@ -1,4 +1,5 @@
-import { useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 
 import Capa from '../../components/candidata/Capa'
 import TituloPagina from '../../components/candidata/TituloPagina'
@@ -9,7 +10,84 @@ import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
 import PerfilProfissional from '../../components/empresa/PerfilProfissional'
 import { useCarregar } from '../../components/empresa/useCarregar'
 import { TIPOS, tempoRelativo } from '../../services/comunidade'
-import { lerTalento } from '../../services/empresa'
+import Botao from '../../components/ui/Botao'
+import { AreaTexto, Campo, Selecao } from '../../components/ui/Campo'
+import { convidarTalento, lerTalento, listarVagasEmpresa } from '../../services/empresa'
+
+// Convite para um processo seletivo: escolhe uma vaga aberta e (opcional)
+// escreve uma mensagem. A profissional recebe uma notificação de convite.
+function Convidar({ talento, convidadaPara, aoConvidar }) {
+  const vagas = useCarregar(() => listarVagasEmpresa('Aberta'))
+  const [vagaId, setVagaId] = useState('')
+  const [mensagem, setMensagem] = useState('')
+  const [estado, setEstado] = useState(null)
+
+  if (vagas.tipo !== 'pronto') return null
+  const disponiveis = vagas.dados.vagas.filter((v) => !convidadaPara.includes(v.id))
+  const convidadas = vagas.dados.vagas.filter((v) => convidadaPara.includes(v.id))
+
+  async function enviar(e) {
+    e.preventDefault()
+    if (!vagaId) return setEstado({ tipo: 'erro', texto: 'Escolha uma vaga.' })
+    setEstado({ tipo: 'enviando' })
+    try {
+      await convidarTalento(talento.id, { vagaId: Number(vagaId), mensagem: mensagem.trim() })
+      setEstado({ tipo: 'sucesso', texto: `Convite enviado para ${talento.nome}.` })
+      setVagaId('')
+      setMensagem('')
+      aoConvidar()
+    } catch (erro) {
+      setEstado({ tipo: 'erro', texto: erro.message })
+    }
+  }
+
+  return (
+    <section className="cartao p-6" aria-labelledby="titulo-convite">
+      <h2 id="titulo-convite" className="font-display text-2xl text-tinta">
+        Convidar para um processo seletivo
+      </h2>
+      {convidadas.length > 0 && (
+        <p className="mt-2 text-sm text-tinta-2">Já convidada para: {convidadas.map((v) => v.titulo).join(', ')}.</p>
+      )}
+      {vagas.dados.vagas.length === 0 ? (
+        <p className="mt-3 text-sm text-suave">
+          Você não tem vagas publicadas.{' '}
+          <Link to="/empresa/vagas/criar" className="font-semibold text-vinho hover:underline">
+            Publicar uma vaga
+          </Link>
+        </p>
+      ) : disponiveis.length === 0 ? (
+        <p className="mt-3 text-sm text-suave">Ela já foi convidada para todas as suas vagas abertas.</p>
+      ) : (
+        <form onSubmit={enviar} noValidate className="mt-4 flex flex-col gap-4">
+          <Campo rotulo="Vaga">
+            {(p) => (
+              <Selecao {...p} value={vagaId} onChange={(e) => setVagaId(e.target.value)}>
+                <option value="">Escolha uma vaga aberta</option>
+                {disponiveis.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.titulo}
+                  </option>
+                ))}
+              </Selecao>
+            )}
+          </Campo>
+          <Campo rotulo="Mensagem" opcional ajuda={`${mensagem.length}/500`}>
+            {(p) => <AreaTexto {...p} rows={3} maxLength={500} value={mensagem} onChange={(e) => setMensagem(e.target.value)} />}
+          </Campo>
+          {estado?.texto && (
+            <p role="status" className={estado.tipo === 'erro' ? 'text-sm text-erro' : 'text-sm text-sucesso'}>
+              {estado.texto}
+            </p>
+          )}
+          <Botao type="submit" className="self-start" disabled={estado?.tipo === 'enviando'}>
+            <Icone nome="mensagem" tamanho={16} /> {estado?.tipo === 'enviando' ? 'Enviando…' : 'Enviar convite'}
+          </Botao>
+        </form>
+      )}
+    </section>
+  )
+}
 
 // Perfil público de uma profissional, visto pela empresa: foto, capa, nome,
 // área, interesses, apresentação e publicações na comunidade. Sem contato
@@ -28,7 +106,7 @@ function Talento() {
     )
   }
 
-  const { talento, publicacoes, profissional } = r.dados
+  const { talento, publicacoes, profissional, convidadaPara = [] } = r.dados
   return (
     <>
       <TituloPagina titulo={talento.nome} voltar={{ para: '/empresa/talentos', rotulo: 'Banco de talentos' }} />
@@ -62,6 +140,7 @@ function Talento() {
           </div>
         </section>
         <div className="flex flex-col gap-6">
+          <Convidar talento={{ ...talento, id }} convidadaPara={convidadaPara} aoConvidar={r.recarregar} />
           {profissional && <PerfilProfissional perfil={profissional} />}
           <section aria-labelledby="titulo-pubs-talento">
             <h2 id="titulo-pubs-talento" className="mb-3 font-display text-2xl text-tinta">

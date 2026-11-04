@@ -37,6 +37,7 @@ const CONFIG = {
       itens: [
         { rotulo: 'Mensagens', para: '/candidata/mensagens', icone: 'mensagem' },
         { rotulo: 'Notificações', para: '/candidata/notificacoes', icone: 'sino' },
+        { rotulo: 'Premium', para: '/candidata/premium', icone: 'coroa' },
         { rotulo: 'Meu perfil', para: '/candidata/perfil', icone: 'perfil' },
         { rotulo: 'Configurações', para: '/candidata/configuracoes', icone: 'engrenagem' },
       ],

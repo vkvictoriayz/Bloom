@@ -31,6 +31,10 @@ export function situacao(candidatura) {
   switch (candidatura.status) {
     case 'Em análise':
       return { grupo: 'andamento', rotulo: 'Em análise', variante: 'alerta', etapasConcluidas: 1, etapaAtual: 1 }
+    // A entrevista faz parte da análise da empresa (não há histórico de datas
+    // de cada etapa para mostrá-la como etapa separada concluída).
+    case 'Em entrevista':
+      return { grupo: 'andamento', rotulo: 'Em entrevista', variante: 'alerta', etapasConcluidas: 1, etapaAtual: 1, detalheAtual: 'Em entrevista' }
     case 'Aprovada':
       return { grupo: 'aprovada', rotulo: 'Aprovada', variante: 'sucesso', etapasConcluidas: 3, etapaAtual: null }
     case 'Reprovada':
@@ -38,6 +42,6 @@ export function situacao(candidatura) {
     case 'Encerrada':
       return { grupo: 'encerrada', rotulo: 'Vaga encerrada', variante: 'neutro', etapasConcluidas: 1, etapaAtual: null }
     default:
-      return { grupo: 'andamento', rotulo: 'Enviada', variante: 'vinho', etapasConcluidas: 1, etapaAtual: 1 }
+      return { grupo: 'andamento', rotulo: 'Recebida', variante: 'vinho', etapasConcluidas: 1, etapaAtual: 1 }
   }
 }

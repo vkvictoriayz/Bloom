@@ -2,6 +2,7 @@ import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 
 import ExcluirConta from '../../components/conta/ExcluirConta'
 import FormularioSenha from '../../components/conta/FormularioSenha'
+import PreferenciasNotificacao from '../../components/conta/PreferenciasNotificacao'
 import Icone from '../../components/Icone'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Botao from '../../components/ui/Botao'
@@ -73,7 +74,7 @@ function Configuracoes() {
         </Secao>
 
         <Secao icone="sino" titulo="Notificações" descricao="O que a empresa recebe.">
-          <EmBreve>As preferências de notificação dependem de uma API de notificações (a tabela CONFIG_EMPRESA já existe no banco).</EmBreve>
+          <PreferenciasNotificacao tipoConta="empresa" />
         </Secao>
 
         <Secao icone="olho" titulo="Privacidade" descricao="O que as candidatas veem.">

@@ -1,11 +1,42 @@
 import { Op } from "sequelize";
 import { Notificacao } from "../models/Interacao.js";
+import { PreferenciaNotificacao } from "../models/Premium.js";
 
-// Cria uma notificação. Com "chave", não repete o aviso enquanto o anterior
-// com a mesma chave não for lido (ex.: uma conversa com várias mensagens
-// novas gera um aviso só). Falha aqui nunca derruba a ação principal.
+// Categoria de preferência de cada tipo de notificação.
+const CATEGORIA = {
+  vaga: "vagasCompativeis",
+  candidatura: "candidaturas",
+  mensagem: "mensagens",
+  convite: "convites",
+  curtida: "comunidade",
+  comentario: "comunidade",
+  conexao: "comunidade",
+  plataforma: "plataforma",
+};
+
+// Categorias que fazem sentido para cada tipo de conta.
+export const CATEGORIAS = {
+  usuaria: ["vagasCompativeis", "candidaturas", "mensagens", "convites", "comunidade", "plataforma"],
+  empresa: ["candidaturas", "mensagens", "plataforma"],
+};
+
+// Preferências salvas (sem linha, tudo ligado).
+export async function preferenciasDe(tipoConta, contaId) {
+  const linha = await PreferenciaNotificacao.findOne({ where: { tipoConta, contaId } });
+  return Object.fromEntries(CATEGORIAS[tipoConta].map((c) => [c, linha ? linha[c] !== false : true]));
+}
+
+// Cria uma notificação, se a conta não desligou a categoria dela. Com
+// "chave", não repete o aviso enquanto o anterior com a mesma chave não for
+// lido (ex.: várias mensagens da mesma conversa geram um aviso só). Falha
+// aqui nunca derruba a ação principal.
 export async function notificar({ tipoConta, contaId, tipo, texto, link = null, chave = null }) {
   try {
+    const categoria = CATEGORIA[tipo];
+    if (categoria) {
+      const prefs = await PreferenciaNotificacao.findOne({ where: { tipoConta, contaId } });
+      if (prefs && prefs[categoria] === false) return;
+    }
     if (chave) {
       const aberta = await Notificacao.findOne({ where: { tipoConta, contaId, chave, lidaEm: { [Op.is]: null } } });
       if (aberta) {

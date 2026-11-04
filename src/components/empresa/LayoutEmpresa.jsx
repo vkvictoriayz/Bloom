@@ -33,6 +33,7 @@ const CONFIG = {
       grupo: 'Recrutamento',
       icone: 'maleta',
       itens: [
+        { rotulo: 'Painel de recrutamento', para: '/empresa/dashboard', icone: 'grafico' },
         { rotulo: 'Gerenciar vagas', para: '/empresa/vagas', icone: 'maleta' },
         { rotulo: 'Candidaturas recebidas', para: '/empresa/candidaturas', icone: 'candidaturas' },
         { rotulo: 'Banco de talentos', para: '/empresa/talentos', icone: 'estrela' },
@@ -44,6 +45,7 @@ const CONFIG = {
         { rotulo: 'Comunidades', para: '/empresa/comunidades', icone: 'grupo' },
         { rotulo: 'Mensagens', para: '/empresa/mensagens', icone: 'mensagem' },
         { rotulo: 'Notificações', para: '/empresa/notificacoes', icone: 'sino' },
+        { rotulo: 'Premium', para: '/empresa/premium', icone: 'coroa' },
         { rotulo: 'Configurações', para: '/empresa/configuracoes', icone: 'engrenagem' },
       ],
     },

@@ -32,6 +32,18 @@ function dataBR(data) {
   return a && m && d ? `${d}/${m}/${a}` : ''
 }
 
+const linhas = (s) => (s ? s.split('\n').map((l) => l.trim()).filter(Boolean) : null)
+
+// "R$ 5.000,00 a R$ 7.000,00" (ou um valor só).
+function faixa(min, max) {
+  if (min === null || min === undefined) return null
+  const brl = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  return max !== null && max !== undefined && Number(max) !== Number(min) ? `${brl(min)} a ${brl(max)}` : brl(min)
+}
+
+// Perfil público de uma empresa (para candidatas) e as vagas abertas dela.
+export const lerEmpresaPublica = (id) => chamar(`/vagas/empresas/${encodeURIComponent(id)}`).then((r) => ({ ...r, vagas: r.vagas.map(converterVaga) }))
+
 // Converte a vaga da API para o mesmo formato das vagas do front.
 export function converterVaga(v) {
   const empresa = v.empresa ?? { id: 0, nome: 'Empresa' }
@@ -40,8 +52,12 @@ export function converterVaga(v) {
     real: true,
     titulo: v.titulo,
     empresa: `empresa-${empresa.id}`,
+    // Vaga de empresa Premium: aparece primeiro e com selo de destaque.
+    destaque: Boolean(empresa.premium),
     dadosEmpresa: {
       slug: null,
+      id: empresa.id,
+      premium: Boolean(empresa.premium),
       nome: empresa.nome,
       nomeCurto: empresa.nome,
       sigla: iniciais(empresa.nome) || 'E',
@@ -59,13 +75,14 @@ export function converterVaga(v) {
     uf: '',
     modalidade: v.modalidade || 'Não informada',
     contrato: v.tipoContrato || 'Não informado',
-    nivel: null,
+    nivel: v.nivel || null,
     publicadaHaDias: diasDesde(v.dataPublicacao),
-    salario: v.salario !== null && v.salario !== undefined ? Number(v.salario).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : null,
+    salario: faixa(v.salario, v.salarioMax),
     resumo: v.descricao,
     descricao: v.descricao,
     responsabilidades: null,
-    requisitos: v.requisitos ? v.requisitos.split('\n').map((l) => l.trim()).filter(Boolean) : null,
+    requisitos: linhas(v.requisitos),
+    beneficios: linhas(v.beneficios),
     competencias: [],
     status: v.status,
   }

@@ -8,6 +8,7 @@ import { consultarCnpj, ErroConsultaCnpj } from "../services/cnpj.js";
 import { consultaCpfAtiva, ErroConsultaCpf, verificarCpf } from "../services/cpf.js";
 import { enviarEmail } from "../services/email.js";
 import { excluirEmpresa, excluirUsuaria } from "../services/exclusaoConta.js";
+import { Assinatura } from "../models/Premium.js";
 import { validarCNPJ, validarCPF } from "../utils/documentos.js";
 import { criarLimitador } from "../utils/limitador.js";
 import { criarToken } from "../utils/jwt.js";
@@ -370,6 +371,11 @@ export async function excluirConta(req, res) {
       falhasLogin.registrar(chave);
       return erro(res, 400, "A senha não confere.", "senha");
     }
+
+    // Assinatura ativa ou aguardando pagamento: precisa ser cancelada antes,
+    // senão o Mercado Pago continuaria cobrando.
+    const assinatura = await Assinatura.findOne({ where: { tipoConta: req.auth.tipo, contaId: conta.id, status: ["ativa", "pendente", "pausada"] } });
+    if (assinatura) return erro(res, 409, "Cancele sua assinatura Premium (em Premium) antes de excluir a conta.");
 
     await (req.auth.tipo === "empresa" ? excluirEmpresa(conta.id) : excluirUsuaria(conta.id));
     return res.json({ mensagem: "Sua conta e seus dados foram excluídos." });

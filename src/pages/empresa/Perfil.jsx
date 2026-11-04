@@ -49,7 +49,15 @@ function Perfil() {
               <Icone nome="editar" tamanho={16} /> Editar perfil
             </Botao>
           </div>
-          <h1 className="mt-4 font-display text-4xl leading-tight text-tinta">{empresa.nome}</h1>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-4xl leading-tight text-tinta">{empresa.nome}</h1>
+            {empresa.premium && (
+              <Selo variante="vinho">
+                <Icone nome="coroa" tamanho={14} /> Premium
+              </Selo>
+            )}
+          </div>
+          {perfil.areaAtuacao && <p className="mt-1 font-semibold text-vinho">{perfil.areaAtuacao}</p>}
           <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-tinta-2">
             {perfil.localizacao && (
               <li className="inline-flex items-center gap-1.5">
@@ -63,13 +71,21 @@ function Perfil() {
                 </a>
               </li>
             )}
+            {perfil.linkedin && (
+              <li>
+                <a href={perfil.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-vinho hover:underline">
+                  <Icone nome="externo" /> LinkedIn
+                </a>
+              </li>
+            )}
             <li className="inline-flex items-center gap-1.5">
-              <Icone nome="email" className="text-vinho" /> {empresa.email}
+              <Icone nome="email" className="text-vinho" /> {perfil.emailContato || empresa.email}
             </li>
           </ul>
           <p className={perfil.descricao ? 'mt-5 max-w-3xl leading-relaxed text-tinta-2' : 'mt-5 text-sm text-suave'}>
             {perfil.descricao || 'Adicione uma descrição para apresentar a empresa às candidatas.'}
           </p>
+          {perfil.informacoes && <p className="mt-3 max-w-3xl text-sm leading-relaxed whitespace-pre-line text-tinta-2">{perfil.informacoes}</p>}
           <dl className="mt-6 grid max-w-lg grid-cols-3 divide-x divide-linha border-t border-linha pt-4 text-center">
             {[
               ['Vagas abertas', numeros.vagasAbertas],

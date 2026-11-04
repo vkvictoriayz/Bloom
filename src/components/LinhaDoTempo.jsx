@@ -5,7 +5,7 @@ import { cn } from '../lib/cn'
 // Etapas de uma candidatura. Só marcamos como concluída a etapa que tem
 // confirmação nos dados; as demais aparecem como "aguardando".
 function LinhaDoTempo({ candidatura, compacta = false }) {
-  const { etapasConcluidas, etapaAtual, grupo, rotulo } = situacao(candidatura)
+  const { etapasConcluidas, etapaAtual, grupo, rotulo, detalheAtual } = situacao(candidatura)
   const final = grupo === 'aprovada' || grupo === 'recusada'
 
   return (
@@ -19,7 +19,7 @@ function LinhaDoTempo({ candidatura, compacta = false }) {
         if (i === 0) detalhe = candidatura.data ?? 'Registrada'
         else if (ultimaFinal) detalhe = rotulo
         else if (concluida) detalhe = 'Concluída'
-        else if (atual) detalhe = 'Aguardando a empresa'
+        else if (atual) detalhe = detalheAtual ?? 'Aguardando a empresa'
         if (grupo === 'encerrada' && i > 0) detalhe = 'Vaga encerrada'
 
         return (

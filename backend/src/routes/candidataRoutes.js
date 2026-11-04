@@ -26,6 +26,8 @@ export const notificacaoRoutes = Router();
 notificacaoRoutes.use(exigirLogin(["usuaria", "empresa"]));
 notificacaoRoutes.get("/", I.listarNotificacoes);
 notificacaoRoutes.post("/lidas", I.marcarTodas);
+notificacaoRoutes.get("/preferencias", I.lerPreferencias);
+notificacaoRoutes.put("/preferencias", I.salvarPreferencias);
 notificacaoRoutes.post("/:id/lida", I.marcarLida);
 
 export const mensagemRoutes = Router();

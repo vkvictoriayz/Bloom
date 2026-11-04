@@ -7,34 +7,48 @@ import { useCarregar } from '../../components/empresa/useCarregar'
 import Botao from '../../components/ui/Botao'
 import { AreaTexto, Aviso, Campo, Entrada, Selecao } from '../../components/ui/Campo'
 import { opcoesFiltro } from '../../data/vagas'
-import { CONTRATOS, criarVaga, editarVaga, lerVagaEmpresa, MODALIDADES } from '../../services/empresa'
+import { CONTRATOS, criarVaga, editarVaga, lerVagaEmpresa, MODALIDADES, NIVEIS } from '../../services/empresa'
 
-const VAZIA = { titulo: '', descricao: '', requisitos: '', area: '', localizacao: '', modalidade: '', tipoContrato: '', salario: '' }
+const VAZIA = { titulo: '', descricao: '', requisitos: '', beneficios: '', area: '', nivel: '', localizacao: '', modalidade: '', tipoContrato: '', salario: '', salarioMax: '' }
+
+// "5.000,00", "5000.5" ou "5000" -> número (ou null se vazio, NaN se inválido).
+function valor(texto) {
+  const t = String(texto ?? '').trim()
+  if (!t) return null
+  const normal = t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t
+  return /^\d+(\.\d{1,2})?$/.test(normal) ? Number(normal) : NaN
+}
 
 // Campos da tabela VAGAS, com os limites do banco.
-function Formulario({ inicial, editando, idVaga }) {
+function Formulario({ inicial, editando, idVaga, rascunhoAtual }) {
   const navigate = useNavigate()
   const [dados, setDados] = useState(inicial)
   const [erros, setErros] = useState({})
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
   const campo = (nome) => (e) => setDados((d) => ({ ...d, [nome]: e.target.value }))
 
-  async function enviar(e) {
-    e.preventDefault()
+  // rascunho: salva sem publicar (só ao criar; depois, publica-se pela vaga).
+  async function enviar(e, rascunho = false) {
+    e?.preventDefault()
     const novos = {}
     if (!dados.titulo.trim()) novos.titulo = 'Informe o título da vaga.'
     if (!dados.descricao.trim()) novos.descricao = 'Descreva a vaga.'
     if (!dados.modalidade) novos.modalidade = 'Escolha a modalidade.'
-    const salario = String(dados.salario).trim()
-    if (salario && (!Number.isFinite(Number(salario.replace(',', '.'))) || Number(salario.replace(',', '.')) < 0)) novos.salario = 'Use apenas números, como 4500.00'
+    const minimo = valor(dados.salario)
+    const maximo = valor(dados.salarioMax)
+    if (Number.isNaN(minimo)) novos.salario = 'Use um valor como 4500 ou 4.500,00'
+    if (Number.isNaN(maximo)) novos.salarioMax = 'Use um valor como 6000 ou 6.000,00'
+    if (minimo === null && maximo !== null && !Number.isNaN(maximo)) novos.salario = 'Informe o mínimo da faixa.'
+    if (minimo !== null && maximo !== null && maximo < minimo) novos.salarioMax = 'O máximo não pode ser menor que o mínimo.'
     setErros(novos)
     if (Object.keys(novos).length) return setEstado({ tipo: 'erro', texto: 'Corrija os campos destacados.' })
 
     setEstado({ tipo: 'salvando' })
     try {
-      const corpo = { ...dados, salario: salario ? salario.replace(',', '.') : null }
+      const corpo = { ...dados, salario: minimo, salarioMax: maximo, ...(editando ? {} : { rascunho }) }
       const r = editando ? await editarVaga(idVaga, corpo) : await criarVaga(corpo)
-      navigate(`/empresa/vagas/${r.vaga.id}`, { state: { aviso: editando ? 'Vaga atualizada.' : 'Vaga publicada.' } })
+      const aviso = editando ? 'Vaga atualizada.' : rascunho ? 'Rascunho salvo. Publique quando estiver pronta.' : 'Vaga publicada.'
+      navigate(`/empresa/vagas/${r.vaga.id}`, { state: { aviso } })
     } catch (erro) {
       setEstado({ tipo: 'erro', texto: erro.message })
     }
@@ -51,6 +65,9 @@ function Formulario({ inicial, editando, idVaga }) {
       <Campo rotulo="Requisitos e competências" opcional ajuda={`${dados.requisitos.length}/500 · Um por linha fica mais fácil de ler.`}>
         {(p) => <AreaTexto {...p} rows={4} maxLength={500} value={dados.requisitos} onChange={campo('requisitos')} />}
       </Campo>
+      <Campo rotulo="Benefícios" opcional ajuda={`${dados.beneficios.length}/500 · Um por linha.`}>
+        {(p) => <AreaTexto {...p} rows={3} maxLength={500} value={dados.beneficios} onChange={campo('beneficios')} />}
+      </Campo>
       <div className="grid gap-5 sm:grid-cols-2">
         <Campo rotulo="Área profissional" opcional>
           {(p) => (
@@ -62,6 +79,16 @@ function Formulario({ inicial, editando, idVaga }) {
                 ))}
               </datalist>
             </>
+          )}
+        </Campo>
+        <Campo rotulo="Nível de experiência" opcional>
+          {(p) => (
+            <Selecao {...p} value={dados.nivel} onChange={campo('nivel')}>
+              <option value="">Não informado</option>
+              {NIVEIS.map((n) => (
+                <option key={n}>{n}</option>
+              ))}
+            </Selecao>
           )}
         </Campo>
         <Campo rotulo="Localização" opcional>
@@ -87,15 +114,23 @@ function Formulario({ inicial, editando, idVaga }) {
             </Selecao>
           )}
         </Campo>
-        <Campo rotulo="Salário (R$)" opcional erro={erros.salario}>
-          {(p) => <Entrada {...p} inputMode="decimal" placeholder="Ex.: 4500.00" value={dados.salario ?? ''} onChange={campo('salario')} />}
+        <Campo rotulo="Faixa salarial: de (R$)" opcional erro={erros.salario}>
+          {(p) => <Entrada {...p} inputMode="decimal" placeholder="Ex.: 4.500,00" value={dados.salario ?? ''} onChange={campo('salario')} />}
+        </Campo>
+        <Campo rotulo="Até (R$)" opcional erro={erros.salarioMax} ajuda={!erros.salarioMax ? 'Deixe vazio para um valor só.' : undefined}>
+          {(p) => <Entrada {...p} inputMode="decimal" placeholder="Ex.: 6.000,00" value={dados.salarioMax ?? ''} onChange={campo('salarioMax')} />}
         </Campo>
       </div>
       {estado.tipo === 'erro' && <Aviso tipo="erro">{estado.texto}</Aviso>}
       <div className="flex flex-wrap gap-2 border-t border-linha pt-5">
         <Botao type="submit" disabled={estado.tipo === 'salvando'}>
-          {estado.tipo === 'salvando' ? 'Salvando…' : editando ? 'Salvar alterações' : 'Publicar vaga'}
+          {estado.tipo === 'salvando' ? 'Salvando…' : editando ? (rascunhoAtual ? 'Salvar rascunho' : 'Salvar alterações') : 'Publicar vaga'}
         </Botao>
+        {!editando && (
+          <Botao type="button" variante="secundario" disabled={estado.tipo === 'salvando'} onClick={() => enviar(null, true)}>
+            Salvar como rascunho
+          </Botao>
+        )}
         <Botao as={Link} to={editando ? `/empresa/vagas/${idVaga}` : '/empresa/vagas'} variante="fantasma">
           Cancelar
         </Botao>
@@ -113,7 +148,7 @@ function FormularioVaga() {
     <>
       <TituloPagina
         titulo={editando ? 'Editar vaga' : 'Nova vaga'}
-        descricao={editando ? undefined : 'A vaga fica aberta para candidaturas assim que for publicada.'}
+        descricao={editando ? undefined : 'Publique agora ou salve como rascunho para revisar antes.'}
         voltar={{ para: '/empresa/vagas', rotulo: 'Gerenciar vagas' }}
       />
       {!editando && <Formulario inicial={VAZIA} />}
@@ -123,7 +158,8 @@ function FormularioVaga() {
         <Formulario
           editando
           idVaga={id}
-          inicial={{ ...VAZIA, ...r.dados.vaga, salario: r.dados.vaga.salario ?? '' }}
+          rascunhoAtual={r.dados.vaga.status === 'Rascunho'}
+          inicial={{ ...VAZIA, ...r.dados.vaga, salario: r.dados.vaga.salario ?? '', salarioMax: r.dados.vaga.salarioMax ?? '' }}
         />
       )}
     </>

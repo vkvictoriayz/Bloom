@@ -33,6 +33,10 @@ import Mensagens from './pages/candidata/Mensagens'
 import Conversa from './pages/candidata/Conversa'
 import Notificacoes from './pages/candidata/Notificacoes'
 import Configuracoes from './pages/candidata/Configuracoes'
+import EmpresaPerfil from './pages/candidata/EmpresaPerfil'
+import PremiumCandidata from './pages/candidata/Premium'
+import PremiumEmpresa from './pages/empresa/Premium'
+import DashboardEmpresa from './pages/empresa/Dashboard'
 
 import LoginEmpresa from './pages/LoginEmpresa'
 import CadastroEmpresa from './pages/CadastroEmpresa'
@@ -125,6 +129,8 @@ function App() {
           <Route path="/candidata/mensagens/:id" element={<Conversa />} />
           <Route path="/candidata/notificacoes" element={<Notificacoes />} />
           <Route path="/candidata/configuracoes" element={<Configuracoes />} />
+          <Route path="/candidata/empresas/:id" element={<EmpresaPerfil />} />
+          <Route path="/candidata/premium" element={<PremiumCandidata />} />
           <Route path="/vagas/:id" element={<DetalhesVaga />} />
           <Route path="/vagas/:id/candidatar" element={<Candidatar />} />
           <Route path="/comunidades/:id" element={<DetalheComunidade />} />
@@ -174,6 +180,8 @@ function App() {
           <Route path="/empresa/mensagens/:id" element={<ConversaEmpresa />} />
           <Route path="/empresa/notificacoes" element={<NotificacoesEmpresa />} />
           <Route path="/empresa/configuracoes" element={<ConfiguracoesEmpresa />} />
+          <Route path="/empresa/premium" element={<PremiumEmpresa />} />
+          <Route path="/empresa/dashboard" element={<DashboardEmpresa />} />
         </Route>
 
         {/* Qualquer outro endereço volta para a Home */}

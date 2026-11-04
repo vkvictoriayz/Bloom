@@ -11,7 +11,7 @@ import { useCandidaturasEstado } from '../../hooks/useVagasReais'
 import Esqueleto from '../../components/ui/Esqueleto'
 
 // Linha do tempo vertical do processo seletivo. As etapas seguem os status
-// do banco (Pendente -> Em análise -> Aprovada/Reprovada). Só marcamos como
+// do banco (Recebida -> Em análise -> Em entrevista -> Aprovada/Reprovada). Só marcamos como
 // concluída a etapa confirmada nos dados; nada é inventado.
 function Andamento() {
   const { id } = useParams()
@@ -43,7 +43,7 @@ function Andamento() {
     if (i === 0) detalhe = `Registrada em ${candidatura.data}`
     else if (final && i === ETAPAS.length - 1) detalhe = info.rotulo
     else if (concluida) detalhe = 'Concluída'
-    else if (atual) detalhe = 'Aguardando atualização da empresa'
+    else if (atual) detalhe = info.detalheAtual ?? 'Aguardando atualização da empresa'
     if (info.grupo === 'encerrada' && i > 0) detalhe = 'Processo encerrado'
     return { titulo, concluida, atual, detalhe }
   })

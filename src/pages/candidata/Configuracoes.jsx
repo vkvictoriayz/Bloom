@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import ExcluirConta from '../../components/conta/ExcluirConta'
 import FormularioSenha from '../../components/conta/FormularioSenha'
+import PreferenciasNotificacao from '../../components/conta/PreferenciasNotificacao'
 import Privacidade from '../../components/conta/Privacidade'
 import Icone from '../../components/Icone'
 import TituloPagina from '../../components/candidata/TituloPagina'
@@ -73,17 +74,7 @@ function Configuracoes() {
         </Secao>
 
         <Secao icone="sino" titulo="Notificações" descricao="O que você quer receber.">
-          <p className="text-sm text-tinta-2">
-            Você recebe avisos de mudanças nas suas candidaturas, mensagens de empresas, novas seguidoras e curtidas ou comentários nas suas
-            publicações, em{' '}
-            <Link to="/candidata/notificacoes" className="font-semibold text-vinho hover:underline">
-              Notificações
-            </Link>
-            .
-          </p>
-          <div className="mt-3">
-            <EmBreve>Escolher quais avisos receber ainda não está disponível.</EmBreve>
-          </div>
+          <PreferenciasNotificacao tipoConta="usuaria" />
         </Secao>
 
         <Secao icone="olho" titulo="Privacidade do perfil" descricao="Quem vê suas informações.">

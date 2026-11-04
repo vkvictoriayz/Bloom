@@ -5,6 +5,11 @@ import { notificar } from "./notificacoes.js";
 // Exclusão definitiva de uma conta e de tudo o que é dela (LGPD). Roda numa
 // transação só: ou apaga tudo, ou nada. A ordem segue as chaves estrangeiras
 // do banco (filhos antes dos pais).
+//
+// Fica guardado só o registro financeiro (ASSINATURA e PAGAMENTO: plano, valor,
+// data e o código do Mercado Pago), sem dado pessoal além do id numérico da
+// conta, que deixa de existir. A conta com assinatura ativa não é excluída
+// (ver AuthController.excluirConta).
 
 async function ids(sql, replacements, transaction) {
   const linhas = await sequelize.query(sql, { replacements, type: QueryTypes.SELECT, transaction });
@@ -29,6 +34,8 @@ export async function excluirUsuaria(id) {
     await apagar("DELETE FROM MENSAGEM WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM CONVERSA WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM NOTIFICACAO WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
+    await apagar("DELETE FROM PREFERENCIA_NOTIFICACAO WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
+    await apagar("DELETE FROM CONVITE WHERE id_usuario = :id", r, t);
     await apagar("DELETE FROM CANDIDATURA_ENVIO WHERE id_candidatura IN (:candidaturas)", r, t);
     await apagar("DELETE FROM CANDIDATURAS WHERE id_candidatura IN (:candidaturas)", r, t);
     await apagar("DELETE FROM FAVORITOS WHERE id_usuario = :id", r, t);
@@ -73,6 +80,11 @@ export async function excluirEmpresa(id) {
     await apagar("DELETE FROM MENSAGEM WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM CONVERSA WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM NOTIFICACAO WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
+    await apagar("DELETE FROM PREFERENCIA_NOTIFICACAO WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
+    await apagar("DELETE FROM CONVITE WHERE id_empresa = :id OR id_vaga IN (:vagas)", r, t);
+    // Campanhas saem; os pagamentos delas ficam (registro financeiro), sem o vínculo.
+    await apagar("UPDATE PAGAMENTO SET id_campanha = NULL WHERE id_campanha IN (SELECT id_campanha FROM CAMPANHA WHERE id_empresa = :id)", r, t);
+    await apagar("DELETE FROM CAMPANHA WHERE id_empresa = :id", r, t);
     await apagar("DELETE FROM CANDIDATURA_ENVIO WHERE id_candidatura IN (:candidaturas)", r, t);
     await apagar("DELETE FROM CANDIDATURAS WHERE id_candidatura IN (:candidaturas)", r, t);
     await apagar("DELETE FROM FAVORITOS WHERE id_vaga IN (:vagas)", r, t);

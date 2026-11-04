@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 
 import { Aviso } from '../ui/Campo'
 import Esqueleto from '../ui/Esqueleto'
+import Interruptor from '../ui/Interruptor'
 import { lerPrivacidade, salvarPrivacidade } from '../../services/recursos'
-import { cn } from '../../lib/cn'
 
 const OPCOES = [
   {
@@ -22,26 +22,6 @@ const OPCOES = [
     descricao: 'Empresas veem seu e-mail no seu perfil. O telefone nunca é mostrado.',
   },
 ]
-
-// Interruptor acessível (role="switch") no padrão Bloom.
-function Interruptor({ ligado, aoMudar, rotulo, desativado }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={ligado}
-      aria-label={rotulo}
-      disabled={desativado}
-      onClick={() => aoMudar(!ligado)}
-      className={cn(
-        'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50',
-        ligado ? 'bg-vinho' : 'bg-linha-forte'
-      )}
-    >
-      <span className={cn('inline-block size-5 rounded-full bg-branco shadow transition-transform', ligado ? 'translate-x-5.5' : 'translate-x-0.5')} />
-    </button>
-  )
-}
 
 // Controles de privacidade da candidata (API /api/candidata/privacidade).
 // Cada interruptor salva na hora; se o servidor recusar, volta como estava.

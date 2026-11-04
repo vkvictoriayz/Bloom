@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
 import TituloPagina from '../../components/candidata/TituloPagina'
@@ -10,34 +10,44 @@ import Botao from '../../components/ui/Botao'
 import { Aviso } from '../../components/ui/Campo'
 import Selo from '../../components/ui/Selo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
-import { dataCurta, listarVagasEmpresa, mudarStatusVaga, STATUS_VAGA, VISUAL_VAGA } from '../../services/empresa'
+import { ACOES_VAGA, dataCurta, excluirVaga, listarVagasEmpresa, mudarStatusVaga, STATUS_VAGA, VISUAL_VAGA } from '../../services/empresa'
 import { cn } from '../../lib/cn'
 
-// Ação de status permitida a partir de cada status (regras de VAGAS).
-const ACOES = {
-  Aberta: [
-    { status: 'Pausada', rotulo: 'Pausar' },
-    { status: 'Encerrada', rotulo: 'Encerrar' },
-  ],
-  Pausada: [
-    { status: 'Aberta', rotulo: 'Reabrir' },
-    { status: 'Encerrada', rotulo: 'Encerrar' },
-  ],
-  Encerrada: [{ status: 'Aberta', rotulo: 'Reabrir' }],
-}
+const FILTROS = { '': 'Todas', Rascunho: 'Rascunhos', Aberta: 'Publicadas', Pausada: 'Desativadas', Encerrada: 'Encerradas' }
 
 function Vagas() {
-  const [filtro, setFiltro] = useState('')
+  const [parametros, setParametros] = useSearchParams()
+  const filtro = STATUS_VAGA.includes(parametros.get('status')) ? parametros.get('status') : ''
   const r = useCarregar(() => listarVagasEmpresa(filtro), [filtro])
   const [mudando, setMudando] = useState(null)
+  const [excluindo, setExcluindo] = useState(null)
   const [aviso, setAviso] = useState(null)
+
+  function setFiltro(s) {
+    setParametros(s ? { status: s } : {}, { replace: true })
+  }
 
   async function mudar(vaga, status) {
     setMudando(vaga.id)
     setAviso(null)
     try {
       await mudarStatusVaga(vaga.id, status)
-      setAviso({ tipo: 'sucesso', texto: `“${vaga.titulo}” agora está ${status.toLowerCase()}.` })
+      setAviso({ tipo: 'sucesso', texto: `“${vaga.titulo}” agora está ${VISUAL_VAGA[status].rotulo.toLowerCase()}.` })
+      r.recarregar()
+    } catch (erro) {
+      setAviso({ tipo: 'erro', texto: erro.message })
+    } finally {
+      setMudando(null)
+    }
+  }
+
+  async function excluir(vaga) {
+    setMudando(vaga.id)
+    setAviso(null)
+    try {
+      await excluirVaga(vaga.id)
+      setAviso({ tipo: 'sucesso', texto: `“${vaga.titulo}” foi excluída.` })
+      setExcluindo(null)
       r.recarregar()
     } catch (erro) {
       setAviso({ tipo: 'erro', texto: erro.message })
@@ -50,7 +60,7 @@ function Vagas() {
     <>
       <TituloPagina
         titulo="Gerenciar vagas"
-        descricao="Crie, edite, pause, encerre e reabra as vagas da empresa."
+        descricao="Crie, publique, desative, encerre e exclua as vagas da empresa."
         acoes={
           <Botao as={Link} to="/empresa/vagas/criar">
             <Icone nome="mais" tamanho={16} /> Nova vaga
@@ -70,7 +80,7 @@ function Vagas() {
               filtro === s ? 'border-tinta bg-tinta text-white' : 'border-linha-forte bg-branco text-tinta-2 hover:border-tinta'
             )}
           >
-            {s ? `${s}s` : 'Todas'}
+            {FILTROS[s]}
           </button>
         ))}
       </div>
@@ -87,7 +97,7 @@ function Vagas() {
         (r.dados.vagas.length === 0 ? (
           <Vazio className="bg-branco">
             <IlustracaoEmpresa className="max-w-[220px]" />
-            <VazioTitulo>{filtro ? `Nenhuma vaga ${filtro.toLowerCase()}` : 'Nenhuma vaga publicada'}</VazioTitulo>
+            <VazioTitulo>{filtro ? `Nenhuma vaga em “${FILTROS[filtro]}”` : 'Nenhuma vaga ainda'}</VazioTitulo>
             <VazioDescricao>Publique uma oportunidade para começar a receber candidaturas.</VazioDescricao>
             <VazioAcoes>
               <Botao as={Link} to="/empresa/vagas/criar">
@@ -104,12 +114,15 @@ function Vagas() {
                     <Link to={`/empresa/vagas/${v.id}`} className="font-display text-xl text-tinta hover:text-vinho">
                       {v.titulo}
                     </Link>
-                    <Selo variante={VISUAL_VAGA[v.status]?.variante}>{v.status}</Selo>
+                    <Selo variante={VISUAL_VAGA[v.status]?.variante}>{VISUAL_VAGA[v.status]?.rotulo ?? v.status}</Selo>
                   </div>
                   <p className="mt-1 text-sm text-tinta-2">
                     {[v.area, v.localizacao, v.modalidade, v.tipoContrato].filter(Boolean).join(' · ') || 'Sem detalhes'}
                   </p>
-                  <p className="mt-1 text-xs text-suave">Publicada em {dataCurta(v.dataPublicacao)}</p>
+                  <p className="mt-1 text-xs text-suave">
+                    {v.dataPublicacao ? `Publicada em ${dataCurta(v.dataPublicacao)}` : 'Ainda não publicada'}
+                    {v.interessadas > 0 && ` · salva por ${v.interessadas} ${v.interessadas === 1 ? 'candidata' : 'candidatas'}`}
+                  </p>
                 </div>
                 <Link
                   to={`/empresa/candidaturas?vaga=${v.id}`}
@@ -122,11 +135,26 @@ function Vagas() {
                   <Botao as={Link} to={`/empresa/vagas/${v.id}/editar`} variante="secundario" tamanho="sm">
                     <Icone nome="editar" tamanho={14} /> Editar
                   </Botao>
-                  {ACOES[v.status]?.map((a) => (
-                    <Botao key={a.status} variante="fantasma" tamanho="sm" disabled={mudando === v.id} onClick={() => mudar(v, a.status)}>
+                  {ACOES_VAGA[v.status]?.map((a) => (
+                    <Botao key={a.status} variante={a.status === 'Aberta' && v.status === 'Rascunho' ? 'primario' : 'fantasma'} tamanho="sm" disabled={mudando === v.id} onClick={() => mudar(v, a.status)}>
                       {a.rotulo}
                     </Botao>
                   ))}
+                  {v.candidaturas === 0 &&
+                    (excluindo === v.id ? (
+                      <>
+                        <Botao tamanho="sm" className="bg-erro hover:bg-erro/90" disabled={mudando === v.id} onClick={() => excluir(v)}>
+                          Confirmar exclusão
+                        </Botao>
+                        <Botao tamanho="sm" variante="fantasma" onClick={() => setExcluindo(null)}>
+                          Cancelar
+                        </Botao>
+                      </>
+                    ) : (
+                      <Botao tamanho="sm" variante="fantasma" className="text-erro" onClick={() => setExcluindo(v.id)}>
+                        <Icone nome="lixeira" tamanho={14} /> Excluir
+                      </Botao>
+                    ))}
                 </div>
               </li>
             ))}

@@ -16,8 +16,9 @@ const opcoes = (tableName) => ({ tableName, freezeTableName: true, timestamps: f
 const refEmpresa = { model: "CADASTRO_EMPRESA", key: "id_empresa" };
 const refUsuaria = { model: "CADASTRO_USUARIA", key: "id_usuario" };
 
-export const STATUS_VAGA = ["Aberta", "Pausada", "Encerrada"];
-export const STATUS_CANDIDATURA = ["Pendente", "Em análise", "Aprovada", "Reprovada"];
+// Valores depois da migration 001 (backend/migrations/001_area_empresa.sql).
+export const STATUS_VAGA = ["Rascunho", "Aberta", "Pausada", "Encerrada"];
+export const STATUS_CANDIDATURA = ["Recebida", "Em análise", "Em entrevista", "Aprovada", "Reprovada"];
 
 export const PerfilEmpresa = sequelize.define(
   "PerfilEmpresa",
@@ -28,6 +29,11 @@ export const PerfilEmpresa = sequelize.define(
     descricao: { type: DataTypes.STRING(500) },
     localizacao: { type: DataTypes.STRING(150) },
     site: { type: DataTypes.STRING(255) },
+    // Colunas da migration 001
+    areaAtuacao: { type: DataTypes.STRING(100), field: "area_atuacao" },
+    linkedin: { type: DataTypes.STRING(255) },
+    emailContato: { type: DataTypes.STRING(150), field: "email_contato" },
+    informacoes: { type: DataTypes.STRING(1000) },
   },
   opcoes("PERFIL_EMPRESA")
 );
@@ -49,9 +55,13 @@ export const Vaga = sequelize.define(
     localizacao: { type: DataTypes.STRING(150) },
     modalidade: { type: DataTypes.STRING(50) },
     tipoContrato: { type: DataTypes.STRING(50), field: "tipo_contrato" },
-    salario: { type: DataTypes.DECIMAL(10, 2) },
+    salario: { type: DataTypes.DECIMAL(10, 2) }, // salário (ou mínimo da faixa)
     dataPublicacao: { type: DataTypes.DATEONLY, field: "data_publicacao" },
     status: { type: DataTypes.ENUM(...STATUS_VAGA) },
+    // Colunas da migration 001
+    nivel: { type: DataTypes.STRING(30) },
+    beneficios: { type: DataTypes.STRING(500) },
+    salarioMax: { type: DataTypes.DECIMAL(10, 2), field: "salario_max" },
   },
   opcoes("VAGAS")
 );
@@ -63,7 +73,7 @@ export const Candidatura = sequelize.define(
     usuariaId: { type: DataTypes.INTEGER, allowNull: false, field: "id_usuario", references: refUsuaria },
     vagaId: { type: DataTypes.INTEGER, allowNull: false, field: "id_vaga", references: { model: "VAGAS", key: "id_vaga" } },
     data: { type: DataTypes.DATEONLY, field: "data_candidatura" },
-    status: { type: DataTypes.ENUM(...STATUS_CANDIDATURA), allowNull: false, defaultValue: "Pendente" },
+    status: { type: DataTypes.ENUM(...STATUS_CANDIDATURA), allowNull: false, defaultValue: "Recebida" },
   },
   { ...opcoes("CANDIDATURAS"), indexes: [{ unique: true, fields: ["id_usuario", "id_vaga"] }] }
 );

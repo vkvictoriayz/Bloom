@@ -12,7 +12,7 @@ import { tempoRelativo } from '../../services/comunidade'
 import { DISPONIVEL, EVENTO_NOTIFICACOES, listarNotificacoes, marcarComoLida, marcarTodasComoLidas } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
-const ICONES = { mensagem: 'mensagem', curtida: 'coracao', comentario: 'mensagem', publicacao: 'inicio', candidatura: 'candidaturas', vaga: 'maleta', conexao: 'perfil' }
+const ICONES = { mensagem: 'mensagem', curtida: 'coracao', comentario: 'mensagem', publicacao: 'inicio', candidatura: 'candidaturas', vaga: 'maleta', conexao: 'perfil', convite: 'email', plataforma: 'coroa' }
 
 // Notificações da conta (candidata ou empresa: a API sabe pelo token).
 // Clicar num aviso marca como lido e abre a página relacionada.

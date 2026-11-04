@@ -118,16 +118,26 @@ function FormularioPerfil({ inicial, aoSalvar }) {
     if (dados.descricao.length > 500) novos.descricao = 'Use até 500 caracteres.'
     if (dados.localizacao.length > 150) novos.localizacao = 'Use até 150 caracteres.'
     if (!urlValida(dados.site.trim())) novos.site = 'Use um endereço completo, como https://empresa.com.br'
+    if (dados.linkedin.trim() && (!urlValida(dados.linkedin.trim()) || !/linkedin\.com/i.test(dados.linkedin))) novos.linkedin = 'Use o endereço da página no LinkedIn (https://www.linkedin.com/company/...)'
+    if (dados.emailContato.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dados.emailContato.trim())) novos.emailContato = 'Digite um e-mail válido.'
+    if (dados.nome.trim().length < 2) novos.nome = 'Informe o nome da empresa.'
+    if (dados.informacoes.length > 1000) novos.informacoes = 'Use até 1000 caracteres.'
     setErros(novos)
     if (Object.keys(novos).length) return setEstado({ tipo: 'erro', texto: 'Corrija os campos destacados.' })
 
     setEstado({ tipo: 'salvando' })
     try {
       await salvarPerfilEmpresa({
+        nome: dados.nome.trim(),
+        telefone: dados.telefone,
         logo: dados.logo.trim(),
         descricao: dados.descricao.trim(),
+        areaAtuacao: dados.areaAtuacao.trim(),
         localizacao: dados.localizacao.trim(),
         site: dados.site.trim(),
+        linkedin: dados.linkedin.trim(),
+        emailContato: dados.emailContato.trim(),
+        informacoes: dados.informacoes.trim(),
       })
       setEstado({ tipo: 'sucesso', texto: 'Perfil salvo.' })
       aoSalvar()
@@ -138,6 +148,14 @@ function FormularioPerfil({ inicial, aoSalvar }) {
 
   return (
     <form onSubmit={enviar} noValidate className="cartao flex max-w-3xl flex-col gap-5 p-6 sm:p-8">
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Campo rotulo="Nome da empresa" erro={erros.nome} ajuda={!erros.nome ? 'Como as candidatas veem a empresa.' : undefined}>
+          {(p) => <Entrada {...p} maxLength={150} value={dados.nome} onChange={campo('nome')} autoComplete="organization" />}
+        </Campo>
+        <Campo rotulo="Área de atuação" opcional>
+          {(p) => <Entrada {...p} maxLength={100} placeholder="Ex.: Desenvolvimento de software" value={dados.areaAtuacao} onChange={campo('areaAtuacao')} />}
+        </Campo>
+      </div>
       <Campo rotulo="Descrição" opcional erro={erros.descricao} ajuda={!erros.descricao ? `${dados.descricao.length}/500 · O que a empresa faz e como é trabalhar nela.` : undefined}>
         {(p) => <AreaTexto {...p} rows={5} maxLength={500} value={dados.descricao} onChange={campo('descricao')} />}
       </Campo>
@@ -145,10 +163,22 @@ function FormularioPerfil({ inicial, aoSalvar }) {
         <Campo rotulo="Localização" opcional erro={erros.localizacao}>
           {(p) => <Entrada {...p} maxLength={150} placeholder="Cidade, UF" value={dados.localizacao} onChange={campo('localizacao')} />}
         </Campo>
-        <Campo rotulo="Site" opcional erro={erros.site}>
+        <Campo rotulo="Site oficial" opcional erro={erros.site}>
           {(p) => <Entrada {...p} type="url" maxLength={255} placeholder="https://" value={dados.site} onChange={campo('site')} />}
         </Campo>
+        <Campo rotulo="LinkedIn" opcional erro={erros.linkedin}>
+          {(p) => <Entrada {...p} type="url" maxLength={255} placeholder="https://www.linkedin.com/company/..." value={dados.linkedin} onChange={campo('linkedin')} />}
+        </Campo>
+        <Campo rotulo="E-mail de contato" opcional erro={erros.emailContato} ajuda={!erros.emailContato ? 'Aparece no perfil público da empresa.' : undefined}>
+          {(p) => <Entrada {...p} type="email" maxLength={150} placeholder="vagas@empresa.com.br" value={dados.emailContato} onChange={campo('emailContato')} />}
+        </Campo>
+        <Campo rotulo="Telefone da conta" opcional>
+          {(p) => <Entrada {...p} type="tel" maxLength={20} placeholder="(00) 0000-0000" value={dados.telefone} onChange={campo('telefone')} />}
+        </Campo>
       </div>
+      <Campo rotulo="Informações adicionais" opcional erro={erros.informacoes} ajuda={!erros.informacoes ? `${dados.informacoes.length}/1000 · Cultura, benefícios gerais, diversidade, como é o processo seletivo.` : undefined}>
+        {(p) => <AreaTexto {...p} rows={4} maxLength={1000} value={dados.informacoes} onChange={campo('informacoes')} />}
+      </Campo>
       {estado.tipo === 'erro' && <Aviso tipo="erro">{estado.texto}</Aviso>}
       {estado.tipo === 'sucesso' && <Aviso tipo="sucesso">{estado.texto}</Aviso>}
       <div className="flex flex-wrap gap-2 border-t border-linha pt-5">
@@ -169,13 +199,13 @@ function EditarPerfil() {
     <>
       <TituloPagina
         titulo="Editar perfil da empresa"
-        descricao={dados ? `Nome e e-mail vêm do cadastro de ${dados.empresa.nome}.` : undefined}
+        descricao={dados ? `O e-mail de login (${dados.empresa.email}) e o CNPJ vêm do cadastro e não mudam aqui.` : undefined}
         voltar={{ para: '/empresa/perfil', rotulo: 'Perfil da empresa' }}
       />
       {dados ? (
         <div className="flex flex-col gap-6">
           <ImagensEmpresa dados={dados} aoMudar={recarregarPerfil} />
-          <FormularioPerfil inicial={dados.perfil} aoSalvar={recarregarPerfil} />
+          <FormularioPerfil inicial={{ ...dados.perfil, nome: dados.empresa.nome, telefone: dados.empresa.telefone ?? '' }} aoSalvar={recarregarPerfil} />
         </div>
       ) : (
         <Carregando quantidade={1} altura="h-80" />

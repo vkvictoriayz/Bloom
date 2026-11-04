@@ -41,6 +41,11 @@ function CartaoVaga({ vaga, candidatura }) {
       <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-suave">{vaga.resumo}</p>
 
       <div className="mt-3 flex min-h-6 flex-wrap gap-1.5">
+        {vaga.destaque && (
+          <Selo variante="vinho">
+            <Icone nome="coroa" /> Destaque
+          </Selo>
+        )}
         {candidatura && (
           <Selo variante="sucesso">
             <Icone nome="check" /> Candidatura enviada

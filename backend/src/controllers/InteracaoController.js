@@ -3,7 +3,8 @@ import { Empresa, Usuaria } from "../models/index.js";
 import { Candidatura, PerfilEmpresa, Vaga } from "../models/Empresarial.js";
 import { imagensDe } from "../models/Imagem.js";
 import { Conversa, Mensagem, Notificacao } from "../models/Interacao.js";
-import { notificar } from "../services/notificacoes.js";
+import { CATEGORIAS, notificar, preferenciasDe } from "../services/notificacoes.js";
+import { PreferenciaNotificacao } from "../models/Premium.js";
 
 // Notificações e mensagens, para candidatas e empresas. O tipo da conta vem
 // do token (req.auth.tipo) e cada consulta filtra pelo dono.
@@ -46,6 +47,25 @@ export const marcarLida = comTratamento(async (req, res) => {
   const [alteradas] = id ? await Notificacao.update({ lidaEm: new Date() }, { where: { id, ...minhas(req), lidaEm: { [Op.is]: null } } }) : [0];
   if (!alteradas && !(id && (await Notificacao.count({ where: { id, ...minhas(req) } })))) return erro(res, 404, "Notificação não encontrada.");
   return res.status(204).end();
+});
+
+// GET /api/notificacoes/preferencias
+export const lerPreferencias = comTratamento(async (req, res) => {
+  return res.json({ preferencias: await preferenciasDe(req.auth.tipo, req.auth.sub) });
+});
+
+// PUT /api/notificacoes/preferencias { vagasCompativeis?, candidaturas?, ... }
+export const salvarPreferencias = comTratamento(async (req, res) => {
+  const tipo = req.auth.tipo;
+  const mudancas = {};
+  for (const [chave, valor] of Object.entries(req.body ?? {})) {
+    if (!CATEGORIAS[tipo].includes(chave)) return erro(res, 400, "Preferência desconhecida.", chave);
+    if (typeof valor !== "boolean") return erro(res, 400, "Formato inválido.", chave);
+    mudancas[chave] = valor;
+  }
+  const [linha] = await PreferenciaNotificacao.findOrCreate({ where: minhas(req), defaults: minhas(req) });
+  await linha.update({ ...mudancas, atualizadaEm: new Date() });
+  return res.json({ preferencias: await preferenciasDe(tipo, req.auth.sub) });
 });
 
 // POST /api/notificacoes/lidas — marca todas

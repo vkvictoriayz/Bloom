@@ -5,6 +5,9 @@ import { imagensDe } from "../models/Imagem.js";
 import { notificar } from "../services/notificacoes.js";
 import { perfilCompleto } from "./CandidataController.js";
 import { perfisOcultos, privacidadeDe } from "../services/privacidade.js";
+import { avisarVagaCompativel } from "../services/vagasCompativeis.js";
+import { Favorito } from "../models/Candidata.js";
+import { contasPremium, Convite } from "../models/Premium.js";
 import {
   Candidatura,
   CandidaturaEnvio,
@@ -63,21 +66,35 @@ async function minhaVaga(req) {
   return vaga && vaga.perfilEmpresaId === perfil.id ? vaga : null;
 }
 
-function vagaJson(v, candidaturas = undefined) {
+export const NIVEIS = ["Estágio", "Júnior", "Pleno", "Sênior", "Especialista", "Liderança"];
+
+const numero = (v) => (v === null || v === undefined ? null : Number(v));
+
+function vagaJson(v, extras = {}) {
   return {
     id: v.id,
     titulo: v.titulo,
     descricao: v.descricao,
     requisitos: v.requisitos ?? "",
+    beneficios: v.beneficios ?? "",
     area: v.area ?? "",
+    nivel: v.nivel ?? "",
     localizacao: v.localizacao ?? "",
     modalidade: v.modalidade ?? "",
     tipoContrato: v.tipoContrato ?? "",
-    salario: v.salario === null || v.salario === undefined ? null : Number(v.salario),
+    salario: numero(v.salario),
+    salarioMax: numero(v.salarioMax),
     dataPublicacao: v.dataPublicacao,
     status: v.status ?? "Aberta",
-    ...(candidaturas !== undefined ? { candidaturas } : {}),
+    ...extras,
   };
+}
+
+function valorEmReais(bruto, campo, rotulo) {
+  if (bruto === undefined || bruto === null || String(bruto).trim() === "") return [null];
+  const valor = Number(String(bruto).replace(/\./g, "").replace(",", "."));
+  if (!Number.isFinite(valor) || valor < 0 || valor > 99999999) return [undefined, [`Informe ${rotulo} válido.`, campo]];
+  return [valor];
 }
 
 // Valida os campos de VAGAS (tamanhos do banco). Devolve [dados] ou [null, erro].
@@ -86,77 +103,130 @@ function lerVaga(body) {
     titulo: texto(body.titulo),
     descricao: texto(body.descricao),
     requisitos: texto(body.requisitos),
+    beneficios: texto(body.beneficios),
     area: texto(body.area),
+    nivel: texto(body.nivel),
     localizacao: texto(body.localizacao),
     modalidade: texto(body.modalidade),
     tipoContrato: texto(body.tipoContrato),
-  }
+  };
   if (!dados.titulo) return [null, ["Informe o título da vaga.", "titulo"]];
   if (dados.titulo.length > 150) return [null, ["O título pode ter até 150 caracteres.", "titulo"]];
   if (!dados.descricao) return [null, ["Descreva a vaga.", "descricao"]];
   if (dados.descricao.length > 500) return [null, ["A descrição pode ter até 500 caracteres.", "descricao"]];
   if (dados.requisitos.length > 500) return [null, ["Os requisitos podem ter até 500 caracteres.", "requisitos"]];
+  if (dados.beneficios.length > 500) return [null, ["Os benefícios podem ter até 500 caracteres.", "beneficios"]];
   if (dados.area.length > 100) return [null, ["A área pode ter até 100 caracteres.", "area"]];
+  if (dados.nivel && !NIVEIS.includes(dados.nivel)) return [null, ["Escolha um nível de experiência da lista.", "nivel"]];
   if (dados.localizacao.length > 150) return [null, ["A localização pode ter até 150 caracteres.", "localizacao"]];
   if (!MODALIDADES.includes(dados.modalidade)) return [null, ["Escolha a modalidade de trabalho.", "modalidade"]];
   if (dados.tipoContrato.length > 50) return [null, ["O tipo de contratação pode ter até 50 caracteres.", "tipoContrato"]];
 
-  let salario = null;
-  if (body.salario !== undefined && body.salario !== null && String(body.salario).trim() !== "") {
-    salario = Number(String(body.salario).replace(",", "."));
-    if (!Number.isFinite(salario) || salario < 0 || salario > 99999999) return [null, ["Informe um salário válido.", "salario"]];
-  }
-  for (const campo of ["requisitos", "area", "localizacao", "tipoContrato"]) dados[campo] ||= null;
-  return [{ ...dados, salario }];
+  const [salario, f1] = valorEmReais(body.salario, "salario", "um salário");
+  if (f1) return [null, f1];
+  const [salarioMax, f2] = valorEmReais(body.salarioMax, "salarioMax", "um valor máximo");
+  if (f2) return [null, f2];
+  if (salario !== null && salarioMax !== null && salarioMax < salario) return [null, ["O máximo da faixa não pode ser menor que o mínimo.", "salarioMax"]];
+  if (salario === null && salarioMax !== null) return [null, ["Informe o mínimo da faixa salarial.", "salario"]];
+
+  for (const campo of ["requisitos", "beneficios", "area", "nivel", "localizacao", "tipoContrato"]) dados[campo] ||= null;
+  return [{ ...dados, salario, salarioMax }];
+}
+
+// Contagens por vaga: candidaturas (por status) e quantas a salvaram.
+async function numerosDasVagas(vagas) {
+  const ids = vagas.map((v) => v.id);
+  if (!ids.length) return { candidaturas: [], salvas: [] };
+  const [candidaturas, salvas] = await Promise.all([
+    Candidatura.findAll({ attributes: ["vagaId", "status"], where: { vagaId: { [Op.in]: ids } } }),
+    Favorito.findAll({ attributes: ["vagaId"], where: { vagaId: { [Op.in]: ids } } }),
+  ]);
+  return { candidaturas, salvas };
 }
 
 // ---------------------------------------------------------------- Perfil
+
+function perfilJson(p) {
+  return {
+    logo: p?.logo ?? "",
+    descricao: p?.descricao ?? "",
+    localizacao: p?.localizacao ?? "",
+    site: p?.site ?? "",
+    areaAtuacao: p?.areaAtuacao ?? "",
+    linkedin: p?.linkedin ?? "",
+    emailContato: p?.emailContato ?? "",
+    informacoes: p?.informacoes ?? "",
+  };
+}
 
 export const perfil = comTratamento(async (req, res) => {
   const empresa = await Empresa.findByPk(eu(req));
   if (!empresa) return erro(res, 401, "Sessão inválida. Faça login novamente.");
   const p = await meuPerfil(eu(req));
   const vagas = p ? await Vaga.findAll({ where: { perfilEmpresaId: p.id } }) : [];
-  const [candidaturas, pendentes, publicacoes, imagens] = await Promise.all([
-    vagas.length ? Candidatura.count({ where: { vagaId: { [Op.in]: vagas.map((v) => v.id) } } }) : 0,
-    vagas.length ? Candidatura.count({ where: { vagaId: { [Op.in]: vagas.map((v) => v.id) }, status: "Pendente" } }) : 0,
+  const [{ candidaturas }, publicacoes, imagens, premium] = await Promise.all([
+    numerosDasVagas(vagas),
     PublicacaoEmpresa.count({ where: { empresaId: eu(req) } }),
     imagensDe("empresa", [eu(req)]),
+    contasPremium("empresa", [eu(req)]),
   ]);
   return res.json({
-    empresa: { id: empresa.id, nome: empresa.nome, email: empresa.email, telefone: empresa.telefone ?? "" },
+    empresa: { id: empresa.id, nome: empresa.nome, email: empresa.email, telefone: empresa.telefone ?? "", premium: premium.has(eu(req)) },
     imagens: imagens.get(eu(req)),
-    perfil: { logo: p?.logo ?? "", descricao: p?.descricao ?? "", localizacao: p?.localizacao ?? "", site: p?.site ?? "" },
+    perfil: perfilJson(p),
     numeros: {
-      vagasAbertas: vagas.filter((v) => (v.status ?? "Aberta") === "Aberta").length,
-      vagas: vagas.length,
-      candidaturas,
-      pendentes,
+      vagasAbertas: vagas.filter((v) => v.status === "Aberta").length,
+      vagas: vagas.filter((v) => v.status !== "Rascunho").length,
+      candidaturas: candidaturas.length,
+      pendentes: candidaturas.filter((c) => c.status === "Recebida").length,
       publicacoes,
     },
   });
 });
 
+// PUT /api/empresa/perfil — dados públicos do perfil e, opcionalmente,
+// o nome de exibição e o telefone da conta.
 export const atualizarPerfil = comTratamento(async (req, res) => {
+  const b = req.body ?? {};
   const dados = {
-    logo: texto(req.body.logo),
-    descricao: texto(req.body.descricao),
-    localizacao: texto(req.body.localizacao),
-    site: texto(req.body.site),
+    logo: texto(b.logo),
+    descricao: texto(b.descricao),
+    localizacao: texto(b.localizacao),
+    site: texto(b.site),
+    areaAtuacao: texto(b.areaAtuacao),
+    linkedin: texto(b.linkedin),
+    emailContato: texto(b.emailContato).toLowerCase(),
+    informacoes: texto(b.informacoes),
   };
   if (dados.descricao.length > 500) return erro(res, 400, "A descrição pode ter até 500 caracteres.", "descricao");
   if (dados.localizacao.length > 150) return erro(res, 400, "A localização pode ter até 150 caracteres.", "localizacao");
+  if (dados.areaAtuacao.length > 100) return erro(res, 400, "A área de atuação pode ter até 100 caracteres.", "areaAtuacao");
+  if (dados.informacoes.length > 1000) return erro(res, 400, "As informações adicionais podem ter até 1000 caracteres.", "informacoes");
   if (dados.site.length > 255 || !urlValida(dados.site)) return erro(res, 400, "Informe um endereço de site válido (https://...).", "site");
   if (dados.logo.length > 255 || !urlValida(dados.logo)) return erro(res, 400, "Informe um endereço de imagem válido (https://...).", "logo");
+  if (dados.linkedin.length > 255 || !urlValida(dados.linkedin) || (dados.linkedin && !/linkedin\.com/i.test(dados.linkedin))) {
+    return erro(res, 400, "Informe o endereço da página da empresa no LinkedIn (https://www.linkedin.com/...).", "linkedin");
+  }
+  if (dados.emailContato && (dados.emailContato.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dados.emailContato))) {
+    return erro(res, 400, "Informe um e-mail de contato válido.", "emailContato");
+  }
+
+  const conta = {};
+  if (b.nome !== undefined) {
+    const nome = texto(b.nome);
+    if (nome.length < 2 || nome.length > 150) return erro(res, 400, "O nome da empresa deve ter de 2 a 150 caracteres.", "nome");
+    conta.nome = nome;
+  }
+  if (b.telefone !== undefined) {
+    const tel = String(b.telefone ?? "").replace(/\D/g, "");
+    if (tel && (tel.length < 10 || tel.length > 11)) return erro(res, 400, "Use DDD + número, com 10 ou 11 dígitos.", "telefone");
+    conta.telefone = tel || null;
+  }
 
   const p = await meuPerfil(eu(req), true);
-  await p.update({
-    logo: dados.logo || null,
-    descricao: dados.descricao || null,
-    localizacao: dados.localizacao || null,
-    site: dados.site || null,
-  });
-  return res.json({ perfil: { logo: p.logo ?? "", descricao: p.descricao ?? "", localizacao: p.localizacao ?? "", site: p.site ?? "" } });
+  await p.update(Object.fromEntries(Object.entries(dados).map(([k, v]) => [k, v || null])));
+  if (Object.keys(conta).length) await Empresa.update(conta, { where: { id: eu(req) } });
+  return res.json({ perfil: perfilJson(p) });
 });
 
 // ----------------------------------------------------------------- Vagas
@@ -169,24 +239,42 @@ export const listarVagas = comTratamento(async (req, res) => {
     if (!STATUS_VAGA.includes(req.query.status)) return erro(res, 400, "Status inválido.");
     where.status = req.query.status;
   }
-  const vagas = await Vaga.findAll({ where, order: [["dataPublicacao", "DESC"], ["id", "DESC"]] });
-  const cands = vagas.length ? await Candidatura.findAll({ where: { vagaId: { [Op.in]: vagas.map((v) => v.id) } } }) : [];
-  return res.json({ vagas: vagas.map((v) => vagaJson(v, cands.filter((c) => c.vagaId === v.id).length)) });
+  const vagas = await Vaga.findAll({ where, order: [["id", "DESC"]] });
+  const { candidaturas, salvas } = await numerosDasVagas(vagas);
+  return res.json({
+    vagas: vagas.map((v) =>
+      vagaJson(v, { candidaturas: candidaturas.filter((c) => c.vagaId === v.id).length, interessadas: salvas.filter((f) => f.vagaId === v.id).length })
+    ),
+  });
 });
 
+async function publicada(vaga, req) {
+  const empresa = await Empresa.findByPk(eu(req));
+  await avisarVagaCompativel(vaga, empresa?.nome);
+}
+
+// POST /api/empresa/vagas { ...campos, rascunho? } — publica na hora ou salva como rascunho.
 export const criarVaga = comTratamento(async (req, res) => {
   const [dados, falha] = lerVaga(req.body);
   if (!dados) return erro(res, 400, ...falha);
+  const rascunho = req.body.rascunho === true;
   const p = await meuPerfil(eu(req), true);
-  const vaga = await Vaga.create({ ...dados, perfilEmpresaId: p.id, status: "Aberta", dataPublicacao: hoje() });
-  return res.status(201).json({ vaga: vagaJson(vaga, 0) });
+  const vaga = await Vaga.create({
+    ...dados,
+    perfilEmpresaId: p.id,
+    status: rascunho ? "Rascunho" : "Aberta",
+    dataPublicacao: rascunho ? null : hoje(),
+  });
+  if (!rascunho) await publicada(vaga, req);
+  return res.status(201).json({ vaga: vagaJson(vaga, { candidaturas: 0, interessadas: 0 }) });
 });
 
 export const verVaga = comTratamento(async (req, res) => {
   const vaga = await minhaVaga(req);
   if (!vaga) return erro(res, 404, "Vaga não encontrada.");
-  const total = await Candidatura.count({ where: { vagaId: vaga.id } });
-  return res.json({ vaga: vagaJson(vaga, total) });
+  const { candidaturas, salvas } = await numerosDasVagas([vaga]);
+  const porStatus = Object.fromEntries(STATUS_CANDIDATURA.map((s) => [s, candidaturas.filter((c) => c.status === s).length]));
+  return res.json({ vaga: vagaJson(vaga, { candidaturas: candidaturas.length, interessadas: salvas.length, porStatus }) });
 });
 
 export const editarVaga = comTratamento(async (req, res) => {
@@ -198,13 +286,74 @@ export const editarVaga = comTratamento(async (req, res) => {
   return res.json({ vaga: vagaJson(vaga) });
 });
 
+// PATCH /api/empresa/vagas/:id/status { status } — publicar (Aberta),
+// desativar (Pausada), encerrar ou voltar a rascunho (só sem candidaturas).
 export const mudarStatusVaga = comTratamento(async (req, res) => {
   const vaga = await minhaVaga(req);
   if (!vaga) return erro(res, 404, "Vaga não encontrada.");
   const status = texto(req.body.status);
   if (!STATUS_VAGA.includes(status)) return erro(res, 400, "Status inválido.");
-  await vaga.update({ status });
+  if (status === "Rascunho" && vaga.status !== "Rascunho" && (await Candidatura.count({ where: { vagaId: vaga.id } }))) {
+    return erro(res, 400, "Uma vaga com candidaturas não volta a ser rascunho. Pause ou encerre a vaga.");
+  }
+  const primeiraPublicacao = status === "Aberta" && !vaga.dataPublicacao;
+  await vaga.update({ status, ...(primeiraPublicacao ? { dataPublicacao: hoje() } : {}) });
+  if (primeiraPublicacao) await publicada(vaga, req);
   return res.json({ vaga: vagaJson(vaga) });
+});
+
+// DELETE /api/empresa/vagas/:id — só sem candidaturas (as candidatas não
+// perdem o histórico): com candidaturas, a vaga deve ser encerrada.
+export const excluirVaga = comTratamento(async (req, res) => {
+  const vaga = await minhaVaga(req);
+  if (!vaga) return erro(res, 404, "Vaga não encontrada.");
+  if (await Candidatura.count({ where: { vagaId: vaga.id } })) {
+    return erro(res, 409, "Esta vaga já recebeu candidaturas e não pode ser excluída. Encerre a vaga para parar de recebê-las.");
+  }
+  await Favorito.destroy({ where: { vagaId: vaga.id } });
+  await Convite.destroy({ where: { vagaId: vaga.id } });
+  await vaga.destroy();
+  return res.status(204).end();
+});
+
+// GET /api/empresa/dashboard — números do recrutamento, direto do banco.
+export const dashboard = comTratamento(async (req, res) => {
+  const p = await meuPerfil(eu(req));
+  const vagas = p ? await Vaga.findAll({ where: { perfilEmpresaId: p.id }, order: [["id", "DESC"]] }) : [];
+  const { candidaturas, salvas } = await numerosDasVagas(vagas);
+  const [publicacoes, convites] = await Promise.all([
+    PublicacaoEmpresa.count({ where: { empresaId: eu(req) } }),
+    Convite.count({ where: { empresaId: eu(req) } }),
+  ]);
+  const conta = (status) => candidaturas.filter((c) => c.status === status).length;
+  return res.json({
+    totais: {
+      vagasPublicadas: vagas.filter((v) => v.status !== "Rascunho").length,
+      vagasAtivas: vagas.filter((v) => v.status === "Aberta").length,
+      rascunhos: vagas.filter((v) => v.status === "Rascunho").length,
+      candidaturas: candidaturas.length,
+      recebidas: conta("Recebida"),
+      emAnalise: conta("Em análise"),
+      emEntrevista: conta("Em entrevista"),
+      aprovadas: conta("Aprovada"),
+      reprovadas: conta("Reprovada"),
+      interessadas: salvas.length,
+      convites,
+      publicacoes,
+    },
+    // Desempenho de cada vaga publicada.
+    vagas: vagas
+      .filter((v) => v.status !== "Rascunho")
+      .map((v) => ({
+        id: v.id,
+        titulo: v.titulo,
+        status: v.status,
+        dataPublicacao: v.dataPublicacao,
+        candidaturas: candidaturas.filter((c) => c.vagaId === v.id).length,
+        aprovadas: candidaturas.filter((c) => c.vagaId === v.id && c.status === "Aprovada").length,
+        interessadas: salvas.filter((f) => f.vagaId === v.id).length,
+      })),
+  });
 });
 
 // ---------------------------------------------------------- Candidaturas
@@ -310,8 +459,9 @@ export const mudarStatusCandidatura = comTratamento(async (req, res) => {
   if (mudou) {
     const vaga = await Vaga.findByPk(cand.vagaId);
     const frase = {
-      Pendente: "voltou para a fila de análise",
+      Recebida: "voltou para a etapa de recebidas",
       "Em análise": "está em análise",
+      "Em entrevista": "avançou para a etapa de entrevista",
       Aprovada: "foi aprovada",
       Reprovada: "não foi selecionada desta vez",
     }[status];
@@ -459,7 +609,38 @@ export const talentos = comTratamento(async (req, res) => {
   }));
   if (busca) pessoas = pessoas.filter((p) => `${p.nome} ${p.area} ${p.interesses.join(" ")} ${p.bio}`.toLowerCase().includes(busca));
   if (area) pessoas = pessoas.filter((p) => p.area.toLowerCase() === area);
+  // Premium: mais destaque (aparece primeiro, com selo).
+  const premium = await contasPremium("usuaria", pessoas.map((p) => p.id));
+  pessoas = pessoas.map((p) => ({ ...p, premium: premium.has(p.id) })).sort((a, b) => Number(b.premium) - Number(a.premium));
   return res.json({ talentos: pessoas });
+});
+
+// POST /api/empresa/talentos/:id/convites { vagaId, mensagem? } — convida
+// uma profissional (com perfil visível) para o processo de uma vaga aberta.
+export const convidar = comTratamento(async (req, res) => {
+  const id = idParam(req.params.id);
+  const conta = id && (await Usuaria.findByPk(id));
+  const privacidade = conta && (await privacidadeDe([id])).get(id);
+  if (!conta || !privacidade.perfilPublico) return erro(res, 404, "Perfil não encontrado.");
+  req.params.id = String(req.body?.vagaId ?? "");
+  const vaga = await minhaVaga(req);
+  if (!vaga) return erro(res, 404, "Vaga não encontrada.", "vagaId");
+  if (vaga.status !== "Aberta") return erro(res, 400, "Só é possível convidar para vagas abertas.", "vagaId");
+  const mensagem = texto(req.body.mensagem);
+  if (mensagem.length > 500) return erro(res, 400, "A mensagem pode ter até 500 caracteres.", "mensagem");
+  if (await Candidatura.findOne({ where: { vagaId: vaga.id, usuariaId: id } })) return erro(res, 409, "Ela já se candidatou a esta vaga.");
+  if (await Convite.findOne({ where: { vagaId: vaga.id, usuariaId: id } })) return erro(res, 409, "Você já convidou esta profissional para esta vaga.");
+
+  const convite = await Convite.create({ empresaId: eu(req), usuariaId: id, vagaId: vaga.id, mensagem: mensagem || null });
+  const empresa = await Empresa.findByPk(eu(req));
+  await notificar({
+    tipoConta: "usuaria",
+    contaId: id,
+    tipo: "convite",
+    texto: `${empresa?.nome ?? "Uma empresa"} convidou você para o processo da vaga ${vaga.titulo}.${mensagem ? ` “${mensagem.slice(0, 120)}”` : ""}`,
+    link: `/vagas/b${vaga.id}`,
+  });
+  return res.status(201).json({ convite: { id: convite.id, vagaId: vaga.id, criadoEm: convite.criadoEm } });
 });
 
 export const talento = comTratamento(async (req, res) => {
@@ -473,6 +654,8 @@ export const talento = comTratamento(async (req, res) => {
     // E-mail e perfil profissional só quando a candidata permitiu.
     talento: { ...mapa.get(id), ...(privacidade.mostrarContato ? { email: conta.email } : {}) },
     profissional: privacidade.mostrarExperiencia ? await perfilCompleto(id, { comContato: false }) : null,
+    // Vagas desta empresa para as quais ela já foi convidada.
+    convidadaPara: (await Convite.findAll({ attributes: ["vagaId"], where: { empresaId: eu(req), usuariaId: id } })).map((c) => c.vagaId),
     publicacoes: pubs.map((p) => ({ id: p.id, tipo: p.tipo, texto: p.texto, criadaEm: p.criadaEm })),
   });
 });

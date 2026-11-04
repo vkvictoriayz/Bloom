@@ -91,6 +91,10 @@ function DetalhesVaga() {
             <Link to={`/empresas/${empresa.slug}`} className="font-semibold text-vinho hover:underline">
               {empresa.nome}
             </Link>
+          ) : empresa.id ? (
+            <Link to={`/candidata/empresas/${empresa.id}`} className="font-semibold text-vinho hover:underline">
+              {empresa.nome}
+            </Link>
           ) : (
             <p className="font-semibold text-vinho">{empresa.nome}</p>
           )}

@@ -4,6 +4,7 @@ import authRoutes from "./routes/authRoutes.js";
 import comunidadeRoutes from "./routes/comunidadeRoutes.js";
 import imagemRoutes from "./routes/imagemRoutes.js";
 import { candidataRoutes, grupoRoutes, mensagemRoutes, notificacaoRoutes } from "./routes/candidataRoutes.js";
+import { pagamentoRoutes, premiumRoutes } from "./routes/premiumRoutes.js";
 import { candidaturaRoutes, empresaRoutes, vagaRoutes } from "./routes/empresaRoutes.js";
 
 const app = express();
@@ -24,6 +25,8 @@ app.use("/api/candidaturas", candidaturaRoutes);
 app.use("/api/notificacoes", notificacaoRoutes);
 app.use("/api/mensagens", mensagemRoutes);
 app.use("/api/comunidades", grupoRoutes);
+app.use("/api/premium", premiumRoutes);
+app.use("/api/pagamentos", pagamentoRoutes);
 
 app.use((req, res) => res.status(404).json({ erro: "Rota não encontrada." }));
 

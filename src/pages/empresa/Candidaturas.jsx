@@ -11,12 +11,47 @@ import { Selecao } from '../../components/ui/Campo'
 import Selo from '../../components/ui/Selo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { dataCurta, listarCandidaturasEmpresa, listarVagasEmpresa, STATUS_CANDIDATURA, VISUAL_CANDIDATURA } from '../../services/empresa'
+import { cn } from '../../lib/cn'
+
+// Quadro por etapa: uma coluna para cada status do processo seletivo.
+function QuadroEtapas({ candidaturas }) {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+      {STATUS_CANDIDATURA.map((s) => {
+        const daEtapa = candidaturas.filter((c) => c.status === s)
+        return (
+          <section key={s} aria-label={VISUAL_CANDIDATURA[s].rotulo} className="flex flex-col rounded-xl border border-linha bg-papel">
+            <header className="flex items-center justify-between gap-2 border-b border-linha px-4 py-3">
+              <Selo variante={VISUAL_CANDIDATURA[s].variante}>{VISUAL_CANDIDATURA[s].rotulo}</Selo>
+              <span className="text-sm font-semibold text-tinta-2 tabular-nums">{daEtapa.length}</span>
+            </header>
+            <ul className="flex flex-col gap-2 p-3">
+              {daEtapa.map((c) => (
+                <li key={c.id}>
+                  <Link to={`/empresa/candidaturas/${c.id}`} className="flex items-center gap-3 rounded-lg border border-linha bg-branco p-3 hover:border-vinho/40">
+                    <Avatar nome={c.candidata.nome} foto={c.candidata.foto} tamanho="sm" />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-tinta">{c.candidata.nome}</span>
+                      <span className="block truncate text-xs text-suave">{c.vaga.titulo}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+              {daEtapa.length === 0 && <li className="px-1 py-2 text-xs text-suave">Ninguém nesta etapa.</li>}
+            </ul>
+          </section>
+        )
+      })}
+    </div>
+  )
+}
 
 // Candidaturas às vagas da empresa (registros reais de CANDIDATURAS).
 function Candidaturas() {
   const [parametros, setParametros] = useSearchParams()
   const vaga = parametros.get('vaga') ?? ''
   const status = parametros.get('status') ?? ''
+  const porEtapa = parametros.get('modo') === 'etapas'
   const r = useCarregar(() => listarCandidaturasEmpresa({ vaga, status }), [vaga, status])
   const vagas = useCarregar(() => listarVagasEmpresa())
 
@@ -30,6 +65,26 @@ function Candidaturas() {
   return (
     <>
       <TituloPagina titulo="Candidaturas recebidas" descricao="Quem se candidatou às vagas da empresa e em que etapa está cada processo." />
+
+      <div className="mb-4 flex w-fit rounded-full border border-linha bg-branco p-1" role="group" aria-label="Forma de exibir">
+        {[
+          ['', 'Lista'],
+          ['etapas', 'Por etapa'],
+        ].map(([valor, rotulo]) => (
+          <button
+            key={rotulo}
+            type="button"
+            aria-pressed={(parametros.get('modo') ?? '') === valor}
+            onClick={() => definir('modo', valor)}
+            className={cn(
+              'h-9 rounded-full px-4 text-sm font-semibold transition-colors',
+              (parametros.get('modo') ?? '') === valor ? 'bg-vinho text-white' : 'text-tinta-2 hover:text-tinta'
+            )}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:max-w-2xl">
         <Selecao aria-label="Filtrar por vaga" value={vaga} onChange={(e) => definir('vaga', e.target.value)}>
@@ -65,6 +120,8 @@ function Candidaturas() {
               </Botao>
             </VazioAcoes>
           </Vazio>
+        ) : porEtapa ? (
+          <QuadroEtapas candidaturas={r.dados.candidaturas} />
         ) : (
           <ul className="cartao divide-y divide-linha overflow-hidden">
             {r.dados.candidaturas.map((c) => {

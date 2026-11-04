@@ -29,6 +29,8 @@ export const abrirConversa = (candidaturaId) => chamar('/mensagens', { method: '
 export const listarNotificacoes = () => chamar('/notificacoes')
 export const marcarComoLida = (id) => chamar(`/notificacoes/${encodeURIComponent(id)}/lida`, { method: 'POST' })
 export const marcarTodasComoLidas = () => chamar('/notificacoes/lidas', { method: 'POST' })
+export const lerPreferenciasNotificacao = () => chamar('/notificacoes/preferencias').then((r) => r.preferencias)
+export const salvarPreferenciasNotificacao = (corpo) => chamar('/notificacoes/preferencias', { method: 'PUT', corpo }).then((r) => r.preferencias)
 export const contarNaoLidas = () => chamar('/notificacoes?resumo=1').then((r) => r.naoLidas)
 // Disparado quando notificações são lidas, para o sino atualizar a contagem.
 export const EVENTO_NOTIFICACOES = 'bloom-notificacoes-lidas'

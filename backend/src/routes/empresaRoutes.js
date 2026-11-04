@@ -15,6 +15,8 @@ empresaRoutes.post("/vagas", E.criarVaga);
 empresaRoutes.get("/vagas/:id", E.verVaga);
 empresaRoutes.put("/vagas/:id", E.editarVaga);
 empresaRoutes.patch("/vagas/:id/status", E.mudarStatusVaga);
+empresaRoutes.delete("/vagas/:id", E.excluirVaga);
+empresaRoutes.get("/dashboard", E.dashboard);
 
 empresaRoutes.get("/candidaturas", E.listarCandidaturas);
 empresaRoutes.get("/candidaturas/:id", E.verCandidatura);
@@ -28,11 +30,13 @@ empresaRoutes.delete("/publicacoes/:id", E.excluirPublicacao);
 empresaRoutes.get("/feed", E.feed);
 empresaRoutes.get("/talentos", E.talentos);
 empresaRoutes.get("/talentos/:id", E.talento);
+empresaRoutes.post("/talentos/:id/convites", E.convidar);
 
 // /api/vagas e /api/candidaturas — lado da candidata (só contas "usuaria").
 export const vagaRoutes = Router();
 vagaRoutes.use(exigirLogin(["usuaria"]));
 vagaRoutes.get("/", V.listar);
+vagaRoutes.get("/empresas/:id", V.empresaPublica);
 vagaRoutes.get("/:id", V.ver);
 
 export const candidaturaRoutes = Router();
