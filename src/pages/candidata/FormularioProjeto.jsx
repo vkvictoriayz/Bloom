@@ -25,6 +25,7 @@ function FormularioProjeto() {
   const [erros, setErros] = useState({})
   const [erroGeral, setErroGeral] = useState('')
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false)
+  const [salvando, setSalvando] = useState(false)
   const arquivo = useRef(null)
 
   if (editando && !original) {
@@ -57,7 +58,7 @@ function FormularioProjeto() {
     leitor.readAsDataURL(imagem)
   }
 
-  function enviar(e) {
+  async function enviar(e) {
     e.preventDefault()
     const novos = {}
     if (dados.nome.trim().length < 2) novos.nome = 'Dê um nome ao projeto (ao menos 2 letras).'
@@ -68,21 +69,32 @@ function FormularioProjeto() {
     setErros(novos)
     if (Object.keys(novos).length) return setErroGeral('Corrija os campos destacados.')
 
-    const salvo = salvarProjeto(usuario, {
-      ...dados,
-      id: original?.id,
-      nome: dados.nome.trim(),
-      descricao: dados.descricao.trim(),
-      repositorio: enderecoSeguro(dados.repositorio.trim()) ?? '',
-      demo: enderecoSeguro(dados.demo.trim()) ?? '',
-    })
-    if (!salvo) return setErroGeral('Não foi possível salvar neste navegador. A imagem pode ser grande demais para o armazenamento.')
-    navigate('/candidata/projetos', { replace: true })
+    setSalvando(true)
+    try {
+      await salvarProjeto(usuario, {
+        ...dados,
+        id: original?.id,
+        nome: dados.nome.trim(),
+        descricao: dados.descricao.trim(),
+        repositorio: enderecoSeguro(dados.repositorio.trim()) ?? '',
+        demo: enderecoSeguro(dados.demo.trim()) ?? '',
+      })
+      navigate('/candidata/projetos', { replace: true })
+    } catch (erro) {
+      setErroGeral(erro.message)
+      setSalvando(false)
+    }
   }
 
-  function excluir() {
-    if (!excluirProjeto(usuario, original.id)) return setErroGeral('Não foi possível excluir o projeto.')
-    navigate('/candidata/projetos', { replace: true })
+  async function excluir() {
+    setSalvando(true)
+    try {
+      await excluirProjeto(usuario, original.id)
+      navigate('/candidata/projetos', { replace: true })
+    } catch (erro) {
+      setErroGeral(erro.message)
+      setSalvando(false)
+    }
   }
 
   return (
@@ -153,7 +165,9 @@ function FormularioProjeto() {
         {erroGeral && <Aviso tipo="erro">{erroGeral}</Aviso>}
 
         <div className="flex flex-wrap items-center gap-2 border-t border-linha pt-6">
-          <Botao type="submit">{editando ? 'Salvar alterações' : 'Criar projeto'}</Botao>
+          <Botao type="submit" disabled={salvando}>
+            {salvando ? 'Salvando…' : editando ? 'Salvar alterações' : 'Criar projeto'}
+          </Botao>
           <Botao as={Link} to="/candidata/projetos" variante="fantasma">
             Cancelar
           </Botao>
@@ -161,7 +175,7 @@ function FormularioProjeto() {
             (confirmandoExclusao ? (
               <span className="ml-auto flex flex-wrap items-center gap-2 text-sm">
                 <span className="text-tinta-2">Excluir este projeto? Não dá para desfazer.</span>
-                <Botao tamanho="sm" className="bg-erro hover:bg-erro/90" onClick={excluir}>
+                <Botao tamanho="sm" className="bg-erro hover:bg-erro/90" onClick={excluir} disabled={salvando}>
                   Excluir
                 </Botao>
                 <Botao tamanho="sm" variante="secundario" onClick={() => setConfirmandoExclusao(false)}>

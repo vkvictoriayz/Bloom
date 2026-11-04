@@ -1,5 +1,7 @@
 import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 
+import ExcluirConta from '../../components/conta/ExcluirConta'
+import FormularioSenha from '../../components/conta/FormularioSenha'
 import Icone from '../../components/Icone'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Botao from '../../components/ui/Botao'
@@ -67,7 +69,7 @@ function Configuracoes() {
         </Secao>
 
         <Secao icone="cadeado" titulo="Segurança" descricao="Senha de acesso.">
-          <EmBreve>A troca de senha ainda não tem um fluxo seguro no backend. Ela será feita pelo mesmo sistema de autenticação, quando existir.</EmBreve>
+          <FormularioSenha />
         </Secao>
 
         <Secao icone="sino" titulo="Notificações" descricao="O que a empresa recebe.">
@@ -77,7 +79,7 @@ function Configuracoes() {
         <Secao icone="olho" titulo="Privacidade" descricao="O que as candidatas veem.">
           <p className="text-sm text-tinta-2">
             Candidatas autenticadas veem o nome da empresa e as vagas abertas. O perfil (foto, capa, descrição, localização e site) aparece no
-            perfil da empresa. A empresa vê apenas dados públicos das profissionais e, nas candidaturas, o que cada candidata enviou.
+            perfil da empresa. A empresa vê os dados públicos das profissionais e o que cada uma permitir mostrar e, nas candidaturas, o que a candidata enviou e o perfil profissional dela.
           </p>
         </Secao>
 
@@ -85,6 +87,16 @@ function Configuracoes() {
           <Botao variante="secundario" onClick={encerrar}>
             <Icone nome="sair" tamanho={16} /> Sair da conta
           </Botao>
+        </Secao>
+
+        <Secao icone="lixeira" titulo="Excluir conta" descricao="Apagar a conta da empresa e seus dados da Bloom.">
+          <ExcluirConta
+            itens={[
+              'o cadastro, o perfil, a foto e a capa da empresa',
+              'todas as vagas e as candidaturas recebidas (as candidatas são avisadas)',
+              'as publicações, mensagens e notificações da empresa',
+            ]}
+          />
         </Secao>
       </div>
     </>

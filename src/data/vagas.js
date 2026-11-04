@@ -204,11 +204,16 @@ export function correspondeBusca(vaga, termo) {
 
 // Recomendação pela sobreposição real entre as competências técnicas do
 // perfil e as tecnologias da vaga. Sem competências no perfil, devolve null.
-export function recomendarVagas(tecnicas = [], limite = 3) {
-  const minhas = new Set(tecnicas.map((t) => t.toLowerCase()))
-  if (!minhas.size) return null
-  return listarVagas()
-    .map((vaga) => ({ vaga, comuns: vaga.competencias.filter((c) => minhas.has(c.toLowerCase())) }))
+// Vagas de "lista" que citam competências técnicas da candidata no título,
+// na área, nos requisitos ou nas competências da vaga.
+export function recomendarVagas(lista, tecnicas = [], limite = 3) {
+  const minhas = tecnicas.map((t) => t.toLowerCase()).filter(Boolean)
+  if (!minhas.length) return null
+  return lista
+    .map((vaga) => {
+      const texto = [vaga.titulo, vaga.area, ...(vaga.requisitos ?? []), ...(vaga.competencias ?? [])].join(' ').toLowerCase()
+      return { vaga, comuns: minhas.filter((t) => texto.includes(t)) }
+    })
     .filter((item) => item.comuns.length > 0)
     .sort((a, b) => b.comuns.length - a.comuns.length || a.vaga.publicadaHaDias - b.vaga.publicadaHaDias)
     .slice(0, limite)

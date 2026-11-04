@@ -1,24 +1,38 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Avatar from '../../components/comunidade/Avatar'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
+import PerfilProfissional from '../../components/empresa/PerfilProfissional'
 import { useCarregar } from '../../components/empresa/useCarregar'
 import Botao from '../../components/ui/Botao'
 import { Aviso, Selecao } from '../../components/ui/Campo'
 import Selo from '../../components/ui/Selo'
 import { dataCurta, lerCandidaturaEmpresa, mudarStatusCandidatura, STATUS_CANDIDATURA, VISUAL_CANDIDATURA } from '../../services/empresa'
+import { abrirConversa } from '../../services/recursos'
 
 // Detalhe de uma candidatura recebida. O backend só devolve candidaturas
-// das vagas desta empresa; a candidata aparece com os dados que ela mesma
-// enviou ou tornou públicos na comunidade.
+// das vagas desta empresa; a candidata aparece com o que enviou, o perfil
+// profissional dela e os dados públicos da comunidade.
 function DetalheCandidatura() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const r = useCarregar(() => lerCandidaturaEmpresa(id), [id])
   const [novoStatus, setNovoStatus] = useState('')
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
+  const [conversa, setConversa] = useState({ tipo: 'ocioso' })
+
+  async function conversar() {
+    setConversa({ tipo: 'abrindo' })
+    try {
+      const resposta = await abrirConversa(Number(id))
+      navigate(`/empresa/mensagens/${resposta.conversa.id}`)
+    } catch (erro) {
+      setConversa({ tipo: 'erro', texto: erro.message })
+    }
+  }
 
   if (r.tipo === 'carregando') return <Carregando quantidade={2} altura="h-40" />
   if (r.tipo === 'erro') {
@@ -30,7 +44,7 @@ function DetalheCandidatura() {
     )
   }
 
-  const { candidatura, vaga, candidata, envio } = r.dados
+  const { candidatura, vaga, candidata, envio, perfil } = r.dados
   const atual = novoStatus || candidatura.status
   const visual = VISUAL_CANDIDATURA[candidatura.status] ?? { variante: 'neutro', rotulo: candidatura.status }
 
@@ -40,7 +54,7 @@ function DetalheCandidatura() {
     setEstado({ tipo: 'salvando' })
     try {
       await mudarStatusCandidatura(candidatura.id, atual)
-      setEstado({ tipo: 'sucesso', texto: `Status atualizado para “${VISUAL_CANDIDATURA[atual].rotulo}”. A candidata vê a mudança no acompanhamento dela.` })
+      setEstado({ tipo: 'sucesso', texto: `Status atualizado para “${VISUAL_CANDIDATURA[atual].rotulo}”. A candidata recebe uma notificação.` })
       setNovoStatus('')
       r.recarregar()
     } catch (erro) {
@@ -50,7 +64,17 @@ function DetalheCandidatura() {
 
   return (
     <>
-      <TituloPagina titulo={candidata.nome} descricao={`Candidatura para ${vaga.titulo} · ${dataCurta(candidatura.data)}`} voltar={{ para: '/empresa/candidaturas', rotulo: 'Candidaturas recebidas' }} />
+      <TituloPagina
+        titulo={candidata.nome}
+        descricao={`Candidatura para ${vaga.titulo} · ${dataCurta(candidatura.data)}`}
+        voltar={{ para: '/empresa/candidaturas', rotulo: 'Candidaturas recebidas' }}
+        acoes={
+          <Botao variante="secundario" onClick={conversar} disabled={conversa.tipo === 'abrindo'}>
+            <Icone nome="mensagem" tamanho={16} /> {conversa.tipo === 'abrindo' ? 'Abrindo…' : 'Enviar mensagem'}
+          </Botao>
+        }
+      />
+      {conversa.tipo === 'erro' && <Aviso tipo="erro" className="mb-4">{conversa.texto}</Aviso>}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex flex-col gap-6">
@@ -102,6 +126,8 @@ function DetalheCandidatura() {
               <p className="mt-2 text-sm text-suave">Nenhum link enviado. O envio de arquivo de currículo ainda não existe na plataforma.</p>
             )}
           </section>
+
+          <PerfilProfissional perfil={perfil} />
         </div>
 
         <aside className="flex flex-col gap-4">

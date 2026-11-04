@@ -104,7 +104,7 @@ function Candidaturas() {
           )}
           <p className="mt-6 flex items-start gap-2 text-xs text-suave">
             <Icone nome="info" tamanho={16} className="mt-px shrink-0" />
-            As candidaturas ficam registradas neste navegador até a API de candidaturas existir. O status só muda quando a empresa atualiza o processo.
+            O status só muda quando a empresa atualiza o processo. Você recebe uma notificação a cada mudança.
           </p>
         </>
       )}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
 import TituloPagina, { RecursoIndisponivel } from '../../components/candidata/TituloPagina'
@@ -9,21 +9,48 @@ import { Aviso } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { Vazio, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { tempoRelativo } from '../../services/comunidade'
-import { DISPONIVEL, listarNotificacoes, marcarComoLida } from '../../services/recursos'
+import { DISPONIVEL, EVENTO_NOTIFICACOES, listarNotificacoes, marcarComoLida, marcarTodasComoLidas } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
 const ICONES = { mensagem: 'mensagem', curtida: 'coracao', comentario: 'mensagem', publicacao: 'inicio', candidatura: 'candidaturas', vaga: 'maleta', conexao: 'perfil' }
 
-function Notificacoes() {
+// Notificações da conta (candidata ou empresa: a API sabe pelo token).
+// Clicar num aviso marca como lido e abre a página relacionada.
+
+function Notificacoes({ descricao = 'Mensagens, curtidas, comentários, novas seguidoras e mudanças nas suas candidaturas.' }) {
   const r = useRecurso(DISPONIVEL.notificacoes, listarNotificacoes)
   const [lidas, setLidas] = useState([])
+  const [todasLidas, setTodasLidas] = useState(false)
   const [erro, setErro] = useState('')
+  const navigate = useNavigate()
+
+  async function abrir(n) {
+    if (!n.lida && !lidas.includes(n.id)) {
+      setLidas((l) => [...l, n.id])
+      marcarComoLida(n.id)
+        .then(() => window.dispatchEvent(new Event(EVENTO_NOTIFICACOES)))
+        .catch(() => {})
+    }
+    if (n.link) navigate(n.link)
+  }
+
+  async function marcarTodas() {
+    setErro('')
+    try {
+      await marcarTodasComoLidas()
+      setTodasLidas(true)
+      window.dispatchEvent(new Event(EVENTO_NOTIFICACOES))
+    } catch (e) {
+      setErro(e.message)
+    }
+  }
 
   async function marcar(id) {
     setErro('')
     try {
       await marcarComoLida(id)
       setLidas((l) => [...l, id])
+      window.dispatchEvent(new Event(EVENTO_NOTIFICACOES))
     } catch (e) {
       setErro(e.message)
     }
@@ -31,7 +58,19 @@ function Notificacoes() {
 
   return (
     <>
-      <TituloPagina titulo="Notificações" descricao="Mensagens, curtidas, comentários, candidaturas e novas oportunidades." />
+      <TituloPagina
+        titulo="Notificações"
+        descricao={descricao}
+        acoes={
+          r.estado === 'pronto' &&
+          !todasLidas &&
+          r.dados.notificacoes?.some((n) => !n.lida && !lidas.includes(n.id)) && (
+            <Botao variante="secundario" onClick={marcarTodas}>
+              Marcar todas como lidas
+            </Botao>
+          )
+        }
+      />
 
       {r.estado === 'indisponivel' && (
         <RecursoIndisponivel
@@ -50,14 +89,20 @@ function Notificacoes() {
         (r.dados.notificacoes?.length ? (
           <ul className="overflow-hidden rounded-xl border border-linha bg-branco">
             {r.dados.notificacoes.map((n) => {
-              const lida = n.lida || lidas.includes(n.id)
+              const lida = n.lida || todasLidas || lidas.includes(n.id)
               return (
                 <li key={n.id} className={cn('flex items-start gap-3 border-b border-linha p-4 last:border-b-0', !lida && 'bg-blush/40')}>
                   <span className="grid size-9 shrink-0 place-items-center rounded-full bg-blush text-vinho" aria-hidden="true">
                     <Icone nome={ICONES[n.tipo] ?? 'sino'} tamanho={18} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className={cn('text-sm', lida ? 'text-tinta-2' : 'font-semibold text-tinta')}>{n.texto}</p>
+                    {n.link ? (
+                      <button type="button" onClick={() => abrir(n)} className={cn('text-left text-sm hover:text-vinho hover:underline', lida ? 'text-tinta-2' : 'font-semibold text-tinta')}>
+                        {n.texto}
+                      </button>
+                    ) : (
+                      <p className={cn('text-sm', lida ? 'text-tinta-2' : 'font-semibold text-tinta')}>{n.texto}</p>
+                    )}
                     <p className="text-xs text-suave">{tempoRelativo(n.criadaEm)}</p>
                   </div>
                   {!lida && (

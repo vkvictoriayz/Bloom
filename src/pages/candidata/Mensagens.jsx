@@ -13,14 +13,16 @@ import { tempoRelativo } from '../../services/comunidade'
 import { DISPONIVEL, listarConversas } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
-// Lista de conversas. Sem API de mensagens, não mostra conversas de exemplo.
-function Mensagens() {
+// Lista de conversas com empresas, cada uma ligada a uma candidatura.
+// "base" é a rota da área (candidata ou empresa); a API decide de quem são
+// as conversas pelo tipo da conta.
+export function Mensagens({ base = '/candidata/mensagens', descricao = 'Converse com as empresas das vagas em que você se candidatou.' }) {
   const r = useRecurso(DISPONIVEL.mensagens, listarConversas)
   const [busca, setBusca] = useState('')
 
   return (
     <>
-      <TituloPagina titulo="Mensagens" descricao="Converse com outras profissionais e com empresas." />
+      <TituloPagina titulo="Mensagens" descricao={descricao} />
 
       {r.estado === 'indisponivel' && (
         <RecursoIndisponivel
@@ -47,16 +49,17 @@ function Mensagens() {
               {conversas.length === 0 ? (
                 <Vazio className="border-0">
                   <VazioTitulo>{busca ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ainda'}</VazioTitulo>
-                  <VazioDescricao>Suas conversas aparecem aqui.</VazioDescricao>
+                  <VazioDescricao>{busca ? 'Tente outro nome.' : 'Uma conversa começa pela página de uma candidatura, com o botão de mensagem.'}</VazioDescricao>
                 </Vazio>
               ) : (
                 <ul className="divide-y divide-linha">
                   {conversas.map((c) => (
                     <li key={c.id}>
-                      <Link to={`/candidata/mensagens/${c.id}`} className="flex items-center gap-3 p-4 hover:bg-papel">
+                      <Link to={`${base}/${c.id}`} className="flex items-center gap-3 p-4 hover:bg-papel">
                         <Avatar nome={c.participante.nome} foto={c.participante.foto} />
                         <span className="min-w-0 flex-1">
                           <span className={cn('block truncate', c.naoLidas ? 'font-bold text-tinta' : 'font-semibold text-tinta-2')}>{c.participante.nome}</span>
+                          {c.vaga && <span className="block truncate text-xs text-vinho">{c.vaga}</span>}
                           <span className="block truncate text-sm text-suave">{c.ultimaMensagem}</span>
                         </span>
                         <span className="flex flex-col items-end gap-1">

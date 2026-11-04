@@ -15,7 +15,7 @@ import { useCandidaturas, useVagas } from '../../hooks/useVagasReais'
 function VagasSalvas() {
   const salvas = useDadosLocais(lerSalvas, [EVENTO_SALVAS])
   const candidaturas = useCandidaturas()
-  // Vagas de exemplo e vagas reais (ids "b<id>") que a candidata salvou.
+  // Vagas (ids "b<id>") que a candidata salvou na conta.
   const { vagas: todas } = useVagas()
   const vagas = salvas.map((id) => todas.find((v) => String(v.id) === String(id))).filter(Boolean)
 

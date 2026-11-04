@@ -7,6 +7,7 @@ import { EmpresaCadastro, RedefinicaoSenha, UsuariaVerificacao } from "../models
 import { consultarCnpj, ErroConsultaCnpj } from "../services/cnpj.js";
 import { consultaCpfAtiva, ErroConsultaCpf, verificarCpf } from "../services/cpf.js";
 import { enviarEmail } from "../services/email.js";
+import { excluirEmpresa, excluirUsuaria } from "../services/exclusaoConta.js";
 import { validarCNPJ, validarCPF } from "../utils/documentos.js";
 import { criarLimitador } from "../utils/limitador.js";
 import { criarToken } from "../utils/jwt.js";
@@ -326,6 +327,55 @@ export async function redefinirSenha(req, res) {
 
 function escaparHtml(valor) {
   return String(valor).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+
+// PUT /api/auth/senha { senhaAtual, novaSenha, confirmarSenha } — troca a
+// senha de quem está logada (candidata ou empresa), conferindo a atual.
+export async function alterarSenha(req, res) {
+  try {
+    const Model = req.auth.tipo === "empresa" ? Empresa : Usuaria;
+    const conta = await Model.findByPk(req.auth.sub);
+    if (!conta) return erro(res, 401, "Sessão inválida. Faça login novamente.");
+
+    const chave = `senha:${req.auth.tipo}:${conta.id}`;
+    if (falhasLogin.bloqueado(chave)) return erro(res, 429, "Muitas tentativas. Aguarde alguns minutos e tente de novo.");
+    if (typeof req.body.senhaAtual !== "string" || !(await bcrypt.compare(req.body.senhaAtual, conta.senhaHash))) {
+      falhasLogin.registrar(chave);
+      return erro(res, 400, "A senha atual não confere.", "senhaAtual");
+    }
+    const falha = validarSenha(req.body.novaSenha, req.body.confirmarSenha);
+    if (falha) return erro(res, 400, falha[0], falha[1] === "senha" ? "novaSenha" : falha[1]);
+    if (req.body.novaSenha === req.body.senhaAtual) return erro(res, 400, "A nova senha precisa ser diferente da atual.", "novaSenha");
+
+    falhasLogin.limpar(chave);
+    await conta.update({ senhaHash: await bcrypt.hash(req.body.novaSenha, SALT_ROUNDS) });
+    return res.json({ mensagem: "Senha alterada." });
+  } catch (e) {
+    return tratarErro(res, e);
+  }
+}
+
+// DELETE /api/auth/conta { senha, confirmacao: "EXCLUIR" } — exclui a conta
+// de quem está logada (candidata ou empresa) e todos os dados dela.
+export async function excluirConta(req, res) {
+  try {
+    const Model = req.auth.tipo === "empresa" ? Empresa : Usuaria;
+    const conta = await Model.findByPk(req.auth.sub);
+    if (!conta) return erro(res, 401, "Sessão inválida. Faça login novamente.");
+
+    const chave = `exclusao:${req.auth.tipo}:${conta.id}`;
+    if (falhasLogin.bloqueado(chave)) return erro(res, 429, "Muitas tentativas. Aguarde alguns minutos e tente de novo.");
+    if (req.body?.confirmacao !== "EXCLUIR") return erro(res, 400, 'Digite EXCLUIR para confirmar.', "confirmacao");
+    if (typeof req.body.senha !== "string" || !(await bcrypt.compare(req.body.senha, conta.senhaHash))) {
+      falhasLogin.registrar(chave);
+      return erro(res, 400, "A senha não confere.", "senha");
+    }
+
+    await (req.auth.tipo === "empresa" ? excluirEmpresa(conta.id) : excluirUsuaria(conta.id));
+    return res.json({ mensagem: "Sua conta e seus dados foram excluídos." });
+  } catch (e) {
+    return tratarErro(res, e);
+  }
 }
 
 // Quem está logada (usa o token validado pelo middleware).

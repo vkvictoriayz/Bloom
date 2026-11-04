@@ -4,7 +4,7 @@ import BotaoSalvar from './BotaoSalvar'
 import Icone from './Icone'
 import MarcaEmpresa from './MarcaEmpresa'
 import Selo from './ui/Selo'
-import { ehIniciante, formatarPublicacao } from '../data/vagas'
+import { formatarPublicacao } from '../data/vagas'
 
 // Vaga em destaque: bloco maior que abre a lista de resultados, com a faixa
 // na cor da empresa, cargo em Fraunces e uma ficha de metadados.
@@ -56,11 +56,6 @@ function VagaDestaque({ vaga, candidatura }) {
             {candidatura && (
               <Selo variante="sucesso">
                 <Icone nome="check" /> Candidatura enviada
-              </Selo>
-            )}
-            {ehIniciante(vaga) && (
-              <Selo variante="vinho">
-                <Icone nome="broto" /> Boa para começar
               </Selo>
             )}
             {vaga.competencias.slice(0, 3).map((tecnologia) => (

@@ -4,7 +4,7 @@ import BotaoSalvar from './BotaoSalvar'
 import Icone from './Icone'
 import MarcaEmpresa from './MarcaEmpresa'
 import Selo from './ui/Selo'
-import { ehIniciante, formatarPublicacao } from '../data/vagas'
+import { formatarPublicacao } from '../data/vagas'
 import { cn } from '../lib/cn'
 
 // Vaga em formato de linha de lista (não card): a hierarquia vem da
@@ -51,11 +51,6 @@ function LinhaVaga({ vaga, candidatura, compacta = false, className }) {
 
         {!compacta && (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {ehIniciante(vaga) && (
-              <Selo variante="vinho">
-                <Icone nome="broto" /> Boa para começar
-              </Selo>
-            )}
             {vaga.competencias.slice(0, 4).map((tecnologia) => (
               <Selo key={tecnologia} variante="contorno">
                 {tecnologia}

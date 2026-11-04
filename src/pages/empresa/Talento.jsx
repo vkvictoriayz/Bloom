@@ -6,6 +6,7 @@ import Avatar from '../../components/comunidade/Avatar'
 import { ICONE_TIPO } from '../../components/comunidade/tipos'
 import Icone from '../../components/Icone'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
+import PerfilProfissional from '../../components/empresa/PerfilProfissional'
 import { useCarregar } from '../../components/empresa/useCarregar'
 import { TIPOS, tempoRelativo } from '../../services/comunidade'
 import { lerTalento } from '../../services/empresa'
@@ -27,7 +28,7 @@ function Talento() {
     )
   }
 
-  const { talento, publicacoes } = r.dados
+  const { talento, publicacoes, profissional } = r.dados
   return (
     <>
       <TituloPagina titulo={talento.nome} voltar={{ para: '/empresa/talentos', rotulo: 'Banco de talentos' }} />
@@ -48,31 +49,41 @@ function Talento() {
                 ))}
               </ul>
             )}
+            {talento.email && (
+              <a href={`mailto:${talento.email}`} className="mt-4 inline-flex items-center gap-1.5 text-sm text-tinta-2 hover:text-vinho">
+                <Icone nome="email" tamanho={15} /> {talento.email}
+              </a>
+            )}
             <p className="mt-6 border-t border-linha pt-4 text-xs text-suave">
-              Contato e dados pessoais não são exibidos. Eles chegam à empresa quando a profissional se candidata a uma vaga.
+              {talento.email
+                ? 'A profissional escolheu mostrar o e-mail às empresas. O telefone nunca é exibido.'
+                : 'Contato e dados pessoais só aparecem se a profissional permitir ou quando ela se candidata a uma vaga.'}
             </p>
           </div>
         </section>
-        <section aria-labelledby="titulo-pubs-talento">
-          <h2 id="titulo-pubs-talento" className="mb-3 font-display text-2xl text-tinta">
-            Publicações na comunidade
-          </h2>
-          {publicacoes.length === 0 ? (
-            <p className="cartao px-5 py-6 text-sm text-suave">Ela ainda não publicou na comunidade.</p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {publicacoes.map((p) => (
-                <li key={p.id} className="cartao p-5">
-                  <p className="inline-flex items-center gap-1 rounded-full bg-blush px-2 py-0.5 text-[11px] font-semibold text-vinho">
-                    <Icone nome={ICONE_TIPO[p.tipo] ?? 'info'} tamanho={12} /> {TIPOS.find((t) => t.id === p.tipo)?.rotulo ?? p.tipo}
-                  </p>
-                  <p className="mt-3 text-[15px] leading-relaxed whitespace-pre-line text-tinta">{p.texto}</p>
-                  <p className="mt-2 text-xs text-suave">{tempoRelativo(p.criadaEm)}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <div className="flex flex-col gap-6">
+          {profissional && <PerfilProfissional perfil={profissional} />}
+          <section aria-labelledby="titulo-pubs-talento">
+            <h2 id="titulo-pubs-talento" className="mb-3 font-display text-2xl text-tinta">
+              Publicações na comunidade
+            </h2>
+            {publicacoes.length === 0 ? (
+              <p className="cartao px-5 py-6 text-sm text-suave">Ela ainda não publicou na comunidade.</p>
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {publicacoes.map((p) => (
+                  <li key={p.id} className="cartao p-5">
+                    <p className="inline-flex items-center gap-1 rounded-full bg-blush px-2 py-0.5 text-[11px] font-semibold text-vinho">
+                      <Icone nome={ICONE_TIPO[p.tipo] ?? 'info'} tamanho={12} /> {TIPOS.find((t) => t.id === p.tipo)?.rotulo ?? p.tipo}
+                    </p>
+                    <p className="mt-3 text-[15px] leading-relaxed whitespace-pre-line text-tinta">{p.texto}</p>
+                    <p className="mt-2 text-xs text-suave">{tempoRelativo(p.criadaEm)}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       </div>
     </>
   )

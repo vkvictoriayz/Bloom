@@ -2,6 +2,8 @@ import { Op } from "sequelize";
 import { Empresa } from "../models/index.js";
 import { Candidatura, CandidaturaEnvio, PerfilEmpresa, Vaga } from "../models/Empresarial.js";
 import { imagensDe } from "../models/Imagem.js";
+import { Usuaria } from "../models/Usuaria.js";
+import { notificar } from "../services/notificacoes.js";
 
 // Vagas publicadas pelas empresas, vistas pela candidata, e as candidaturas
 // dela. Rotas exigem login de usuária (exigirLogin(["usuaria"])).
@@ -98,6 +100,16 @@ export const candidatar = comTratamento(async (req, res) => {
     throw e;
   }
   await CandidaturaEnvio.create({ candidaturaId: cand.id, titulo: titulo || null, competencias: competencias || null, apresentacao: apresentacao || null, links: JSON.stringify(links) });
+  const [perfilEmpresa, candidata] = await Promise.all([PerfilEmpresa.findByPk(vaga.perfilEmpresaId), Usuaria.findByPk(eu(req))]);
+  if (perfilEmpresa) {
+    await notificar({
+      tipoConta: "empresa",
+      contaId: perfilEmpresa.empresaId,
+      tipo: "candidatura",
+      texto: `Nova candidatura de ${candidata?.nome ?? "uma candidata"} para ${vaga.titulo}.`,
+      link: `/empresa/candidaturas/${cand.id}`,
+    });
+  }
   return res.status(201).json({ candidatura: { id: cand.id, vagaId, data: cand.data, status: cand.status } });
 });
 

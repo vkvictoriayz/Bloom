@@ -8,11 +8,11 @@ import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
 import ListaPessoas from '../../components/comunidade/ListaPessoas'
 import { Aviso, estiloControle } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
-import { correspondeBusca, listarVagas } from '../../data/vagas'
+import { correspondeBusca } from '../../data/vagas'
 import { cn } from '../../lib/cn'
 import { candidaturaDaVaga } from '../../services/candidaturas'
 import { lerFeed } from '../../services/comunidade'
-import { useCandidaturas } from '../../hooks/useVagasReais'
+import { useCandidaturas, useVagas } from '../../hooks/useVagasReais'
 
 const CATEGORIAS = [
   { id: 'tudo', rotulo: 'Tudo' },
@@ -81,6 +81,7 @@ function Explorar() {
   const categoria = CATEGORIAS.some((c) => c.id === parametros.get('categoria')) ? parametros.get('categoria') : 'tudo'
   const busca = parametros.get('q') ?? ''
   const candidaturas = useCandidaturas()
+  const { vagas: todasVagas } = useVagas()
 
   function definir(chave, valor) {
     const p = new URLSearchParams(parametros)
@@ -89,7 +90,7 @@ function Explorar() {
     setParametros(p, { replace: true })
   }
 
-  const vagas = listarVagas().filter((v) => correspondeBusca(v, busca))
+  const vagas = todasVagas.filter((v) => correspondeBusca(v, busca))
   const tudo = categoria === 'tudo'
   const verTudo = (id) =>
     tudo && (

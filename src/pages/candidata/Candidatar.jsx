@@ -11,7 +11,7 @@ import Esqueleto from '../../components/ui/Esqueleto'
 import { useCandidaturas, useVaga } from '../../hooks/useVagasReais'
 import { candidatarServidor } from '../../services/vagasApi'
 import { useSessao } from '../../hooks/useSessao'
-import { candidatar, candidaturaDaVaga } from '../../services/candidaturas'
+import { candidaturaDaVaga } from '../../services/candidaturas'
 import { lerPerfil } from '../../services/perfil'
 import { lerProjetos } from '../../services/projetos'
 import { cn } from '../../lib/cn'
@@ -55,7 +55,7 @@ function Candidatar() {
 
   if (carregando) return <Esqueleto className="h-96 rounded-2xl" />
 
-  if (!vaga || (vaga.real && vaga.status !== 'Aberta')) {
+  if (!vaga || vaga.status !== 'Aberta') {
     return (
       <Vazio className="bg-branco">
         <VazioTitulo>{vaga ? 'Esta vaga não está recebendo candidaturas' : 'Vaga não encontrada'}</VazioTitulo>
@@ -99,10 +99,8 @@ function Candidatar() {
     setEtapa('revisao')
   }
 
-  // Vaga real (publicada por uma empresa): a candidatura vai para a API e só
-  // é confirmada depois da resposta do servidor. Vaga de exemplo: continua
-  // registrada neste navegador, como antes.
-  async function enviarParaEmpresa() {
+  // A candidatura vai para a API e só é confirmada depois da resposta do servidor.
+  async function enviar() {
     setEnviando(true)
     setErro('')
     try {
@@ -127,35 +125,18 @@ function Candidatar() {
     }
   }
 
-  function enviar() {
-    if (vaga.real) return enviarParaEmpresa()
-    const r = candidatar(vaga, {
-      apresentacao: apresentacao.trim(),
-      links: [
-        ...links.map((l) => ({ rotulo: l.rotulo, url: l.url })),
-        ...projetosEscolhidos.map((p) => ({ rotulo: `Projeto: ${p.nome}`, url: enderecoSeguro(p.demo) ?? enderecoSeguro(p.repositorio) ?? '' })),
-      ],
-      perfil: { nome, email, titulo: perfil.cargo, local: perfil.local, competencias: perfil.tecnicas },
-    })
-    if (!r.ok) return setErro('Não foi possível registrar a candidatura neste navegador. Libere o armazenamento do site e tente de novo.')
-    setEnviada(r.candidatura)
-    setEtapa('enviada')
-  }
-
   if (etapa === 'enviada') {
     return (
       <div className="mx-auto max-w-xl rounded-xl border border-linha bg-branco p-8 text-center">
         <span className="mx-auto grid size-14 place-items-center rounded-full bg-sucesso-claro text-sucesso" aria-hidden="true">
           <Icone nome="check" tamanho={28} />
         </span>
-        <h1 className="mt-5 font-display text-3xl text-tinta">{vaga.real ? 'Candidatura enviada' : 'Candidatura registrada'}</h1>
+        <h1 className="mt-5 font-display text-3xl text-tinta">Candidatura enviada</h1>
         <p className="mt-2 text-tinta-2">
           Sua candidatura para <strong>{vaga.titulo}</strong> foi registrada em {enviada.data}.
         </p>
         <p className="mt-3 text-sm text-suave">
-          {vaga.real
-            ? `${vaga.dadosEmpresa.nome} já pode ver sua candidatura. Quando a empresa atualizar o status, ele aparece no acompanhamento.`
-            : 'Esta é uma vaga de exemplo: a candidatura fica salva neste navegador e não chega a uma empresa.'}
+          {`${vaga.dadosEmpresa.nome} já pode ver sua candidatura e o seu perfil. Quando a empresa atualizar o status, você recebe uma notificação.`}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Botao as={Link} to={`/candidata/candidaturas/${encodeURIComponent(enviada.id)}/andamento`}>
@@ -314,9 +295,7 @@ function Candidatar() {
             </dl>
           </Bloco>
           <Aviso tipo="info">
-            {vaga.real
-              ? `Sua candidatura será enviada a ${vaga.dadosEmpresa.nome}, com os dados e links acima.`
-              : 'Esta é uma vaga de exemplo: a candidatura será registrada neste navegador e não chega a uma empresa.'}
+            {`Sua candidatura será enviada a ${vaga.dadosEmpresa.nome}, com os dados e links acima e o seu perfil profissional.`}
           </Aviso>
           {erro && <Aviso tipo="erro">{erro}</Aviso>}
           <div className="flex flex-wrap gap-2">

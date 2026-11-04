@@ -79,6 +79,8 @@ export function converterCandidatura(c) {
     vagaId: `b${c.vaga?.id}`,
     cargo: c.vaga?.titulo ?? 'Vaga',
     empresa: vaga?.dadosEmpresa.nome ?? '',
+    dadosEmpresa: vaga?.dadosEmpresa ?? null,
+    idServidor: c.id,
     local: vaga?.local ?? '',
     modalidade: vaga?.modalidade ?? '',
     data: dataBR(c.data),

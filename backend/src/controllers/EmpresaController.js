@@ -2,6 +2,9 @@ import { Op } from "sequelize";
 import { Empresa, Usuaria } from "../models/index.js";
 import { PerfilComunidade, Publicacao, Comentario, Curtida } from "../models/Comunidade.js";
 import { imagensDe } from "../models/Imagem.js";
+import { notificar } from "../services/notificacoes.js";
+import { perfilCompleto } from "./CandidataController.js";
+import { perfisOcultos, privacidadeDe } from "../services/privacidade.js";
 import {
   Candidatura,
   CandidaturaEnvio,
@@ -269,10 +272,12 @@ async function minhaCandidatura(req) {
 export const verCandidatura = comTratamento(async (req, res) => {
   const [cand, vaga] = await minhaCandidatura(req);
   if (!cand) return erro(res, 404, "Candidatura não encontrada.");
-  const [conta, pessoas, envio] = await Promise.all([
+  const [conta, pessoas, envio, profissional] = await Promise.all([
     Usuaria.findByPk(cand.usuariaId),
     perfisPublicos([cand.usuariaId]),
     CandidaturaEnvio.findOne({ where: { candidaturaId: cand.id } }),
+    // Perfil profissional completo, sem telefone: só para quem recebeu a candidatura.
+    perfilCompleto(cand.usuariaId, { comContato: false }),
   ]);
   let links = [];
   try {
@@ -285,6 +290,7 @@ export const verCandidatura = comTratamento(async (req, res) => {
     vaga: vagaJson(vaga),
     // O e-mail foi informado pela candidata ao se candidatar a esta vaga.
     candidata: { ...pessoas.get(cand.usuariaId), email: conta?.email ?? "" },
+    perfil: profissional,
     envio: {
       titulo: envio?.titulo ?? "",
       competencias: lista(envio?.competencias),
@@ -299,7 +305,24 @@ export const mudarStatusCandidatura = comTratamento(async (req, res) => {
   if (!cand) return erro(res, 404, "Candidatura não encontrada.");
   const status = texto(req.body.status);
   if (!STATUS_CANDIDATURA.includes(status)) return erro(res, 400, "Status inválido.");
+  const mudou = cand.status !== status;
   await cand.update({ status });
+  if (mudou) {
+    const vaga = await Vaga.findByPk(cand.vagaId);
+    const frase = {
+      Pendente: "voltou para a fila de análise",
+      "Em análise": "está em análise",
+      Aprovada: "foi aprovada",
+      Reprovada: "não foi selecionada desta vez",
+    }[status];
+    await notificar({
+      tipoConta: "usuaria",
+      contaId: cand.usuariaId,
+      tipo: "candidatura",
+      texto: `Sua candidatura para ${vaga?.titulo ?? "uma vaga"} ${frase}.`,
+      link: `/candidata/candidaturas/s${cand.id}`,
+    });
+  }
   return res.json({ candidatura: { id: cand.id, data: cand.data, status: cand.status } });
 });
 
@@ -425,7 +448,9 @@ export const feed = comTratamento(async (req, res) => {
 export const talentos = comTratamento(async (req, res) => {
   const busca = texto(req.query.busca).toLowerCase();
   const area = texto(req.query.area).toLowerCase();
-  const contas = await Usuaria.findAll({ order: [["nome", "ASC"]], limit: 300 });
+  const [todas, ocultos] = await Promise.all([Usuaria.findAll({ order: [["nome", "ASC"]], limit: 300 }), perfisOcultos()]);
+  // Só quem deixou o perfil público aparece para as empresas.
+  const contas = todas.filter((c) => !ocultos.has(c.id));
   const mapa = await perfisPublicos(contas.map((c) => c.id));
   const contagem = await Publicacao.findAll({ attributes: ["usuariaId"] });
   let pessoas = contas.map((c) => ({
@@ -439,11 +464,15 @@ export const talentos = comTratamento(async (req, res) => {
 
 export const talento = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
-  if (!id || !(await Usuaria.findByPk(id))) return erro(res, 404, "Perfil não encontrado.");
+  const conta = id && (await Usuaria.findByPk(id));
+  const privacidade = conta && (await privacidadeDe([id])).get(id);
+  if (!conta || !privacidade.perfilPublico) return erro(res, 404, "Perfil não encontrado.");
   const mapa = await perfisPublicos([id]);
   const pubs = await Publicacao.findAll({ where: { usuariaId: id }, order: [["criadaEm", "DESC"]], limit: 20 });
   return res.json({
-    talento: mapa.get(id),
+    // E-mail e perfil profissional só quando a candidata permitiu.
+    talento: { ...mapa.get(id), ...(privacidade.mostrarContato ? { email: conta.email } : {}) },
+    profissional: privacidade.mostrarExperiencia ? await perfilCompleto(id, { comContato: false }) : null,
     publicacoes: pubs.map((p) => ({ id: p.id, tipo: p.tipo, texto: p.texto, criadaEm: p.criadaEm })),
   });
 });

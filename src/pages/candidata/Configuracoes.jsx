@@ -1,5 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
 
+import ExcluirConta from '../../components/conta/ExcluirConta'
+import FormularioSenha from '../../components/conta/FormularioSenha'
+import Privacidade from '../../components/conta/Privacidade'
 import Icone from '../../components/Icone'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Botao from '../../components/ui/Botao'
@@ -61,33 +64,34 @@ function Configuracoes() {
             </div>
           </dl>
           <div className="mt-4">
-            <EmBreve>A alteração do nome e do e-mail da conta depende de uma API de conta que ainda não existe.</EmBreve>
+            <EmBreve>O nome pode ser alterado em Editar perfil. O e-mail da conta ainda não pode ser alterado pela plataforma.</EmBreve>
           </div>
         </Secao>
 
         <Secao icone="cadeado" titulo="Segurança" descricao="Senha de acesso.">
-          <EmBreve>
-            A troca de senha pela área logada ainda não está disponível no backend. Você pode usar a{' '}
-            <Link to="/recuperar-senha" className="font-semibold text-vinho hover:underline">
-              recuperação de senha
-            </Link>
-            .
-          </EmBreve>
+          <FormularioSenha />
         </Secao>
 
         <Secao icone="sino" titulo="Notificações" descricao="O que você quer receber.">
-          <EmBreve>As preferências de notificação chegam junto com a API de notificações.</EmBreve>
+          <p className="text-sm text-tinta-2">
+            Você recebe avisos de mudanças nas suas candidaturas, mensagens de empresas, novas seguidoras e curtidas ou comentários nas suas
+            publicações, em{' '}
+            <Link to="/candidata/notificacoes" className="font-semibold text-vinho hover:underline">
+              Notificações
+            </Link>
+            .
+          </p>
+          <div className="mt-3">
+            <EmBreve>Escolher quais avisos receber ainda não está disponível.</EmBreve>
+          </div>
         </Secao>
 
         <Secao icone="olho" titulo="Privacidade do perfil" descricao="Quem vê suas informações.">
-          <p className="text-sm text-tinta-2">
-            Hoje, seu nome, foto e capa, área de atuação, interesses, apresentação curta e publicações na comunidade são visíveis para outras integrantes e
-            empresas autenticadas. Ao se candidatar a uma vaga, a empresa também recebe seu e-mail e o que você enviou. Os demais dados do perfil
-            ficam neste navegador e não são compartilhados.
+          <p className="mb-4 text-sm text-tinta-2">
+            Seu nome, foto e capa, área, interesses, apresentação curta e publicações na comunidade são vistos por quem está logado na Bloom.
+            Escolha abaixo o que mais as empresas podem ver.
           </p>
-          <div className="mt-3">
-            <EmBreve>Os controles de visibilidade dependem de uma API de privacidade.</EmBreve>
-          </div>
+          <Privacidade />
         </Secao>
 
         <Secao icone="maleta" titulo="Preferências profissionais" descricao="Modalidades, áreas e disponibilidade.">
@@ -100,6 +104,18 @@ function Configuracoes() {
           <Botao variante="secundario" onClick={encerrar}>
             <Icone nome="sair" tamanho={16} /> Sair da conta
           </Botao>
+        </Secao>
+
+        <Secao icone="lixeira" titulo="Excluir conta" descricao="Apagar sua conta e seus dados da Bloom.">
+          <ExcluirConta
+            itens={[
+              'seu cadastro, perfil profissional, projetos, foto e capa',
+              'suas candidaturas e vagas salvas',
+              'suas publicações, comentários, curtidas e conexões',
+              'suas mensagens e notificações',
+              'as comunidades que você criou',
+            ]}
+          />
         </Secao>
       </div>
     </>

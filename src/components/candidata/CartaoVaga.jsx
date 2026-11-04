@@ -5,7 +5,7 @@ import Icone from '../Icone'
 import MarcaEmpresa from '../MarcaEmpresa'
 import Botao from '../ui/Botao'
 import Selo from '../ui/Selo'
-import { ehIniciante, formatarPublicacao } from '../../data/vagas'
+import { formatarPublicacao } from '../../data/vagas'
 
 // Cartão de vaga da área da candidata. Todos têm a mesma estrutura e
 // altura (grade simétrica): empresa, cargo, metadados, resumo e ações.
@@ -44,11 +44,6 @@ function CartaoVaga({ vaga, candidatura }) {
         {candidatura && (
           <Selo variante="sucesso">
             <Icone nome="check" /> Candidatura enviada
-          </Selo>
-        )}
-        {ehIniciante(vaga) && (
-          <Selo variante="vinho">
-            <Icone nome="broto" /> Boa para começar
           </Selo>
         )}
       </div>

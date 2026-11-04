@@ -8,10 +8,10 @@ import CartaoVaga from '../../components/candidata/CartaoVaga'
 import Botao from '../../components/ui/Botao'
 import Selo from '../../components/ui/Selo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
-import { ehIniciante, formatarPublicacao, listarVagas } from '../../data/vagas'
+import { formatarPublicacao } from '../../data/vagas'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { candidaturaDaVaga, situacao } from '../../services/candidaturas'
-import { useCandidaturas, useVaga } from '../../hooks/useVagasReais'
+import { useCandidaturas, useVaga, useVagas } from '../../hooks/useVagasReais'
 
 function Secao({ titulo, children }) {
   return (
@@ -39,6 +39,7 @@ function DetalhesVaga() {
   const { id } = useParams()
   const { vaga, carregando } = useVaga(id)
   const candidaturas = useCandidaturas()
+  const { vagas: todas } = useVagas()
   const candidatura = vaga ? candidaturaDaVaga(vaga.id, candidaturas) : null
 
   useEffect(() => {
@@ -62,9 +63,8 @@ function DetalhesVaga() {
   }
 
   const empresa = vaga.dadosEmpresa
-  // Relacionadas: mesma empresa ou mesma área.
-  // Relacionadas: só entre as vagas de exemplo (as reais ainda não têm busca por área).
-  const relacionadas = (vaga.real ? [] : listarVagas())
+  // Relacionadas: abertas, da mesma empresa ou da mesma área.
+  const relacionadas = todas
     .filter((v) => v.id !== vaga.id && (v.empresa === vaga.empresa || v.area === vaga.area))
     .slice(0, 2)
 
@@ -102,11 +102,6 @@ function DetalhesVaga() {
             <span>{vaga.modalidade}</span>
             <span>{vaga.nivel ?? 'Nível não informado'}</span>
           </p>
-          {ehIniciante(vaga) && (
-            <Selo variante="vinho" className="mt-3">
-              <Icone nome="broto" /> Boa para começar
-            </Selo>
-          )}
         </div>
       </header>
 

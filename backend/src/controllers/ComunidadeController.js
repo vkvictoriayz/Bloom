@@ -2,6 +2,8 @@ import { Op } from "sequelize";
 import { Comentario, Conexao, Curtida, PerfilComunidade, Publicacao } from "../models/Comunidade.js";
 import { imagensDe } from "../models/Imagem.js";
 import { Usuaria } from "../models/index.js";
+import { notificar } from "../services/notificacoes.js";
+import { perfisOcultos } from "../services/privacidade.js";
 
 export const TIPOS = ["dica", "experiencia", "projeto", "conquista", "oportunidade", "duvida"];
 const POR_PAGINA = 20;
@@ -34,7 +36,7 @@ async function perfisPor(ids) {
   );
 }
 
-async function montarPublicacoes(lista, meuId) {
+export async function montarPublicacoes(lista, meuId) {
   if (!lista.length) return [];
   const ids = lista.map((p) => p.id);
   const [autoras, curtidas, comentarios] = await Promise.all([
@@ -125,15 +127,34 @@ export const excluir = comTratamento(async (req, res) => {
 // POST /publicacoes/:id/curtir (alterna)
 export const curtir = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
-  if (!id || !(await Publicacao.findByPk(id))) return erro(res, 404, "Publicação não encontrada.");
+  const publicacao = id && (await Publicacao.findByPk(id));
+  if (!publicacao) return erro(res, 404, "Publicação não encontrada.");
 
   const existente = await Curtida.findOne({ where: { publicacaoId: id, usuariaId: eu(req) } });
   if (existente) await Curtida.destroy({ where: { id: existente.id } });
-  else await Curtida.create({ publicacaoId: id, usuariaId: eu(req) });
+  else {
+    await Curtida.create({ publicacaoId: id, usuariaId: eu(req) });
+    await avisarAutora(publicacao, req, "curtida", "curtiu sua publicação");
+  }
 
   const total = await Curtida.count({ where: { publicacaoId: id } });
   return res.json({ curtiu: !existente, curtidas: total });
 });
+
+// Avisa a autora de uma publicação (nunca ela mesma). Curtidas e comentários
+// da mesma publicação se juntam num aviso só até ela ler.
+async function avisarAutora(publicacao, req, tipo, acao) {
+  if (publicacao.usuariaId === eu(req)) return;
+  const quem = await Usuaria.findByPk(eu(req));
+  await notificar({
+    tipoConta: "usuaria",
+    contaId: publicacao.usuariaId,
+    tipo,
+    texto: `${quem?.nome ?? "Uma integrante"} ${acao}.`,
+    link: "/candidata/feed",
+    chave: `${tipo}-publicacao-${publicacao.id}`,
+  });
+}
 
 // GET /publicacoes/:id/comentarios
 export const listarComentarios = comTratamento(async (req, res) => {
@@ -155,13 +176,15 @@ export const listarComentarios = comTratamento(async (req, res) => {
 // POST /publicacoes/:id/comentarios { texto }
 export const comentar = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
-  if (!id || !(await Publicacao.findByPk(id))) return erro(res, 404, "Publicação não encontrada.");
+  const publicacao = id && (await Publicacao.findByPk(id));
+  if (!publicacao) return erro(res, 404, "Publicação não encontrada.");
 
   const conteudo = texto(req.body.texto);
   if (!conteudo) return erro(res, 400, "Escreva um comentário.", "texto");
   if (conteudo.length > 500) return erro(res, 400, "O comentário pode ter até 500 caracteres.", "texto");
 
   const criado = await Comentario.create({ publicacaoId: id, usuariaId: eu(req), texto: conteudo });
+  await avisarAutora(publicacao, req, "comentario", "comentou sua publicação");
   const autoras = await perfisPor([eu(req)]);
   const total = await Comentario.count({ where: { publicacaoId: id } });
   return res.status(201).json({
@@ -174,10 +197,13 @@ export const comentar = comTratamento(async (req, res) => {
 export const perfis = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const busca = texto(req.query.busca).toLowerCase();
-  const [contas, seguidas] = await Promise.all([
+  const [contasTodas, seguidas, ocultos] = await Promise.all([
     Usuaria.findAll({ where: { id: { [Op.ne]: meuId } }, order: [["nome", "ASC"]], limit: 200 }),
     Conexao.findAll({ where: { seguidoraId: meuId } }),
+    perfisOcultos(),
   ]);
+  // Quem escondeu o perfil não aparece em buscas nem em sugestões.
+  const contas = contasTodas.filter((c) => !ocultos.has(c.id));
   const seguidasIds = new Set(seguidas.map((c) => c.seguidaId));
   const mapa = await perfisPor(contas.map((c) => c.id));
 
@@ -198,7 +224,11 @@ export const seguir = comTratamento(async (req, res) => {
 
   const existente = await Conexao.findOne({ where: { seguidoraId: eu(req), seguidaId: id } });
   if (existente) await Conexao.destroy({ where: { id: existente.id } });
-  else await Conexao.create({ seguidoraId: eu(req), seguidaId: id });
+  else {
+    await Conexao.create({ seguidoraId: eu(req), seguidaId: id });
+    const quem = await Usuaria.findByPk(eu(req));
+    await notificar({ tipoConta: "usuaria", contaId: id, tipo: "conexao", texto: `${quem?.nome ?? "Uma integrante"} começou a seguir você.`, link: "/candidata/explorar" });
+  }
 
   return res.json({ seguindo: !existente });
 });

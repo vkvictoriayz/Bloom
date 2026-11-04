@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import LayoutPrivado from '../layout/LayoutPrivado'
 import { useDadosLocais } from '../../hooks/useDadosLocais'
 import { useSessao } from '../../hooks/useSessao'
+import { sincronizarAreaCandidata } from '../../services/candidataApi'
 import { lerMinhasImagens, sincronizarImagensLocais } from '../../services/imagens'
 import { EVENTO_PERFIL, lerPerfil } from '../../services/perfil'
 
@@ -69,6 +70,8 @@ function LayoutCandidata() {
     lerMinhasImagens()
       .then((r) => sincronizarImagensLocais(usuario, r.imagens))
       .catch(() => {})
+    // Perfil, projetos e vagas salvas vêm da conta (ver candidataApi.js).
+    sincronizarAreaCandidata(usuario).catch(() => {})
   }, [usuario])
   return <LayoutPrivado config={CONFIG} usuario={usuario} foto={perfil.foto} />
 }

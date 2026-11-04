@@ -1,66 +1,25 @@
-import { gravarJSON, lerLista } from './armazenamento'
-
-// Candidaturas da usuária.
+// Candidaturas da candidata: vêm do servidor (useCandidaturas, em
+// hooks/useVagasReais.js). Aqui ficam só as funções de leitura e de
+// exibição (etapas e status), usadas pelas telas.
 //
-// A tabela CANDIDATURAS existe no banco (status: Pendente, Em análise,
-// Aprovada, Reprovada), mas ainda não há rota no backend. Por isso a
-// candidatura é registrada neste navegador. Uma candidatura local nunca
-// avança de etapa sozinha: só um status vindo do servidor
-// (confirmadaPeloServidor) pode marcar análise ou resultado.
+// Versões antigas registravam neste navegador candidaturas a vagas de
+// exemplo, que nunca chegavam a uma empresa. Esse registro foi apagado.
+try {
+  localStorage.removeItem('bloom-candidaturas')
+} catch {
+  // armazenamento indisponível: nada a limpar
+}
 
-export const CHAVE_CANDIDATURAS = 'bloom-candidaturas'
+// Ainda usados por páginas públicas antigas; sempre vazios.
 export const EVENTO_CANDIDATURAS = 'bloom-candidaturas-atualizadas'
+export const lerCandidaturas = () => []
 
-const STATUS_SERVIDOR = ['Pendente', 'Em análise', 'Aprovada', 'Reprovada', 'Encerrada']
-
-function normalizar(candidatura) {
-  const doServidor = candidatura.confirmadaPeloServidor === true
-  const status = doServidor && STATUS_SERVIDOR.includes(candidatura.status) ? candidatura.status : 'Pendente'
-  return { ...candidatura, status, confirmadaPeloServidor: doServidor }
-}
-
-export function lerCandidaturas() {
-  return lerLista(CHAVE_CANDIDATURAS).map(normalizar)
-}
-
-export function candidaturaDaVaga(vagaId, lista = lerCandidaturas()) {
+export function candidaturaDaVaga(vagaId, lista = []) {
   return lista.find((item) => String(item.vagaId) === String(vagaId)) ?? null
 }
 
-export function buscarCandidatura(id, lista = lerCandidaturas()) {
+export function buscarCandidatura(id, lista = []) {
   return lista.find((item) => String(item.id) === String(id)) ?? null
-}
-
-// Registra a candidatura; não duplica se já existir.
-// "extras" guarda o que a candidata enviou (apresentação, links).
-// Retorna { ok, jaExistia, candidatura }.
-export function candidatar(vaga, extras = {}) {
-  const atuais = lerCandidaturas()
-  const existente = candidaturaDaVaga(vaga.id, atuais)
-  if (existente) return { ok: true, jaExistia: true, candidatura: existente }
-
-  const agora = new Date()
-  const nova = {
-    id: `${vaga.id}-${agora.getTime()}`,
-    vagaId: vaga.id,
-    cargo: vaga.titulo,
-    empresa: vaga.dadosEmpresa?.nomeCurto ?? vaga.empresa,
-    empresaSlug: vaga.empresa,
-    local: vaga.local,
-    modalidade: vaga.modalidade,
-    data: agora.toLocaleDateString('pt-BR'),
-    enviadaEm: agora.toISOString(),
-    status: 'Pendente',
-    confirmadaPeloServidor: false,
-    enviado: {
-      apresentacao: extras.apresentacao ?? '',
-      links: extras.links ?? [],
-      perfil: extras.perfil ?? null,
-    },
-  }
-
-  const ok = gravarJSON(CHAVE_CANDIDATURAS, [...atuais, nova], EVENTO_CANDIDATURAS)
-  return { ok, jaExistia: false, candidatura: ok ? nova : null }
 }
 
 // Etapas reais do processo, alinhadas ao ENUM do banco.

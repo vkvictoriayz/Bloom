@@ -92,7 +92,7 @@ function Projetos() {
       )}
       <p className="mt-6 flex items-start gap-2 text-xs text-suave">
         <Icone nome="info" tamanho={16} className="mt-px shrink-0" />
-        Os projetos ficam salvos neste navegador, junto com o seu perfil, até existir uma API de projetos.
+        Os projetos ficam salvos na sua conta e aparecem para a empresa quando você se candidata a uma vaga dela.
       </p>
     </>
   )

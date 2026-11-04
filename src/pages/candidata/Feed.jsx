@@ -11,8 +11,9 @@ import Botao from '../../components/ui/Botao'
 import { Aviso, Selecao } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { Vazio, VazioDescricao, VazioIcone, VazioTitulo } from '../../components/ui/Vazio'
-import { formatarPublicacao, listarVagas, recomendarVagas } from '../../data/vagas'
+import { formatarPublicacao, recomendarVagas } from '../../data/vagas'
 import { useDadosLocais } from '../../hooks/useDadosLocais'
+import { useVagas } from '../../hooks/useVagasReais'
 import { useSessao } from '../../hooks/useSessao'
 import { LIMITE_PUBLICACAO, TIPOS, lerFeed, publicar } from '../../services/comunidade'
 import { EVENTO_PERFIL, lerPerfil } from '../../services/perfil'
@@ -34,11 +35,14 @@ const POSICAO_VAGAS = 3
 // Vagas recomendadas pelas competências do perfil; sem competências,
 // mostramos as mais recentes e dizemos isso.
 function CartaoVagas({ tecnicas }) {
-  const recomendadas = recomendarVagas(tecnicas)
+  const { vagas } = useVagas()
+  const recomendadas = recomendarVagas(vagas, tecnicas)
   const porPerfil = recomendadas?.length > 0
   const itens = porPerfil
     ? recomendadas.map((r) => r.vaga)
-    : [...listarVagas()].sort((a, b) => a.publicadaHaDias - b.publicadaHaDias).slice(0, 3)
+    : [...vagas].sort((a, b) => a.publicadaHaDias - b.publicadaHaDias).slice(0, 3)
+  // Sem vagas publicadas, o cartão não aparece.
+  if (itens.length === 0) return null
 
   return (
     <section aria-labelledby="titulo-vagas-feed" className="rounded-2xl border border-linha bg-branco p-5 sm:p-6">

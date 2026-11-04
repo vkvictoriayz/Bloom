@@ -1,13 +1,11 @@
 import { lerPerfil, salvarPerfil } from './perfil'
 
-// Projetos da candidata. Ficam dentro do perfil (mesma persistência do
-// perfil, neste navegador), até existir uma API de projetos.
+import { criarProjetoServidor, editarProjetoServidor, excluirProjetoServidor } from './candidataApi'
 
-export const LIMITE_IMAGEM_PROJETO = 400 * 1024 // 400 KB, por causa do armazenamento local
+// Projetos da candidata, salvos no servidor (/api/candidata/projetos). A
+// cópia dentro do perfil local serve para as telas lerem na hora.
 
-function novoId() {
-  return `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
-}
+export const LIMITE_IMAGEM_PROJETO = 400 * 1024 // 400 KB, o mesmo limite do servidor
 
 // Projetos antigos (do editor de perfil) tinham só nome, link e descrição
 // e nenhum id: completamos os campos sem perder o que foi salvo.
@@ -33,17 +31,20 @@ export function buscarProjeto(usuario, id) {
   return lerProjetos(usuario).find((p) => p.id === id) ?? null
 }
 
-// Cria (sem id) ou atualiza (com id). Devolve o projeto salvo ou null.
-export function salvarProjeto(usuario, dados) {
+// Cria (sem id) ou atualiza (com id) no servidor e atualiza a cópia local.
+// Devolve o projeto salvo; em caso de erro, lança com a mensagem da API.
+export async function salvarProjeto(usuario, dados) {
+  const { id, ...campos } = dados
+  const projeto = id ? await editarProjetoServidor(id, campos) : await criarProjetoServidor(campos)
   const perfil = lerPerfil(usuario)
   const atuais = perfil.projetos.map(normalizar)
-  const projeto = { ...dados, id: dados.id ?? novoId() }
-  const projetos = dados.id ? atuais.map((p) => (p.id === dados.id ? projeto : p)) : [...atuais, projeto]
-  return salvarPerfil({ ...perfil, projetos }) ? projeto : null
+  const projetos = id ? atuais.map((p) => (p.id === id ? projeto : p)) : [projeto, ...atuais]
+  salvarPerfil({ ...perfil, projetos })
+  return projeto
 }
 
-export function excluirProjeto(usuario, id) {
+export async function excluirProjeto(usuario, id) {
+  await excluirProjetoServidor(id)
   const perfil = lerPerfil(usuario)
-  const projetos = perfil.projetos.map(normalizar).filter((p) => p.id !== id)
-  return salvarPerfil({ ...perfil, projetos })
+  salvarPerfil({ ...perfil, projetos: perfil.projetos.map(normalizar).filter((p) => p.id !== id) })
 }

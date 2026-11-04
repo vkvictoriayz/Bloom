@@ -1,14 +1,18 @@
+import { useState } from 'react'
+
 import Icone from './Icone'
 import { useDadosLocais } from '../hooks/useDadosLocais'
 import { alternarSalva, EVENTO_SALVAS, lerSalvas } from '../services/salvas'
 import { cn } from '../lib/cn'
 
-// Coração que salva/remove a vaga. Lê e grava direto no armazenamento,
-// então todas as telas abertas ficam em sincronia.
+// Coração que salva/remove a vaga na conta. A cópia local muda na hora,
+// então todas as telas abertas ficam em sincronia; se o servidor recusar,
+// o coração volta e o motivo aparece no título do botão.
 function BotaoSalvar({ vaga, comTexto = false, className }) {
   const salvas = useDadosLocais(lerSalvas, [EVENTO_SALVAS])
   const salva = salvas.includes(String(vaga.id))
-  const rotulo = salva ? 'Remover das vagas salvas' : 'Salvar vaga'
+  const [falha, setFalha] = useState('')
+  const rotulo = falha || (salva ? 'Remover das vagas salvas' : 'Salvar vaga')
 
   return (
     <button
@@ -16,7 +20,8 @@ function BotaoSalvar({ vaga, comTexto = false, className }) {
       onClick={(e) => {
         e.preventDefault()
         e.stopPropagation()
-        alternarSalva(vaga.id)
+        setFalha('')
+        alternarSalva(vaga.id).catch((erro) => setFalha(`Não foi possível salvar: ${erro.message}`))
       }}
       aria-pressed={salva}
       aria-label={comTexto ? undefined : `${rotulo}: ${vaga.titulo}`}

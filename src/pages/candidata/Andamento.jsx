@@ -7,15 +7,17 @@ import Selo from '../../components/ui/Selo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { buscarCandidatura, ETAPAS, situacao } from '../../services/candidaturas'
 import { cn } from '../../lib/cn'
-import { useCandidaturas } from '../../hooks/useVagasReais'
+import { useCandidaturasEstado } from '../../hooks/useVagasReais'
+import Esqueleto from '../../components/ui/Esqueleto'
 
 // Linha do tempo vertical do processo seletivo. As etapas seguem os status
 // do banco (Pendente -> Em análise -> Aprovada/Reprovada). Só marcamos como
 // concluída a etapa confirmada nos dados; nada é inventado.
 function Andamento() {
   const { id } = useParams()
-  const lista = useCandidaturas()
+  const { lista, carregando } = useCandidaturasEstado()
   const candidatura = buscarCandidatura(id, lista)
+  if (carregando) return <Esqueleto className="h-96 rounded-xl" />
 
   if (!candidatura) {
     return (

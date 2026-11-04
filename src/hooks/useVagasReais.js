@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react'
 
-import { useDadosLocais } from './useDadosLocais'
-import { EVENTO_CANDIDATURAS, lerCandidaturas } from '../services/candidaturas'
-import { buscarVaga, listarVagas } from '../data/vagas'
 import {
   ehVagaReal,
   EVENTO_CANDIDATURAS_SERVIDOR,
@@ -11,8 +8,7 @@ import {
   listarVagasServidor,
 } from '../services/vagasApi'
 
-// Vagas de exemplo + vagas reais publicadas pelas empresas.
-// Se a API falhar, as vagas de exemplo continuam e o erro é informado.
+// Vagas publicadas pelas empresas (API). Não há mais vagas de exemplo.
 export function useVagas() {
   const [reais, setReais] = useState({ vagas: [], carregando: true, erro: '' })
 
@@ -26,17 +22,19 @@ export function useVagas() {
     }
   }, [])
 
-  return { vagas: [...reais.vagas, ...listarVagas()], carregando: reais.carregando, erro: reais.erro }
+  return reais
 }
 
-// Uma vaga pelo id do front: "b12" vem da API, número vem dos exemplos.
+// Uma vaga pelo id do front ("b12" = vaga 12 da API). Ids de vagas de
+// exemplo antigas (só números) não existem mais: dão "não encontrada".
 export function useVaga(id) {
   const real = ehVagaReal(id)
-  const [estado, setEstado] = useState(() => (real ? { vaga: null, carregando: true, erro: '' } : { vaga: buscarVaga(id), carregando: false, erro: '' }))
+  const inicial = () => (real ? { vaga: null, carregando: true, erro: '' } : { vaga: null, carregando: false, erro: '' })
+  const [estado, setEstado] = useState(inicial)
   const [idAnterior, setIdAnterior] = useState(id)
   if (idAnterior !== id) {
     setIdAnterior(id)
-    setEstado(real ? { vaga: null, carregando: true, erro: '' } : { vaga: buscarVaga(id), carregando: false, erro: '' })
+    setEstado(inicial())
   }
 
   useEffect(() => {
@@ -53,11 +51,10 @@ export function useVaga(id) {
   return estado
 }
 
-// Candidaturas da candidata: as registradas neste navegador (vagas de
-// exemplo) e as enviadas ao backend (vagas reais, com status da empresa).
-export function useCandidaturas() {
-  const locais = useDadosLocais(lerCandidaturas, [EVENTO_CANDIDATURAS])
-  const [servidor, setServidor] = useState([])
+// Candidaturas da candidata, do servidor (com o status dado pela empresa),
+// com os estados de carregamento e erro.
+export function useCandidaturasEstado() {
+  const [estado, setEstado] = useState({ lista: [], carregando: true, erro: '' })
   const [versao, setVersao] = useState(0)
 
   useEffect(() => {
@@ -69,12 +66,17 @@ export function useCandidaturas() {
   useEffect(() => {
     let ativo = true
     listarCandidaturasServidor()
-      .then((lista) => ativo && setServidor(lista))
-      .catch(() => ativo && setServidor([]))
+      .then((lista) => ativo && setEstado({ lista, carregando: false, erro: '' }))
+      .catch((e) => ativo && setEstado({ lista: [], carregando: false, erro: e.message }))
     return () => {
       ativo = false
     }
   }, [versao])
 
-  return [...locais, ...servidor]
+  return estado
+}
+
+// Só a lista (para as telas que não mostram carregamento).
+export function useCandidaturas() {
+  return useCandidaturasEstado().lista
 }

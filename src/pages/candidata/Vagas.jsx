@@ -93,7 +93,7 @@ function Vagas() {
     setParametros(ordem !== 'recentes' ? { ordem } : {}, { replace: true })
   }
 
-  // Vagas reais publicadas pelas empresas + vagas de exemplo do projeto.
+  // Vagas publicadas pelas empresas na Bloom.
   const { vagas: todas, erro: erroVagasReais } = useVagas()
   // Opções dos filtros a partir das vagas carregadas (nunca inventadas).
   const grupos = GRUPOS.map((g) => ({ ...g, opcoes: unicos(todas.map(g.campo)) }))
@@ -240,8 +240,8 @@ function Vagas() {
           <p className="mt-8 flex items-start gap-2 text-xs text-suave">
             <Icone nome="info" tamanho={16} className="mt-px shrink-0" />
             {erroVagasReais
-              ? `Não foi possível carregar as vagas publicadas pelas empresas (${erroVagasReais}). Mostrando só as vagas de exemplo do projeto.`
-              : 'Inclui as vagas publicadas pelas empresas na Bloom e as vagas de exemplo do projeto.'}
+              ? `Não foi possível carregar as vagas publicadas pelas empresas (${erroVagasReais}). Tente recarregar a página.`
+              : 'Vagas publicadas pelas empresas na Bloom.'}
           </p>
         </section>
       </div>

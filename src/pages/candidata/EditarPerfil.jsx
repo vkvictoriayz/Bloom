@@ -9,11 +9,13 @@ import Avatar from '../../components/comunidade/Avatar'
 import EditorEtiquetas from '../../components/perfil/EditorEtiquetas'
 import EditorItens from '../../components/perfil/EditorItens'
 import Botao from '../../components/ui/Botao'
+import Esqueleto from '../../components/ui/Esqueleto'
 import { AreaTexto, Aviso, Campo, Entrada } from '../../components/ui/Campo'
 import { opcoesFiltro } from '../../data/vagas'
 import { useSessao } from '../../hooks/useSessao'
 import { lerMeuPerfil, salvarMeuPerfil } from '../../services/comunidade'
 import { enviarImagem, removerImagem, soNesteNavegador } from '../../services/imagens'
+import { aguardarSincronizacao, salvarSecoesPerfil, sincronizarAreaCandidata } from '../../services/candidataApi'
 import { completude, EVENTO_PERFIL, lerPerfil, salvarPerfil } from '../../services/perfil'
 import { cn } from '../../lib/cn'
 
@@ -54,7 +56,7 @@ function Secao({ id, titulo, descricao, origem, children }) {
   )
 }
 
-function EditarPerfil() {
+function FormularioPerfil() {
   const sessao = useSessao()
   const { hash } = useLocation()
   const [perfil, setPerfil] = useState(() => lerPerfil(sessao?.usuario))
@@ -109,16 +111,21 @@ function EditarPerfil() {
     setMensagens((m) => ({ ...m, [secao]: { tipo, texto } }))
   }
 
-  function gravar(secao, mudancas, texto = 'Alterações salvas.') {
-    // Parte do que está salvo agora: foto e capa podem ter mudado por fora.
-    const novo = { ...lerPerfil(sessao?.usuario), ...mudancas }
-    if (salvarPerfil(novo)) {
-      setPerfil(novo)
+  // Salva no servidor e atualiza a cópia local. Foto e capa já foram ao
+  // servidor pela API de imagens: aqui só a cópia local muda.
+  async function gravar(secao, mudancas, texto = 'Alterações salvas.') {
+    const usuario = sessao?.usuario
+    const soImagens = Object.keys(mudancas).every((chave) => chave === 'foto' || chave === 'capa')
+    try {
+      if (soImagens) salvarPerfil({ ...lerPerfil(usuario), ...mudancas })
+      else await salvarSecoesPerfil(usuario, mudancas)
+      setPerfil(lerPerfil(usuario))
       avisar(secao, 'sucesso', texto)
       return true
+    } catch (erro) {
+      avisar(secao, 'erro', erro.message)
+      return false
     }
-    avisar(secao, 'erro', 'Não foi possível salvar neste navegador. Libere o armazenamento do site e tente de novo.')
-    return false
   }
 
   function salvarDados(e) {
@@ -253,7 +260,7 @@ function EditarPerfil() {
         </nav>
 
         <div className="flex min-w-0 flex-col gap-6">
-          <Secao id="dados" titulo="Dados básicos" origem="local">
+          <Secao id="dados" titulo="Dados básicos" origem="servidor">
             <form onSubmit={salvarDados} noValidate className="grid gap-4 sm:grid-cols-2">
               <Campo rotulo="Nome completo" erro={erros.nome}>
                 {(p) => <Entrada {...p} maxLength={100} value={dados.nome} onChange={(e) => setDados({ ...dados, nome: e.target.value })} />}
@@ -334,7 +341,7 @@ function EditarPerfil() {
             {mensagem('imagens')}
           </Secao>
 
-          <Secao id="resumo" titulo="Resumo profissional" origem="local">
+          <Secao id="resumo" titulo="Resumo profissional" origem="servidor">
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -342,8 +349,8 @@ function EditarPerfil() {
               }}
               className="flex flex-col gap-4"
             >
-              <Campo rotulo="Resumo" ajuda={`${resumo.sobre.length}/1000 · Quem você é, no que trabalha e o que busca.`}>
-                {(p) => <AreaTexto {...p} rows={5} maxLength={1000} value={resumo.sobre} onChange={(e) => setResumo({ ...resumo, sobre: e.target.value })} />}
+              <Campo rotulo="Resumo" ajuda={`${resumo.sobre.length}/500 · Quem você é, no que trabalha e o que busca.`}>
+                {(p) => <AreaTexto {...p} rows={5} maxLength={500} value={resumo.sobre} onChange={(e) => setResumo({ ...resumo, sobre: e.target.value })} />}
               </Campo>
               <Campo rotulo="Objetivo de carreira" opcional>
                 {(p) => <AreaTexto {...p} rows={3} maxLength={500} value={resumo.objetivo} onChange={(e) => setResumo({ ...resumo, objetivo: e.target.value })} />}
@@ -381,7 +388,7 @@ function EditarPerfil() {
             )}
           </Secao>
 
-          <Secao id="competencias" titulo="Competências" descricao="As técnicas são usadas para recomendar vagas." origem="local">
+          <Secao id="competencias" titulo="Competências" descricao="As técnicas são usadas para recomendar vagas." origem="servidor">
             <div className="grid gap-8 md:grid-cols-2">
               <EditorEtiquetas
                 rotulo="Técnicas"
@@ -402,7 +409,7 @@ function EditarPerfil() {
             {mensagem('competencias')}
           </Secao>
 
-          <Secao id="experiencias" titulo="Experiência profissional" origem="local">
+          <Secao id="experiencias" titulo="Experiência profissional" origem="servidor">
             <EditorItens
               itens={perfil.experiencias}
               layout="linha"
@@ -427,7 +434,7 @@ function EditarPerfil() {
             {mensagem('experiencias')}
           </Secao>
 
-          <Secao id="formacao" titulo="Formação acadêmica" origem="local">
+          <Secao id="formacao" titulo="Formação acadêmica" origem="servidor">
             <EditorItens
               itens={perfil.formacoes}
               layout="linha"
@@ -452,7 +459,7 @@ function EditarPerfil() {
             {mensagem('formacao')}
           </Secao>
 
-          <Secao id="cursos" titulo="Cursos e certificações" origem="local">
+          <Secao id="cursos" titulo="Cursos e certificações" origem="servidor">
             <EditorItens
               itens={perfil.cursos}
               rotuloAdicionar="Adicionar curso"
@@ -488,7 +495,7 @@ function EditarPerfil() {
             </div>
           </Secao>
 
-          <Secao id="preferencias" titulo="Preferências profissionais" descricao="O que você procura na próxima oportunidade." origem="local">
+          <Secao id="preferencias" titulo="Preferências profissionais" descricao="O que você procura na próxima oportunidade." origem="servidor">
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -552,6 +559,44 @@ function EditarPerfil() {
       </div>
     </>
   )
+}
+
+// Espera o perfil chegar do servidor antes de montar o formulário: assim um
+// navegador novo nunca salva campos vazios por cima do que está na conta.
+function EditarPerfil() {
+  const sessao = useSessao()
+  const [estado, setEstado] = useState({ tipo: 'carregando' })
+  const [tentativa, setTentativa] = useState(0)
+
+  useEffect(() => {
+    let ativo = true
+    const espera = tentativa ? sincronizarAreaCandidata(sessao?.usuario).then(() => ({ ok: true }), (e) => ({ ok: false, erro: e.message })) : aguardarSincronizacao(sessao?.usuario)
+    espera.then((r) => ativo && setEstado(r.ok ? { tipo: 'pronto' } : { tipo: 'erro', texto: r.erro }))
+    return () => {
+      ativo = false
+    }
+  }, [sessao?.usuario, tentativa])
+
+  if (estado.tipo === 'carregando') return <Esqueleto className="h-96 rounded-xl" />
+  if (estado.tipo === 'erro') {
+    return (
+      <>
+        <TituloPagina titulo="Editar perfil" voltar={{ para: '/candidata/perfil', rotulo: 'Meu perfil' }} />
+        <Aviso tipo="erro">Não foi possível carregar seu perfil: {estado.texto}</Aviso>
+        <Botao
+          variante="secundario"
+          className="mt-4"
+          onClick={() => {
+            setEstado({ tipo: 'carregando' })
+            setTentativa((t) => t + 1)
+          }}
+        >
+          Tentar de novo
+        </Botao>
+      </>
+    )
+  }
+  return <FormularioPerfil />
 }
 
 export default EditarPerfil

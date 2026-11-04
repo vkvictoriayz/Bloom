@@ -1,4 +1,5 @@
-import { Link, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
 import LinhaDoTempo from '../../components/LinhaDoTempo'
@@ -7,10 +8,11 @@ import TituloPagina from '../../components/candidata/TituloPagina'
 import Botao from '../../components/ui/Botao'
 import Selo from '../../components/ui/Selo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
-import { buscarEmpresa, empresaPorNome } from '../../data/empresas'
-import { buscarVaga } from '../../data/vagas'
+import { Aviso } from '../../components/ui/Campo'
+import Esqueleto from '../../components/ui/Esqueleto'
 import { buscarCandidatura, situacao } from '../../services/candidaturas'
-import { useCandidaturas } from '../../hooks/useVagasReais'
+import { abrirConversa } from '../../services/recursos'
+import { useCandidaturasEstado } from '../../hooks/useVagasReais'
 
 // Só a própria candidata acessa: as candidaturas lidas são as dela.
 function NaoEncontrada() {
@@ -29,16 +31,41 @@ function NaoEncontrada() {
 
 function useCandidatura() {
   const { id } = useParams()
-  const lista = useCandidaturas()
+  const { lista, carregando, erro } = useCandidaturasEstado()
   const candidatura = buscarCandidatura(id, lista)
-  // Candidatura enviada ao backend: a vaga é real ("b<id>") e abre em /vagas/:id.
-  const vaga = candidatura ? (candidatura.servidor ? { id: candidatura.vagaId } : buscarVaga(candidatura.vagaId)) : null
-  const empresa = candidatura ? buscarEmpresa(candidatura.empresaSlug) ?? empresaPorNome(candidatura.empresa) : null
-  return { candidatura, vaga, empresa }
+  // A vaga é real ("b<id>") e abre em /vagas/:id.
+  const vaga = candidatura ? { id: candidatura.vagaId } : null
+  const empresa = candidatura?.dadosEmpresa ?? null
+  return { candidatura, vaga, empresa, carregando, erro }
+}
+
+// Abre (ou retoma) a conversa com a empresa sobre esta candidatura.
+function BotaoMensagem({ candidatura }) {
+  const navigate = useNavigate()
+  const [estado, setEstado] = useState({ tipo: 'ocioso' })
+  async function abrir() {
+    setEstado({ tipo: 'abrindo' })
+    try {
+      const r = await abrirConversa(candidatura.idServidor)
+      navigate(`/candidata/mensagens/${r.conversa.id}`)
+    } catch (erro) {
+      setEstado({ tipo: 'erro', texto: erro.message })
+    }
+  }
+  return (
+    <>
+      <Botao variante="secundario" onClick={abrir} disabled={estado.tipo === 'abrindo'}>
+        <Icone nome="mensagem" tamanho={16} /> {estado.tipo === 'abrindo' ? 'Abrindo…' : 'Mensagem para a empresa'}
+      </Botao>
+      {estado.tipo === 'erro' && <Aviso tipo="erro">{estado.texto}</Aviso>}
+    </>
+  )
 }
 
 function DetalheCandidatura() {
-  const { candidatura, vaga, empresa } = useCandidatura()
+  const { candidatura, vaga, empresa, carregando, erro } = useCandidatura()
+  if (carregando) return <Esqueleto className="h-96 rounded-xl" />
+  if (erro) return <Aviso tipo="erro">Não foi possível carregar suas candidaturas: {erro}</Aviso>
   if (!candidatura) return <NaoEncontrada />
 
   const info = situacao(candidatura)
@@ -51,9 +78,12 @@ function DetalheCandidatura() {
         descricao={`${empresa?.nome ?? candidatura.empresa} · enviada em ${candidatura.data}`}
         voltar={{ para: '/candidata/candidaturas', rotulo: 'Minhas candidaturas' }}
         acoes={
-          <Botao as={Link} to={`/candidata/candidaturas/${encodeURIComponent(candidatura.id)}/andamento`}>
-            Ver andamento
-          </Botao>
+          <div className="flex flex-wrap items-start gap-2">
+            <BotaoMensagem candidatura={candidatura} />
+            <Botao as={Link} to={`/candidata/candidaturas/${encodeURIComponent(candidatura.id)}/andamento`}>
+              Ver andamento
+            </Botao>
+          </div>
         }
       />
 

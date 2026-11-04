@@ -4,6 +4,9 @@ import { prepararComunidade } from "./models/Comunidade.js";
 import { prepararEmpresarial } from "./models/Empresarial.js";
 import { prepararImagens } from "./models/Imagem.js";
 import { prepararVerificacao } from "./models/Verificacao.js";
+import { prepararCandidata } from "./models/Candidata.js";
+import { prepararInteracao } from "./models/Interacao.js";
+import { prepararGrupos } from "./models/Grupos.js";
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16) {
   console.error("Defina JWT_SECRET (mínimo 16 caracteres) no arquivo .env");
@@ -17,6 +20,9 @@ try {
   await prepararEmpresarial(); // idem para perfil da empresa, vagas e candidaturas
   await prepararImagens(); // idem para foto e capa de perfil
   await prepararVerificacao(); // verificação de CPF/CNPJ e redefinição de senha
+  await prepararCandidata(); // perfil profissional, projetos e vagas salvas
+  await prepararInteracao(); // notificações e mensagens
+  await prepararGrupos(); // comunidades temáticas
 } catch (e) {
   console.error("Não foi possível conectar ao MySQL. Confira o .env e se o banco BLOOM existe.");
   console.error(e.message);

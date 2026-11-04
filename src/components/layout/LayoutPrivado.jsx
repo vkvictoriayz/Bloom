@@ -5,6 +5,7 @@ import Icone from '../Icone'
 import Logo, { Borboleta } from '../Logo'
 import Avatar from '../comunidade/Avatar'
 import { sair } from '../../services/auth'
+import { contarNaoLidas, EVENTO_NOTIFICACOES } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
 // Moldura das áreas logadas (candidata e empresa): menu lateral que expande
@@ -263,7 +264,38 @@ function BuscaGeral({ busca }) {
   )
 }
 
+// Quantas notificações não lidas: consulta ao trocar de página, a cada
+// minuto (com a aba visível) e quando algo é marcado como lido.
+function useNaoLidas() {
+  const { pathname } = useLocation()
+  const [total, setTotal] = useState(0)
+  const [versao, setVersao] = useState(0)
+
+  useEffect(() => {
+    const atualizar = () => setVersao((v) => v + 1)
+    const relogio = setInterval(() => document.visibilityState === 'visible' && atualizar(), 60000)
+    window.addEventListener(EVENTO_NOTIFICACOES, atualizar)
+    return () => {
+      clearInterval(relogio)
+      window.removeEventListener(EVENTO_NOTIFICACOES, atualizar)
+    }
+  }, [])
+
+  useEffect(() => {
+    let ativo = true
+    contarNaoLidas()
+      .then((n) => ativo && setTotal(n))
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+  }, [pathname, versao])
+
+  return total
+}
+
 function LayoutPrivado({ config, usuario, foto, contexto }) {
+  const naoLidas = useNaoLidas()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [recolhido, setRecolhido] = useState(() => lerRecolhido(config.chavePreferencia))
@@ -374,8 +406,18 @@ function LayoutPrivado({ config, usuario, foto, contexto }) {
             <NavLink to={config.mensagens} className={atalho} aria-label="Mensagens" title="Mensagens">
               <Icone nome="mensagem" tamanho={20} />
             </NavLink>
-            <NavLink to={config.notificacoes} className={atalho} aria-label="Notificações" title="Notificações">
+            <NavLink
+              to={config.notificacoes}
+              className={cn(atalho, 'relative')}
+              aria-label={naoLidas ? `Notificações: ${naoLidas} não lidas` : 'Notificações'}
+              title="Notificações"
+            >
               <Icone nome="sino" tamanho={20} />
+              {naoLidas > 0 && (
+                <span aria-hidden="true" className="absolute top-1 right-1 grid h-4 min-w-4 place-items-center rounded-full bg-vinho px-1 text-[10px] leading-none font-bold text-white">
+                  {naoLidas > 9 ? '9+' : naoLidas}
+                </span>
+              )}
             </NavLink>
             <MenuConta usuario={usuario} foto={foto} config={config} aoSair={handleSair} />
           </div>
