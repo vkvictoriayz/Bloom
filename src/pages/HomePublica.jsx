@@ -63,7 +63,7 @@ const perguntas = [
   },
   {
     pergunta: 'Sou de uma empresa. Como participo?',
-    resposta: 'Pela Área da empresa você cria a conta da sua organização. O painel empresarial está em evolução e vai receber a publicação de vagas e a edição do perfil da empresa.',
+    resposta: 'Pela Área da empresa você cria a conta da sua organização, edita o perfil, publica vagas e acompanha as candidaturas recebidas.',
   },
 ]
 
@@ -87,18 +87,15 @@ function HomePublica() {
     <Pagina titulo="Carreiras em tecnologia" className="bg-papel">
       <div className="mx-auto flex max-w-7xl flex-col gap-16 px-4 py-8 sm:px-6 lg:gap-24 lg:px-8 lg:py-12">
         {/* ── Abertura ─────────────────────────────────────────── */}
-        <section className="grid overflow-hidden rounded-2xl border border-linha bg-branco lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <section className="grid overflow-hidden rounded-2xl border border-linha bg-branco lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           <div className="flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-16">
-            <p className="inline-flex w-fit items-center gap-2 rounded-full bg-blush px-3 py-1 text-xs font-bold text-vinho">
-              <Icone nome="broto" tamanho={14} /> Carreiras · Tecnologia · Oportunidades
-            </p>
-            <h1 className="mt-6 font-display text-[2.5rem] leading-[1.05] text-tinta sm:text-[3.4rem] xl:text-[3.9rem]">
+            <h1 className="font-display text-[2.1rem] leading-[1.1] text-balance text-tinta sm:text-[2.6rem] xl:text-[2.9rem]">
               <TextoEscalonado texto="Conectando mulheres da tecnologia a" />{' '}
               <em className="text-vinho">
                 <TextoEscalonado texto="oportunidades reais." atraso={330} />
               </em>
             </h1>
-            <p className="mt-5 max-w-lg text-lg leading-relaxed text-tinta-2">
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-tinta-2">
               A BLOOM conecta talentos a oportunidades profissionais e a empresas que valorizam o potencial das mulheres na tecnologia.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -125,6 +122,14 @@ function HomePublica() {
               width="1536"
               height="1024"
             />
+          </div>
+        </section>
+
+        {/* ── Áreas ────────────────────────────────────────────── */}
+        <section id="areas" aria-labelledby="titulo-areas" className="scroll-mt-24">
+          <TituloSecao id="titulo-areas" titulo="Vagas em todas as áreas de T.I." descricao="Do primeiro emprego à liderança técnica: escolha uma área para começar." />
+          <div className="rounded-2xl border border-linha bg-branco py-8">
+            <CarrosselAreas areas={areasTI} />
           </div>
         </section>
 
@@ -196,14 +201,6 @@ function HomePublica() {
           </div>
         </section>
 
-        {/* ── Áreas ────────────────────────────────────────────── */}
-        <section id="areas" aria-labelledby="titulo-areas" className="scroll-mt-24">
-          <TituloSecao id="titulo-areas" titulo="Vagas em todas as áreas de T.I." descricao="Do primeiro emprego à liderança técnica: escolha uma área para começar." />
-          <div className="rounded-2xl border border-linha bg-branco py-8">
-            <CarrosselAreas areas={areasTI} />
-          </div>
-        </section>
-
         {/* ── Empresas ─────────────────────────────────────────── */}
         <section aria-labelledby="titulo-empresas">
           <TituloSecao
@@ -245,7 +242,7 @@ function HomePublica() {
               Sua empresa contrata talentos em tecnologia?
             </h2>
             <p className="mt-3 flex-1 text-white/80">
-              Crie a conta da sua organização na Bloom. O painel empresarial está em evolução e vai receber a publicação de vagas e a edição do perfil da empresa.
+              Crie a conta da sua organização na Bloom para publicar vagas, receber candidaturas e conhecer profissionais da comunidade.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Botao as={Link} to="/empresa/cadastro" variante="claro" className="rounded-full">
