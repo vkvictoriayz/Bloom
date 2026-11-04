@@ -1,44 +1,13 @@
 import { api } from "./api.js";
 
 const CHAVE = "bloom_sessao";
-const CHAVE_USUARIOS_LOCAIS = "bloom_usuarios_cadastrados";
-
-function gerarTokenDemo(usuario) {
-  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = btoa(
-    JSON.stringify({
-      id: usuario.id || Date.now(),
-      email: usuario.email,
-      nome: usuario.nome || usuario.email.split("@")[0],
-      tipo: usuario.tipo || "usuaria",
-      exp: Math.floor(Date.now() / 1000) + 8 * 3600, // 8 horas
-    })
-  );
-  return `${header}.${payload}.assinatura-demo`;
-}
-
-function salvarUsuarioLocal(dados) {
-  try {
-    const salvos = JSON.parse(localStorage.getItem(CHAVE_USUARIOS_LOCAIS) || "[]");
-    const filtrados = salvos.filter((u) => u.email !== dados.email);
-    filtrados.push(dados);
-    localStorage.setItem(CHAVE_USUARIOS_LOCAIS, JSON.stringify(filtrados));
-  } catch {
-    // continua
-  }
-}
-
-function buscarUsuarioLocal(email, senha) {
-  try {
-    const salvos = JSON.parse(localStorage.getItem(CHAVE_USUARIOS_LOCAIS) || "[]");
-    return salvos.find(
-      (u) =>
-        u.email.toLowerCase() === email.toLowerCase() &&
-        (!senha || u.senha === senha)
-    );
-  } catch {
-    return null;
-  }
+// Versões antigas guardavam neste navegador os cadastros feitos com o
+// servidor fora do ar, inclusive CPF e senha em texto puro, e criavam uma
+// sessão de demonstração. Isso acabou: apaga o que tiver sobrado.
+try {
+  localStorage.removeItem("bloom_usuarios_cadastrados");
+} catch {
+  // armazenamento indisponível: nada a limpar
 }
 
 export function salvarSessao({ token, usuario }) {
@@ -72,55 +41,16 @@ export function sair() {
   window.dispatchEvent(new Event("bloom-sessao-atualizada"));
 }
 
-export async function cadastrarUsuaria(dados) {
-  try {
-    return await api("/auth/cadastro", { method: "POST", corpo: dados });
-  } catch (erro) {
-    const msg = erro?.message || "";
-    if (
-      msg.includes("Não foi possível conectar") ||
-      msg.includes("Servidor fora do ar")
-    ) {
-      salvarUsuarioLocal(dados);
-      const usuario = {
-        id: Date.now(),
-        nome: dados.nome,
-        email: dados.email,
-        tipo: "usuaria",
-      };
-      return {
-        token: gerarTokenDemo(usuario),
-        usuario,
-      };
-    }
-    throw erro;
-  }
-}
+// Login e cadastro só pelo servidor: sem ele, a pessoa vê o erro e tenta de novo.
+export const cadastrarUsuaria = (dados) =>
+  api("/auth/cadastro", { method: "POST", corpo: dados });
 
-export async function entrarUsuaria(dados) {
-  try {
-    return await api("/auth/login", { method: "POST", corpo: dados });
-  } catch (erro) {
-    const msg = erro?.message || "";
-    if (
-      msg.includes("Não foi possível conectar") ||
-      msg.includes("Servidor fora do ar")
-    ) {
-      const usuarioLocal = buscarUsuarioLocal(dados.email, dados.senha);
-      const usuario = {
-        id: usuarioLocal?.id || 1,
-        nome: usuarioLocal?.nome || dados.email.split("@")[0],
-        email: dados.email,
-        tipo: "usuaria",
-      };
-      return {
-        token: gerarTokenDemo(usuario),
-        usuario,
-      };
-    }
-    throw erro;
-  }
-}
+export const entrarUsuaria = (dados) =>
+  api("/auth/login", { method: "POST", corpo: dados });
+
+// Dados públicos do CNPJ (BrasilAPI, consultada pelo servidor).
+export const consultarCnpj = (cnpj) =>
+  api(`/auth/empresa/cnpj/${encodeURIComponent(cnpj)}`).then((r) => r.empresa);
 
 export const cadastrarEmpresa = (dados) =>
   api("/auth/empresa/cadastro", { method: "POST", corpo: dados });
@@ -129,3 +59,10 @@ export const entrarEmpresa = (dados) =>
   api("/auth/empresa/login", { method: "POST", corpo: dados });
 
 export const buscarSessaoAtual = (token) => api("/auth/me", { token });
+
+// Redefinição de senha: pede o link por e-mail e grava a nova senha.
+export const pedirRedefinicaoSenha = (dados) =>
+  api("/auth/senha/esqueci", { method: "POST", corpo: dados });
+
+export const redefinirSenha = (dados) =>
+  api("/auth/senha/redefinir", { method: "POST", corpo: dados });

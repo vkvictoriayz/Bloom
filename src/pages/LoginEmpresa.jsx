@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import TelaAcesso, { LinkAcesso } from '../components/TelaAcesso'
 import CampoSenha from '../components/CampoSenha'
 import Botao from '../components/ui/Botao'
@@ -50,7 +50,6 @@ function LoginEmpresa() {
       visual={{
         ilustracao: 'empresa',
         frase: 'Talentos da tecnologia, perto da sua empresa.',
-        itens: ['Cadastro da sua organização', 'Acesso à área empresarial', 'Publicação de vagas em breve'],
       }}
       rodape={
         <>
@@ -77,7 +76,17 @@ function LoginEmpresa() {
         )}
       </Campo>
 
-      <CampoSenha rotulo="Senha" valor={senha} aoMudar={setSenha} placeholder="Digite sua senha" />
+      <CampoSenha
+        rotulo="Senha"
+        valor={senha}
+        aoMudar={setSenha}
+        placeholder="Digite sua senha"
+        acessorio={
+          <Link className="text-xs font-semibold text-vinho underline-offset-4 hover:underline" to="/recuperar-senha?tipo=empresa">
+            Esqueci minha senha
+          </Link>
+        }
+      />
 
       {mensagem && <Aviso tipo={location.state?.mensagem === mensagem ? 'sucesso' : 'erro'}>{mensagem}</Aviso>}
 

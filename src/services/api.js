@@ -25,8 +25,10 @@ export async function api(caminho, { method = "GET", corpo, token } = {}) {
     // resposta sem corpo JSON
   }
 
-  // 502/503/504 = o Vite não conseguiu falar com o backend (não está rodando).
-  if ([502, 503, 504].includes(resposta.status)) {
+  // 502/503/504 sem mensagem da API = o Vite não conseguiu falar com o
+  // backend (não está rodando). Com mensagem, é o backend avisando que um
+  // serviço externo está fora (ex.: consulta de CNPJ) e ela vale.
+  if ([502, 503, 504].includes(resposta.status) && !dados?.erro) {
     throw new Error("Servidor fora do ar. Rode \"npm run server\" e tente de novo.");
   }
 

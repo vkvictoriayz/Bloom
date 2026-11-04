@@ -12,10 +12,12 @@ const ILUSTRACOES = {
   empresa: IlustracaoEmpresa,
 }
 
+// "itens" (a lista com marcadores abaixo da frase) só aparece quando a tela
+// pede: login e cadastro não usam.
 const VISUAL_PADRAO = {
   ilustracao: 'codigo',
   frase: 'Florescer é voltar para você.',
-  itens: ['Vagas de tecnologia em um só lugar', 'Candidaturas com etapas claras', 'Perfil profissional que você controla'],
+  itens: [],
 }
 
 // Para onde o seletor "Candidata | Empresa" leva, conforme a tela atual.
@@ -132,16 +134,18 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
               )}
               <div>
                 <p className="max-w-sm font-display text-3xl leading-tight text-vinho-escuro italic">{frase}</p>
-                <ul className="mt-5 flex flex-col gap-2 text-sm text-tinta-2">
-                  {itens.map((item) => (
-                    <li key={item} className="flex items-center gap-2.5">
-                      <span className="grid size-5 shrink-0 place-items-center rounded-full bg-vinho text-white">
-                        <Icone nome="check" tamanho={12} />
-                      </span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                {itens.length > 0 && (
+                  <ul className="mt-5 flex flex-col gap-2 text-sm text-tinta-2">
+                    {itens.map((item) => (
+                      <li key={item} className="flex items-center gap-2.5">
+                        <span className="grid size-5 shrink-0 place-items-center rounded-full bg-vinho text-white">
+                          <Icone nome="check" tamanho={12} />
+                        </span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           </aside>

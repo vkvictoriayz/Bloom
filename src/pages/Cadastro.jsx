@@ -2,17 +2,21 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cadastrarUsuaria, salvarSessao } from "../services/auth";
 import { destinoAposLogin } from "../services/destino";
-import { formatarCPF, formatarTelefone } from "../utils/documentos";
+import { formatarCPF, formatarTelefone, validarCPF } from "../utils/documentos";
 import TelaAcesso, { GrupoCampos, LinkAcesso } from "../components/TelaAcesso";
 import CampoSenha from "../components/CampoSenha";
 import imgAcesso from "../assets/ilustracoes/acesso-candidata.webp";
 import Botao from "../components/ui/Botao";
 import { Aviso, Campo, Entrada } from "../components/ui/Campo";
 
+// Data de hoje (AAAA-MM-DD), limite do campo de nascimento.
+const HOJE = new Date().toISOString().slice(0, 10);
+
 function Cadastro() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [cpf, setCpf] = useState("");
+  const [nascimento, setNascimento] = useState("");
   const [telefone, setTelefone] = useState("");
   const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
@@ -22,39 +26,31 @@ function Cadastro() {
   const [mensagem, setMensagem] = useState("");
   const [tipoMensagem, setTipoMensagem] = useState("");
 
+  function falhar(texto) {
+    setMensagem(texto);
+    setTipoMensagem("erro");
+  }
+
+  // As mesmas regras são conferidas de novo no servidor.
   async function cadastrar() {
-    if (!nome || !email || !cpf || !senha || !confirmarSenha) {
-      setMensagem("Preencha todos os campos!");
-      setTipoMensagem("erro");
-      return;
+    if (!nome.trim() || !email.trim() || !cpf || !nascimento || !senha || !confirmarSenha) {
+      return falhar("Preencha todos os campos obrigatórios.");
     }
-
-    if (!email.includes("@") || !email.includes(".")) {
-      setMensagem("Digite um e-mail válido!");
-      setTipoMensagem("erro");
-      return;
-    }
-
-    if (senha.length < 6) {
-      setMensagem("A senha deve ter pelo menos 6 caracteres!");
-      setTipoMensagem("erro");
-      return;
-    }
-
-    if (senha !== confirmarSenha) {
-      setMensagem("As senhas não são iguais!");
-      setTipoMensagem("erro");
-      return;
-    }
+    if (!validarCPF(cpf)) return falhar("CPF inválido. Confira os números.");
+    if (nascimento > HOJE) return falhar("Data de nascimento inválida.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return falhar("Digite um e-mail válido.");
+    if (senha.length < 8) return falhar("A senha deve ter pelo menos 8 caracteres.");
+    if (senha !== confirmarSenha) return falhar("As senhas não são iguais.");
 
     setCarregando(true);
     setMensagem("");
 
     try {
       const sessao = await cadastrarUsuaria({
-        nome,
-        email,
+        nome: nome.trim(),
+        email: email.trim(),
         cpf,
+        nascimento,
         telefone,
         senha,
         confirmarSenha,
@@ -133,6 +129,19 @@ function Cadastro() {
           )}
         </Campo>
 
+        <Campo rotulo="Data de nascimento">
+          {(props) => (
+            <Entrada
+              {...props}
+              type="date"
+              autoComplete="bday"
+              max={HOJE}
+              value={nascimento}
+              onChange={(e) => setNascimento(e.target.value)}
+            />
+          )}
+        </Campo>
+
         <Campo rotulo="Telefone" opcional>
           {(props) => (
             <Entrada
@@ -147,6 +156,9 @@ function Cadastro() {
           )}
         </Campo>
       </div>
+      <p className="-mt-2 text-xs leading-relaxed text-suave">
+        O CPF e a data de nascimento servem só para confirmar sua identidade. Eles não aparecem no seu perfil.
+      </p>
       </GrupoCampos>
 
       <GrupoCampos indice="2" titulo="Segurança">
@@ -154,7 +166,7 @@ function Cadastro() {
         rotulo="Senha"
         valor={senha}
         aoMudar={setSenha}
-        placeholder="Mínimo de 6 caracteres"
+        placeholder="Mínimo de 8 caracteres"
         autoComplete="new-password"
       />
 
