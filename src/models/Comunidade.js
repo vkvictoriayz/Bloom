@@ -29,6 +29,8 @@ export const Publicacao = sequelize.define(
     tipo: { type: DataTypes.STRING(20), allowNull: false, defaultValue: "dica" },
     texto: { type: DataTypes.STRING(1000), allowNull: false },
     criadaEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "criada_em" },
+    // Coluna da migration 003: quando a autora editou pela última vez.
+    editadaEm: { type: DataTypes.DATE, field: "editada_em" },
   },
   opcoes("PUBLICACAO")
 );

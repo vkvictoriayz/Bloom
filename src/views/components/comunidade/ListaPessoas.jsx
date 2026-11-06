@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
-import Botao from '../ui/Botao'
 import { Aviso, Entrada } from '../ui/Campo'
 import Avatar from './Avatar'
-import { lerPerfis, seguir } from '../../services/comunidade'
+import BotaoSeguir from './BotaoSeguir'
+import { definirSeguindo, lerPerfis } from '../../services/comunidade'
 
 // Descobrir e acompanhar outras integrantes (networking).
 // "limite" mostra só as primeiras N pessoas (versão compacta do feed);
@@ -36,7 +37,7 @@ function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: 
 
   async function alternar(pessoa) {
     try {
-      const r = await seguir(pessoa.id)
+      const r = await definirSeguindo(pessoa.id, !pessoa.seguindo)
       setPessoas((lista) => lista.map((p) => (p.id === pessoa.id ? { ...p, seguindo: r.seguindo } : p)))
       aoMudarConexao?.(r.seguindo)
     } catch (e) {
@@ -74,19 +75,12 @@ function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: 
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {(limite ? pessoas?.slice(0, limite) : pessoas)?.map((p) => (
             <li key={p.id} className="flex flex-col items-center rounded-xl border border-linha p-4 text-center">
-              <Avatar nome={p.nome} foto={p.foto} tamanho="lg" />
-              <p className="mt-3 w-full truncate text-sm font-semibold text-tinta">{p.nome}</p>
-              <p className="w-full truncate text-xs text-suave">{p.area || 'Área não informada'}</p>
-              <Botao
-                tamanho="sm"
-                variante={p.seguindo ? 'secundario' : 'primario'}
-                className="mt-3 w-full"
-                aria-pressed={p.seguindo}
-                aria-label={`${p.seguindo ? 'Deixar de seguir' : 'Seguir'} ${p.nome}`}
-                onClick={() => alternar(p)}
-              >
-                {p.seguindo ? 'Seguindo' : 'Seguir'}
-              </Botao>
+              <Link to={`/candidata/pessoas/${p.id}`} className="flex w-full flex-col items-center rounded-lg hover:text-vinho">
+                <Avatar nome={p.nome} foto={p.foto} tamanho="lg" />
+                <span className="mt-3 w-full truncate text-sm font-semibold text-tinta">{p.nome}</span>
+                <span className="w-full truncate text-xs text-suave">{p.area || 'Área não informada'}</span>
+              </Link>
+              <BotaoSeguir tamanho="sm" nome={p.nome} seguindo={p.seguindo} aoAlternar={() => alternar(p)} className="mt-3 w-full" />
             </li>
           ))}
         </ul>
@@ -94,14 +88,14 @@ function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: 
         <ul className="mt-2 divide-y divide-linha">
           {(limite ? pessoas?.slice(0, limite) : pessoas)?.map((p) => (
             <li key={p.id} className="flex items-center gap-3 py-3.5">
-              <Avatar nome={p.nome} foto={p.foto} tamanho="sm" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-tinta">{p.nome}</p>
-                <p className="truncate text-xs text-suave">{p.area || 'Área não informada'}</p>
-              </div>
-              <Botao tamanho="sm" variante={p.seguindo ? 'secundario' : 'primario'} aria-pressed={p.seguindo} aria-label={`${p.seguindo ? 'Deixar de seguir' : 'Seguir'} ${p.nome}`} onClick={() => alternar(p)}>
-                {p.seguindo ? 'Seguindo' : 'Seguir'}
-              </Botao>
+              <Link to={`/candidata/pessoas/${p.id}`} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg hover:text-vinho">
+                <Avatar nome={p.nome} foto={p.foto} tamanho="sm" />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-tinta">{p.nome}</span>
+                  <span className="block truncate text-xs text-suave">{p.area || 'Área não informada'}</span>
+                </span>
+              </Link>
+              <BotaoSeguir tamanho="sm" nome={p.nome} seguindo={p.seguindo} aoAlternar={() => alternar(p)} className="min-w-28" />
             </li>
           ))}
         </ul>

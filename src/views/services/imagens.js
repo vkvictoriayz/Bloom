@@ -14,6 +14,9 @@ function chamar(caminho, opcoes = {}) {
 export const lerMinhasImagens = () => chamar("/minhas");
 export const enviarImagem = (campo, imagem) => chamar(`/${campo}`, { method: "PUT", corpo: { imagem } });
 export const removerImagem = (campo) => chamar(`/${campo}`, { method: "DELETE" });
+// Ícone predefinido no lugar da foto ("icone:<nome>:<cor>").
+export const escolherIcone = (icone) => chamar("/icone", { method: "PUT", corpo: { icone } });
+export const removerIcone = () => chamar("/icone", { method: "DELETE" });
 
 // Imagem escolhida antes de existir o envio ao servidor: fica só no navegador.
 export const soNesteNavegador = (valor) => typeof valor === "string" && valor.startsWith("data:");

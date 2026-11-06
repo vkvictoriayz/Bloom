@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
 import MarcaEmpresa from '../../components/MarcaEmpresa'
+import { AnexoImagem } from '../../components/comunidade/AnexoImagem'
 import Avatar from '../../components/comunidade/Avatar'
 import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
 import ListaPessoas from '../../components/comunidade/ListaPessoas'
@@ -96,6 +97,7 @@ function Feed() {
 
   const [texto, setTexto] = useState('')
   const [tipo, setTipo] = useState('dica')
+  const [imagem, setImagem] = useState(null)
   const [publicando, setPublicando] = useState(false)
   const [erroPublicar, setErroPublicar] = useState('')
   const [publicado, setPublicado] = useState(false)
@@ -139,13 +141,15 @@ function Feed() {
 
   async function enviar(evento) {
     evento.preventDefault()
-    if (!texto.trim() || publicando) return
+    if ((!texto.trim() && !imagem) || publicando) return
     setPublicando(true)
     setErroPublicar('')
     setPublicado(false)
     try {
-      const r = await publicar({ texto, tipo })
+      const corpo = { texto, tipo, ...(imagem ? { imagem: imagem.dataUrl, largura: imagem.largura, altura: imagem.altura } : {}) }
+      const r = await publicar(corpo)
       setTexto('')
+      setImagem(null)
       setPublicado(true)
       if (!tipoFiltro || tipoFiltro === r.publicacao.tipo) setPublicacoes((lista) => [r.publicacao, ...(lista ?? [])])
     } catch (e) {
@@ -157,6 +161,10 @@ function Feed() {
 
   function aoExcluir(id) {
     setPublicacoes((lista) => lista.filter((p) => p.id !== id))
+  }
+
+  function aoAtualizar(nova) {
+    setPublicacoes((lista) => lista.map((p) => (p.id === nova.id ? nova : p)))
   }
 
   const cartaoPessoas = (
@@ -204,6 +212,11 @@ function Feed() {
         </div>
 
         <div className="mt-4 sm:pl-[80px]">
+          {imagem && (
+            <div className="mb-4">
+              <AnexoImagem id="imagem-nova-publicacao" valor={imagem} aoMudar={setImagem} desabilitado={publicando} />
+            </div>
+          )}
           <div role="radiogroup" aria-label="Tipo de publicação" className="-mx-1 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
             {TIPOS.map((t) => {
               const ativo = tipo === t.id
@@ -226,10 +239,15 @@ function Feed() {
             })}
           </div>
           <div className="mt-3 flex items-center justify-end gap-3 border-t border-linha pt-3">
+            {!imagem && (
+              <div className="mr-auto -ml-3">
+                <AnexoImagem id="imagem-nova-publicacao" valor={null} aoMudar={setImagem} desabilitado={publicando} />
+              </div>
+            )}
             <span className="text-xs text-suave tabular-nums" aria-live="polite">
               {texto.length}/{LIMITE_PUBLICACAO}
             </span>
-            <Botao type="submit" disabled={!texto.trim() || publicando} className="rounded-full px-5">
+            <Botao type="submit" disabled={(!texto.trim() && !imagem) || publicando} className="rounded-full px-5">
               {publicando ? 'Publicando…' : 'Publicar'} <Icone nome="seta" tamanho={16} />
             </Botao>
           </div>
@@ -312,7 +330,7 @@ function Feed() {
           <>
             {lista.map((p, i) => (
               <Fragment key={p.id}>
-                <CartaoPublicacao publicacao={p} aoExcluir={aoExcluir} />
+                <CartaoPublicacao publicacao={p} aoExcluir={aoExcluir} aoAtualizar={aoAtualizar} />
                 {i === POSICAO_PESSOAS && cartaoPessoas}
                 {i === POSICAO_VAGAS && cartaoVagas}
               </Fragment>

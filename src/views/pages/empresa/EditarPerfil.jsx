@@ -9,7 +9,9 @@ import { Carregando } from '../../components/empresa/Estados'
 import Botao from '../../components/ui/Botao'
 import { AreaTexto, Aviso, Campo, Entrada } from '../../components/ui/Campo'
 import { fotoEmpresa, salvarPerfilEmpresa } from '../../services/empresa'
-import { enviarImagem, removerImagem } from '../../services/imagens'
+import { enviarImagem, escolherIcone, removerIcone, removerImagem } from '../../services/imagens'
+import { SeletorIcone } from '../../components/IconePerfil'
+import { ehIcone } from '../../data/icones'
 
 const LIMITE_IMAGEM = 1024 * 1024 // 1 MB, o mesmo limite do servidor
 const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp']
@@ -33,6 +35,8 @@ function ImagensEmpresa({ dados, aoMudar }) {
   const arquivoCapa = useRef(null)
   const foto = fotoEmpresa(dados)
   const capa = dados.imagens?.capa
+  const iconeAtual = ehIcone(dados.imagens?.foto) ? dados.imagens.foto : null
+  const [escolhendoIcone, setEscolhendoIcone] = useState(false)
 
   async function executar(acao, texto) {
     setOcupado(true)
@@ -70,19 +74,27 @@ function ImagensEmpresa({ dados, aoMudar }) {
           <h2 id="titulo-imagens-empresa" className="font-semibold text-tinta">
             Foto e capa
           </h2>
-          <p className="text-sm text-suave">Imagens de até 1 MB (JPG, PNG ou WebP). Aparecem para as candidatas.</p>
+          <p className="text-sm text-suave">Imagens de até 1 MB (JPG, PNG ou WebP), ou um ícone da Bloom enquanto não tiver o logotipo. Aparecem para as candidatas.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <input ref={arquivoFoto} type="file" accept={TIPOS_IMAGEM.join(',')} hidden onChange={escolher('foto')} />
             <input ref={arquivoCapa} type="file" accept={TIPOS_IMAGEM.join(',')} hidden onChange={escolher('capa')} />
             <Botao variante="secundario" tamanho="sm" disabled={ocupado} onClick={() => arquivoFoto.current?.click()}>
-              <Icone nome="camera" tamanho={16} /> {dados.imagens?.foto ? 'Trocar foto' : 'Adicionar foto'}
+              <Icone nome="camera" tamanho={16} /> {dados.imagens?.foto && !iconeAtual ? 'Trocar foto ou logotipo' : 'Enviar foto ou logotipo'}
+            </Botao>
+            <Botao variante="secundario" tamanho="sm" disabled={ocupado} aria-expanded={escolhendoIcone} onClick={() => setEscolhendoIcone((v) => !v)}>
+              <Icone nome="predio" tamanho={16} /> {iconeAtual ? 'Trocar ícone' : 'Usar um ícone'}
             </Botao>
             <Botao variante="secundario" tamanho="sm" disabled={ocupado} onClick={() => arquivoCapa.current?.click()}>
               <Icone nome="imagem" tamanho={16} /> {capa ? 'Trocar capa' : 'Adicionar capa'}
             </Botao>
             {dados.imagens?.foto && (
-              <Botao variante="fantasma" tamanho="sm" disabled={ocupado} onClick={() => executar(() => removerImagem('foto'), 'Foto removida.')}>
-                Remover foto
+              <Botao
+                variante="fantasma"
+                tamanho="sm"
+                disabled={ocupado}
+                onClick={() => (iconeAtual ? executar(removerIcone, 'Ícone removido.') : executar(() => removerImagem('foto'), 'Foto removida.'))}
+              >
+                {iconeAtual ? 'Remover ícone' : 'Remover foto'}
               </Botao>
             )}
             {capa && (
@@ -93,6 +105,18 @@ function ImagensEmpresa({ dados, aoMudar }) {
           </div>
         </div>
       </div>
+      {escolhendoIcone && (
+        <div className="px-6 pb-6 sm:px-8">
+          <SeletorIcone
+            publico="empresa"
+            forma="quadrado"
+            valor={iconeAtual}
+            ocupado={ocupado}
+            aoCancelar={() => setEscolhendoIcone(false)}
+            aoEscolher={(icone) => executar(() => escolherIcone(icone), 'Ícone salvo. Ele aparece no lugar da foto.').then(() => setEscolhendoIcone(false))}
+          />
+        </div>
+      )}
       {aviso && (
         <div className="px-6 pb-6 sm:px-8">
           <Aviso tipo={aviso.tipo}>{aviso.texto}</Aviso>

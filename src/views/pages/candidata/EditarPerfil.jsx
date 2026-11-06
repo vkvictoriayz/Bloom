@@ -14,7 +14,9 @@ import { AreaTexto, Aviso, Campo, Entrada } from '../../components/ui/Campo'
 import { opcoesFiltro } from '../../data/vagas'
 import { useSessao } from '../../hooks/useSessao'
 import { lerMeuPerfil, salvarMeuPerfil } from '../../services/comunidade'
-import { enviarImagem, removerImagem, soNesteNavegador } from '../../services/imagens'
+import { enviarImagem, escolherIcone, removerIcone, removerImagem, soNesteNavegador } from '../../services/imagens'
+import { SeletorIcone } from '../../components/IconePerfil'
+import { ehIcone } from '../../data/icones'
 import { aguardarSincronizacao, salvarSecoesPerfil, sincronizarAreaCandidata } from '../../services/candidataApi'
 import { completude, EVENTO_PERFIL, lerPerfil, salvarPerfil } from '../../services/perfil'
 import { cn } from '../../lib/cn'
@@ -79,6 +81,7 @@ function FormularioPerfil() {
   const [erroComunidade, setErroComunidade] = useState('')
   const [salvandoComunidade, setSalvandoComunidade] = useState(false)
 
+  const [escolhendoIcone, setEscolhendoIcone] = useState(false)
   const [enviandoImagem, setEnviandoImagem] = useState(false)
 
   const arquivoFoto = useRef(null)
@@ -183,9 +186,28 @@ function FormularioPerfil() {
     }
   }
 
+  // Ícone predefinido no lugar da foto (a foto enviada, se houver, sai).
+  async function usarIcone(icone) {
+    setEnviandoImagem(true)
+    try {
+      const r = await escolherIcone(icone)
+      await gravar('imagens', { foto: r.imagens.foto }, 'Ícone salvo. Ele aparece no lugar da foto.')
+      setEscolhendoIcone(false)
+    } catch (erro) {
+      avisar('imagens', 'erro', erro.message)
+    } finally {
+      setEnviandoImagem(false)
+    }
+  }
+
   async function tirarImagem(campo) {
     setEnviandoImagem(true)
     try {
+      if (campo === 'foto' && ehIcone(perfil.foto)) {
+        await removerIcone()
+        gravar('imagens', { foto: '' }, 'Ícone removido.')
+        return
+      }
       await removerImagem(campo)
       gravar('imagens', { [campo]: '' }, campo === 'foto' ? 'Foto removida.' : 'Capa removida.')
     } catch (erro) {
@@ -299,7 +321,7 @@ function FormularioPerfil() {
           <Secao
             id="imagens"
             titulo="Foto e capa"
-            descricao="Imagens de até 1 MB (JPG, PNG ou WebP). Aparecem para outras integrantes e para as empresas."
+            descricao="Imagens de até 1 MB (JPG, PNG ou WebP), ou um ícone da Bloom no lugar da foto. Aparecem para outras integrantes e para as empresas."
             origem="servidor"
           >
             <div className="overflow-hidden rounded-xl border border-linha">
@@ -310,14 +332,17 @@ function FormularioPerfil() {
                   <input ref={arquivoFoto} type="file" accept={TIPOS_IMAGEM.join(',')} hidden onChange={escolherImagem('foto')} />
                   <input ref={arquivoCapa} type="file" accept={TIPOS_IMAGEM.join(',')} hidden onChange={escolherImagem('capa')} />
                   <Botao variante="secundario" tamanho="sm" disabled={enviandoImagem} onClick={() => arquivoFoto.current?.click()}>
-                    <Icone nome="camera" tamanho={16} /> {perfil.foto ? 'Trocar foto' : 'Adicionar foto'}
+                    <Icone nome="camera" tamanho={16} /> {perfil.foto && !ehIcone(perfil.foto) ? 'Trocar foto' : 'Enviar foto'}
+                  </Botao>
+                  <Botao variante="secundario" tamanho="sm" disabled={enviandoImagem} aria-expanded={escolhendoIcone} onClick={() => setEscolhendoIcone((v) => !v)}>
+                    <Icone nome="broto" tamanho={16} /> {ehIcone(perfil.foto) ? 'Trocar ícone' : 'Usar um ícone'}
                   </Botao>
                   <Botao variante="secundario" tamanho="sm" disabled={enviandoImagem} onClick={() => arquivoCapa.current?.click()}>
                     <Icone nome="imagem" tamanho={16} /> {perfil.capa ? 'Trocar capa' : 'Adicionar capa'}
                   </Botao>
                   {perfil.foto && (
                     <Botao variante="fantasma" tamanho="sm" disabled={enviandoImagem} onClick={() => tirarImagem('foto')}>
-                      Remover foto
+                      {ehIcone(perfil.foto) ? 'Remover ícone' : 'Remover foto'}
                     </Botao>
                   )}
                   {perfil.capa && (
@@ -328,6 +353,11 @@ function FormularioPerfil() {
                 </div>
               </div>
             </div>
+            {escolhendoIcone && (
+              <div className="mt-4">
+                <SeletorIcone publico="usuaria" valor={perfil.foto} aoEscolher={usarIcone} ocupado={enviandoImagem} aoCancelar={() => setEscolhendoIcone(false)} />
+              </div>
+            )}
             {imagensLocais.length > 0 && (
               <Aviso tipo="info" className="mt-4">
                 {imagensLocais.length === 2

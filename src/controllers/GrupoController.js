@@ -5,7 +5,8 @@ import { Comunidade, ComunidadeMembro, ComunidadePublicacao } from "../models/Gr
 import { imagensDe } from "../models/Imagem.js";
 import { Usuaria } from "../models/index.js";
 import { perfisOcultos } from "../services/privacidade.js";
-import { montarPublicacoes, TIPOS } from "./ComunidadeController.js";
+import { iconeValido } from "../services/icones.js";
+import { gravarImagem, lerPublicacao, montarPublicacoes } from "./ComunidadeController.js";
 
 // Comunidades temáticas. Leitura: candidatas e empresas. Criar, participar,
 // publicar e excluir: só candidatas (exigirLogin nas rotas).
@@ -37,7 +38,7 @@ async function contagens(ids) {
 }
 
 function comunidadeJson(c, { participantes = 0, participando = false, minha = false } = {}) {
-  return { id: c.id, nome: c.nome, tema: c.tema, descricao: c.descricao, criadaEm: c.criadaEm, participantes, participando, minha };
+  return { id: c.id, nome: c.nome, tema: c.tema, descricao: c.descricao, icone: c.icone ?? null, criadaEm: c.criadaEm, participantes, participando, minha };
 }
 
 // GET /api/comunidades
@@ -69,10 +70,12 @@ function lerComunidade(body = {}) {
   if (nome.length < 3 || nome.length > 80) return [null, ["O nome deve ter de 3 a 80 caracteres.", "nome"]];
   if (tema.length < 2 || tema.length > 60) return [null, ["Informe o tema (até 60 caracteres).", "tema"]];
   if (descricao.length < 10 || descricao.length > 500) return [null, ["Descreva a comunidade (de 10 a 500 caracteres).", "descricao"]];
-  return [{ nome, tema, descricao }];
+  const icone = texto(body.icone);
+  if (icone && !iconeValido(icone, "comunidade")) return [null, ["Escolha um dos ícones da lista.", "icone"]];
+  return [{ nome, tema, descricao, icone: icone || null }];
 }
 
-// POST /api/comunidades { nome, tema, descricao }
+// POST /api/comunidades { nome, tema, descricao, icone? }
 export const criar = comTratamento(async (req, res) => {
   const [dados, falha] = lerComunidade(req.body);
   if (!dados) return erro(res, 400, ...falha);
@@ -146,26 +149,38 @@ export const participar = comTratamento(async (req, res) => {
   return res.json({ participando: !existente, participantes: await ComunidadeMembro.count({ where: { comunidadeId: id } }) });
 });
 
-// POST /api/comunidades/:id/publicacoes { texto, tipo } — só participantes.
+// POST /api/comunidades/:id/publicacoes { texto, tipo, imagem? } — só participantes.
 export const publicar = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   if (!id || !(await Comunidade.findByPk(id))) return erro(res, 404, "Comunidade não encontrada.");
   if (!(await ComunidadeMembro.findOne({ where: { comunidadeId: id, usuariaId: req.auth.sub } }))) {
     return erro(res, 403, "Participe da comunidade para publicar nela.");
   }
-  const conteudo = texto(req.body.texto);
-  const tipo = texto(req.body.tipo) || "dica";
-  if (!conteudo) return erro(res, 400, "Escreva algo para publicar.", "texto");
-  if (conteudo.length > 1000) return erro(res, 400, "A publicação pode ter até 1000 caracteres.", "texto");
-  if (!TIPOS.includes(tipo)) return erro(res, 400, "Escolha um tipo de publicação válido.", "tipo");
+  const lida = lerPublicacao(req.body);
+  if (lida.falha) return erro(res, 400, ...lida.falha);
 
   const criada = await sequelize.transaction(async (transaction) => {
-    const p = await Publicacao.create({ usuariaId: req.auth.sub, tipo, texto: conteudo }, { transaction });
+    const p = await Publicacao.create({ usuariaId: req.auth.sub, tipo: lida.tipo, texto: lida.conteudo }, { transaction });
     await ComunidadePublicacao.create({ comunidadeId: id, publicacaoId: p.id }, { transaction });
+    await gravarImagem(p.id, lida.imagem ?? undefined, transaction);
     return p;
   });
   const [publicacao] = await montarPublicacoes([criada], req.auth.sub);
   return res.status(201).json({ publicacao });
+});
+
+// PUT /api/comunidades/:id { icone } — só quem criou troca o ícone
+// (null volta para a inicial do nome).
+export const atualizar = comTratamento(async (req, res) => {
+  const id = idParam(req.params.id);
+  const comunidade = id && (await Comunidade.findByPk(id));
+  if (!comunidade) return erro(res, 404, "Comunidade não encontrada.");
+  if (comunidade.criadoraId !== req.auth.sub) return erro(res, 403, "Só quem criou a comunidade pode alterá-la.");
+  const icone = req.body?.icone === null ? null : texto(req.body?.icone);
+  if (icone !== null && !iconeValido(icone, "comunidade")) return erro(res, 400, "Escolha um dos ícones da lista.", "icone");
+  await comunidade.update({ icone });
+  const participantes = await ComunidadeMembro.count({ where: { comunidadeId: id } });
+  return res.json({ comunidade: comunidadeJson(comunidade, { participantes, participando: true, minha: true }) });
 });
 
 // DELETE /api/comunidades/:id — só quem criou. As publicações continuam no

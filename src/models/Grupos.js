@@ -17,6 +17,8 @@ export const Comunidade = sequelize.define(
     tema: { type: DataTypes.STRING(60), allowNull: false },
     descricao: { type: DataTypes.STRING(500), allowNull: false },
     criadoraId: { type: DataTypes.INTEGER, allowNull: false, field: "id_criadora", references: refUsuaria },
+    // Coluna da migration 003: ícone predefinido ("icone:<nome>:<cor>").
+    icone: { type: DataTypes.STRING(40) },
     criadaEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "criada_em" },
   },
   opcoes("COMUNIDADE")

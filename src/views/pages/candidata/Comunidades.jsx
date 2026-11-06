@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
+import { IconeAvatar, SeletorIcone } from '../../components/IconePerfil'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import { useRecurso } from '../../components/candidata/useRecurso'
 import Botao from '../../components/ui/Botao'
@@ -14,6 +15,8 @@ import { criarComunidade, DISPONIVEL, listarComunidades } from '../../services/r
 function NovaComunidade({ aoCancelar }) {
   const navigate = useNavigate()
   const [dados, setDados] = useState({ nome: '', tema: '', descricao: '' })
+  const [icone, setIcone] = useState(null)
+  const [escolhendoIcone, setEscolhendoIcone] = useState(false)
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
   const campo = (nome) => (e) => setDados((d) => ({ ...d, [nome]: e.target.value }))
 
@@ -24,7 +27,7 @@ function NovaComunidade({ aoCancelar }) {
     if (dados.descricao.trim().length < 10) return setEstado({ tipo: 'erro', texto: 'Descreva a comunidade (ao menos 10 caracteres).' })
     setEstado({ tipo: 'enviando' })
     try {
-      const r = await criarComunidade({ nome: dados.nome.trim(), tema: dados.tema.trim(), descricao: dados.descricao.trim() })
+      const r = await criarComunidade({ nome: dados.nome.trim(), tema: dados.tema.trim(), descricao: dados.descricao.trim(), ...(icone ? { icone } : {}) })
       navigate(`/comunidades/${r.comunidade.id}`)
     } catch (erro) {
       setEstado({ tipo: 'erro', texto: erro.message })
@@ -45,6 +48,38 @@ function NovaComunidade({ aoCancelar }) {
       <Campo rotulo="Descrição" ajuda={`${dados.descricao.length}/500 · Para quem é e sobre o que vocês vão conversar.`}>
         {(p) => <AreaTexto {...p} rows={3} maxLength={500} value={dados.descricao} onChange={campo('descricao')} />}
       </Campo>
+      <div>
+        <p className="text-sm font-semibold text-tinta-2">
+          Ícone <span className="font-normal text-suave">(opcional)</span>
+        </p>
+        {escolhendoIcone ? (
+          <div className="mt-2">
+            <SeletorIcone
+              publico="comunidade"
+              forma="quadrado"
+              valor={icone}
+              rotuloBotao="Usar este ícone"
+              aoEscolher={(valor) => {
+                setIcone(valor)
+                setEscolhendoIcone(false)
+              }}
+              aoCancelar={() => setEscolhendoIcone(false)}
+            />
+          </div>
+        ) : (
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            {icone && <IconeAvatar valor={icone} forma="quadrado" className="size-12" />}
+            <Botao type="button" variante="secundario" tamanho="sm" onClick={() => setEscolhendoIcone(true)}>
+              {icone ? 'Trocar ícone' : 'Escolher um ícone'}
+            </Botao>
+            {icone && (
+              <Botao type="button" variante="fantasma" tamanho="sm" onClick={() => setIcone(null)}>
+                Remover
+              </Botao>
+            )}
+          </div>
+        )}
+      </div>
       {estado.tipo === 'erro' && <Aviso tipo="erro">{estado.texto}</Aviso>}
       <div className="flex flex-wrap gap-2">
         <Botao type="submit" disabled={estado.tipo === 'enviando'}>
@@ -92,9 +127,13 @@ function Comunidades() {
             {r.dados.comunidades.map((c) => (
               <li key={c.id} className="flex flex-col rounded-xl border border-linha bg-branco p-5">
                 <div className="flex items-center gap-3">
-                  <span className="grid size-12 shrink-0 place-items-center rounded-lg bg-blush text-vinho" aria-hidden="true">
-                    <Icone nome="grupo" />
-                  </span>
+                  {c.icone ? (
+                    <IconeAvatar valor={c.icone} forma="quadrado" className="size-12" />
+                  ) : (
+                    <span className="grid size-12 shrink-0 place-items-center rounded-lg bg-blush text-vinho" aria-hidden="true">
+                      <Icone nome="grupo" />
+                    </span>
+                  )}
                   <div className="min-w-0">
                     <h2 className="truncate font-semibold text-tinta">{c.nome}</h2>
                     <p className="text-xs text-suave">

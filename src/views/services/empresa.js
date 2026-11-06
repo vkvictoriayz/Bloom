@@ -98,6 +98,9 @@ export function dataCurta(valor) {
 
 // Foto da empresa: a enviada pela própria empresa ou, sem ela, o logo
 // informado por endereço (PERFIL_EMPRESA.logo).
+// Foto enviada > logo informado > ícone escolhido ("icone:...").
 export function fotoEmpresa(dados) {
-  return dados?.imagens?.foto || dados?.perfil?.logo || ''
+  const foto = dados?.imagens?.foto
+  if (foto && !foto.startsWith('icone:')) return foto
+  return dados?.perfil?.logo || foto || ''
 }

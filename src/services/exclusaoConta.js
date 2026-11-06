@@ -50,7 +50,15 @@ export async function excluirUsuaria(id) {
     await apagar("DELETE FROM COMUNIDADE WHERE id_comunidade IN (:criadas)", r, t);
     await apagar("DELETE FROM CURTIDA WHERE id_usuario = :id OR id_publicacao IN (:publicacoes)", r, t);
     await apagar("DELETE FROM COMENTARIO WHERE id_usuario = :id OR id_publicacao IN (:publicacoes)", r, t);
+    await apagar("DELETE FROM PUBLICACAO_IMAGEM WHERE id_publicacao IN (:publicacoes)", r, t);
     await apagar("DELETE FROM PUBLICACAO WHERE id_publicacao IN (:publicacoes)", r, t);
+    await apagar(
+      "DELETE FROM MENSAGEM_DIRETA WHERE id_conversa_direta IN (SELECT id_conversa_direta FROM CONVERSA_DIRETA WHERE id_usuaria_a = :id OR id_usuaria_b = :id)",
+      r,
+      t
+    );
+    await apagar("DELETE FROM CONVERSA_DIRETA WHERE id_usuaria_a = :id OR id_usuaria_b = :id", r, t);
+    await apagar("DELETE FROM ICONE_PERFIL WHERE dono_tipo = 'usuaria' AND dono_id = :id", r, t);
     await apagar("DELETE FROM CONEXAO WHERE id_seguidora = :id OR id_seguida = :id", r, t);
     await apagar("DELETE FROM PERFIL_COMUNIDADE WHERE id_usuario = :id", r, t);
     await apagar("DELETE FROM IMAGEM_PERFIL WHERE dono_tipo = 'usuaria' AND dono_id = :id", r, t);
@@ -85,6 +93,7 @@ export async function excluirEmpresa(id) {
     // Campanhas saem; os pagamentos delas ficam (registro financeiro), sem o vínculo.
     await apagar("UPDATE PAGAMENTO SET id_campanha = NULL WHERE id_campanha IN (SELECT id_campanha FROM CAMPANHA WHERE id_empresa = :id)", r, t);
     await apagar("DELETE FROM CAMPANHA WHERE id_empresa = :id", r, t);
+    await apagar("DELETE FROM ICONE_PERFIL WHERE dono_tipo = 'empresa' AND dono_id = :id", r, t);
     await apagar("DELETE FROM CANDIDATURA_ENVIO WHERE id_candidatura IN (:candidaturas)", r, t);
     await apagar("DELETE FROM CANDIDATURAS WHERE id_candidatura IN (:candidaturas)", r, t);
     await apagar("DELETE FROM FAVORITOS WHERE id_vaga IN (:vagas)", r, t);

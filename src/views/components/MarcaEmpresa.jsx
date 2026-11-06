@@ -1,3 +1,5 @@
+import { IconeAvatar } from './IconePerfil'
+import { ehIcone } from '../data/icones'
 import { cn } from '../lib/cn'
 import { urlImagem } from '../services/api'
 
@@ -22,7 +24,9 @@ function tamanhoFonte(sigla, tamanho) {
 function MarcaEmpresa({ empresa, tamanho = 'md', className }) {
   if (!empresa) return null
 
-  const logo = urlImagem(empresa.foto || empresa.logo)
+  // Ícone escolhido pela empresa no lugar da foto (o logo informado tem prioridade).
+  if (ehIcone(empresa.foto) && !empresa.logo) return <IconeAvatar valor={empresa.foto} forma="quadrado" className={cn(TAMANHOS[tamanho], className)} />
+  const logo = urlImagem(ehIcone(empresa.foto) ? empresa.logo : empresa.foto || empresa.logo)
   if (logo) {
     return (
       <span className={cn('grid shrink-0 place-items-center overflow-hidden border border-linha bg-branco p-1.5', TAMANHOS[tamanho], className)}>

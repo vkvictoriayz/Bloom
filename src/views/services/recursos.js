@@ -42,6 +42,13 @@ export const participarComunidade = (id) => chamar(`/comunidades/${encodeURIComp
 export const criarComunidade = (corpo) => chamar('/comunidades', { method: 'POST', corpo })
 export const excluirComunidade = (id) => chamar(`/comunidades/${encodeURIComponent(id)}`, { method: 'DELETE' })
 export const publicarNaComunidade = (id, corpo) => chamar(`/comunidades/${encodeURIComponent(id)}/publicacoes`, { method: 'POST', corpo })
+export const atualizarComunidade = (id, corpo) => chamar(`/comunidades/${encodeURIComponent(id)}`, { method: 'PUT', corpo })
+
+// Conversas entre candidatas (separadas das conversas com empresas)
+export const listarConversasCandidatas = () => chamar('/mensagens/candidatas')
+export const abrirConversaCandidata = (usuariaId) => chamar('/mensagens/candidatas', { method: 'POST', corpo: { usuariaId } })
+export const lerConversaCandidata = (id) => chamar(`/mensagens/candidatas/${encodeURIComponent(id)}`)
+export const enviarMensagemCandidata = (id, texto) => chamar(`/mensagens/candidatas/${encodeURIComponent(id)}`, { method: 'POST', corpo: { texto } })
 
 // Privacidade da candidata
 export const lerPrivacidade = () => chamar('/candidata/privacidade').then((r) => r.privacidade)

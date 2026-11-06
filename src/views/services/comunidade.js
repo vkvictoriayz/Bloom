@@ -27,16 +27,26 @@ const consulta = (params) => {
 };
 
 // autora: "eu" traz só as publicações da própria usuária.
+// autora: também aceita o id de outra integrante (perfil público).
 export const lerFeed = ({ filtro, tipo, autora, pagina = 1 } = {}) =>
   chamar(`/feed${consulta({ filtro, tipo, autora, pagina: pagina > 1 ? pagina : "" })}`);
 export const publicar = (corpo) => chamar("/publicacoes", { method: "POST", corpo });
+// corpo.imagem: data URL troca; null remove; ausente mantém.
+export const editarPublicacao = (id, corpo) => chamar(`/publicacoes/${id}`, { method: "PUT", corpo });
 export const excluirPublicacao = (id) => chamar(`/publicacoes/${id}`, { method: "DELETE" });
 export const curtir = (id) => chamar(`/publicacoes/${id}/curtir`, { method: "POST" });
 export const lerComentarios = (id) => chamar(`/publicacoes/${id}/comentarios`);
 export const comentar = (id, texto) => chamar(`/publicacoes/${id}/comentarios`, { method: "POST", corpo: { texto } });
+export const excluirComentario = (id) => chamar(`/comentarios/${id}`, { method: "DELETE" });
 
 export const lerPerfis = ({ busca, conectadas } = {}) => chamar(`/perfis${consulta({ busca, conectadas: conectadas ? "1" : "" })}`);
 export const seguir = (id) => chamar(`/perfis/${id}/seguir`, { method: "POST" });
+export const seguirPerfil = (id) => chamar(`/perfis/${id}/seguir`, { method: "PUT" });
+export const deixarDeSeguir = (id) => chamar(`/perfis/${id}/seguir`, { method: "DELETE" });
+// Liga ou desliga conforme o estado desejado (evita alternar duas vezes).
+export const definirSeguindo = (id, seguir) => (seguir ? seguirPerfil(id) : deixarDeSeguir(id));
+export const lerPerfilIntegrante = (id) => chamar(`/perfis/${id}`);
+export const lerConexoes = (id, lado) => chamar(`/perfis/${id}/${lado === "seguindo" ? "seguindo" : "seguidoras"}`);
 export const lerMeuPerfil = () => chamar("/meu-perfil");
 export const salvarMeuPerfil = (corpo) => chamar("/meu-perfil", { method: "PUT", corpo });
 

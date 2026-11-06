@@ -28,6 +28,8 @@ import Andamento from './pages/candidata/Andamento'
 import Projetos from './pages/candidata/Projetos'
 import FormularioProjeto from './pages/candidata/FormularioProjeto'
 import Comunidades from './pages/candidata/Comunidades'
+import Conexoes from './pages/candidata/Conexoes'
+import PerfilIntegrante from './pages/candidata/PerfilIntegrante'
 import DetalheComunidade from './pages/candidata/DetalheComunidade'
 import Mensagens from './pages/candidata/Mensagens'
 import Conversa from './pages/candidata/Conversa'
@@ -127,6 +129,9 @@ function App() {
           <Route path="/candidata/comunidades" element={<Comunidades />} />
           <Route path="/candidata/mensagens" element={<Mensagens />} />
           <Route path="/candidata/mensagens/:id" element={<Conversa />} />
+          <Route path="/candidata/mensagens/candidatas/:id" element={<Conversa tipo="candidatas" base="/candidata/mensagens" />} />
+          <Route path="/candidata/pessoas/:id" element={<PerfilIntegrante />} />
+          <Route path="/candidata/pessoas/:id/conexoes" element={<Conexoes />} />
           <Route path="/candidata/notificacoes" element={<Notificacoes />} />
           <Route path="/candidata/configuracoes" element={<Configuracoes />} />
           <Route path="/candidata/empresas/:id" element={<EmpresaPerfil />} />

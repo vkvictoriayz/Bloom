@@ -2,34 +2,46 @@
 // Em produção, defina VITE_API_URL (ex.: https://api.seusite.com/api).
 const API_URL = import.meta.env?.VITE_API_URL ?? "/api";
 
+const esperar = (ms) => new Promise((ok) => setTimeout(ok, ms));
+
+// 502/503/504 sem mensagem da API = o Vite não conseguiu falar com a API
+// (ela está reiniciando ou parada); o pedido nem chegou nela. Com mensagem,
+// é a API avisando que um serviço externo está fora (ex.: consulta de CNPJ).
+const semApi = (resposta, dados) => [502, 503, 504].includes(resposta.status) && !dados?.erro;
+
 export async function api(caminho, { method = "GET", corpo, token } = {}) {
   let resposta;
-
-  try {
-    resposta = await fetch(`${API_URL}${caminho}`, {
-      method,
-      headers: {
-        ...(corpo ? { "Content-Type": "application/json" } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: corpo ? JSON.stringify(corpo) : undefined,
-    });
-  } catch {
-    throw new Error("Não foi possível conectar ao servidor. Tente novamente.");
-  }
-
   let dados = null;
-  try {
-    dados = await resposta.json();
-  } catch {
-    // resposta sem corpo JSON
+
+  // Até 4 tentativas (~6 s) enquanto a API não responde: cobre o reinício
+  // automático dela no `npm run dev` sem mostrar erro à toa.
+  for (let tentativa = 1; ; tentativa++) {
+    try {
+      resposta = await fetch(`${API_URL}${caminho}`, {
+        method,
+        headers: {
+          ...(corpo ? { "Content-Type": "application/json" } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: corpo ? JSON.stringify(corpo) : undefined,
+      });
+    } catch {
+      throw new Error("Não foi possível conectar ao servidor. Confira sua internet e tente novamente.");
+    }
+
+    dados = null;
+    try {
+      dados = await resposta.json();
+    } catch {
+      // resposta sem corpo JSON
+    }
+
+    if (!semApi(resposta, dados) || tentativa === 4) break;
+    await esperar(tentativa * 1000);
   }
 
-  // 502/503/504 sem mensagem da API = o Vite não conseguiu falar com o
-  // backend (não está rodando). Com mensagem, é o backend avisando que um
-  // serviço externo está fora (ex.: consulta de CNPJ) e ela vale.
-  if ([502, 503, 504].includes(resposta.status) && !dados?.erro) {
-    throw new Error("Servidor fora do ar. Rode \"npm run server\" e tente de novo.");
+  if (semApi(resposta, dados)) {
+    throw new Error("O servidor da Bloom não está respondendo. Confira o terminal do \"npm run dev\" e tente de novo.");
   }
 
   if (!resposta.ok) {

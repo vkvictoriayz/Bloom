@@ -3,28 +3,34 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import TituloPagina from '../../components/candidata/TituloPagina'
 import { useRecurso } from '../../components/candidata/useRecurso'
+import { AnexoImagem } from '../../components/comunidade/AnexoImagem'
 import Avatar from '../../components/comunidade/Avatar'
+import { IconeAvatar, SeletorIcone } from '../../components/IconePerfil'
+import { iniciais } from '../../hooks/useSessao'
 import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
 import Botao from '../../components/ui/Botao'
 import { AreaTexto, Aviso, Selecao } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { LIMITE_PUBLICACAO, TIPOS } from '../../services/comunidade'
-import { DISPONIVEL, excluirComunidade, lerComunidadeTematica, participarComunidade, publicarNaComunidade } from '../../services/recursos'
+import { atualizarComunidade, DISPONIVEL, excluirComunidade, lerComunidadeTematica, participarComunidade, publicarNaComunidade } from '../../services/recursos'
 
 // Caixa para publicar dentro da comunidade (só para participantes).
 function NovaPublicacao({ comunidadeId, aoPublicar }) {
   const [texto, setTexto] = useState('')
   const [tipo, setTipo] = useState('dica')
+  const [imagem, setImagem] = useState(null)
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
 
   async function enviar(e) {
     e.preventDefault()
-    if (!texto.trim()) return setEstado({ tipo: 'erro', texto: 'Escreva algo para publicar.' })
+    if (!texto.trim() && !imagem) return setEstado({ tipo: 'erro', texto: 'Escreva algo ou adicione uma imagem para publicar.' })
     setEstado({ tipo: 'enviando' })
     try {
-      const r = await publicarNaComunidade(comunidadeId, { texto: texto.trim(), tipo })
+      const corpo = { texto: texto.trim(), tipo, ...(imagem ? { imagem: imagem.dataUrl, largura: imagem.largura, altura: imagem.altura } : {}) }
+      const r = await publicarNaComunidade(comunidadeId, corpo)
       setTexto('')
+      setImagem(null)
       setEstado({ tipo: 'ocioso' })
       aoPublicar(r.publicacao)
     } catch (erro) {
@@ -38,7 +44,9 @@ function NovaPublicacao({ comunidadeId, aoPublicar }) {
         Publicar na comunidade
       </label>
       <AreaTexto id="publicar-comunidade" rows={3} maxLength={LIMITE_PUBLICACAO} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Compartilhe uma dica, dúvida ou conquista com o grupo." />
+      {imagem && <AnexoImagem id="imagem-comunidade" valor={imagem} aoMudar={setImagem} desabilitado={estado.tipo === 'enviando'} />}
       <div className="flex flex-wrap items-center gap-2">
+        {!imagem && <AnexoImagem id="imagem-comunidade" valor={null} aoMudar={setImagem} desabilitado={estado.tipo === 'enviando'} />}
         <Selecao aria-label="Tipo de publicação" value={tipo} onChange={(e) => setTipo(e.target.value)} className="w-auto">
           {TIPOS.map((t) => (
             <option key={t.id} value={t.id}>
@@ -46,7 +54,7 @@ function NovaPublicacao({ comunidadeId, aoPublicar }) {
             </option>
           ))}
         </Selecao>
-        <Botao type="submit" className="ml-auto" disabled={estado.tipo === 'enviando' || !texto.trim()}>
+        <Botao type="submit" className="ml-auto" disabled={estado.tipo === 'enviando' || (!texto.trim() && !imagem)}>
           {estado.tipo === 'enviando' ? 'Publicando…' : 'Publicar'}
         </Botao>
       </div>
@@ -64,6 +72,9 @@ function DetalheComunidade() {
   const [removidas, setRemovidas] = useState([])
   const [erroAcao, setErroAcao] = useState('')
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false)
+  const [icone, setIcone] = useState(undefined)
+  const [trocandoIcone, setTrocandoIcone] = useState(false)
+  const [salvandoIcone, setSalvandoIcone] = useState(false)
 
   if (r.estado === 'carregando') return <Esqueleto className="h-64 rounded-xl" />
   if (r.estado === 'erro' || !r.dados?.comunidade) {
@@ -83,6 +94,7 @@ function DetalheComunidade() {
   const { comunidade, participantes = [], publicacoes = [] } = r.dados
   const souParticipante = participando ?? comunidade.participando
   const lista = [...novas, ...publicacoes].filter((p) => !removidas.includes(p.id))
+  const iconeAtual = icone === undefined ? comunidade.icone : icone
 
   async function alternar() {
     setErroAcao('')
@@ -91,6 +103,20 @@ function DetalheComunidade() {
       setParticipando(resposta.participando)
     } catch (e) {
       setErroAcao(e.message)
+    }
+  }
+
+  async function salvarIcone(valor) {
+    setSalvandoIcone(true)
+    setErroAcao('')
+    try {
+      const r = await atualizarComunidade(comunidade.id, { icone: valor })
+      setIcone(r.comunidade.icone)
+      setTrocandoIcone(false)
+    } catch (e) {
+      setErroAcao(e.message)
+    } finally {
+      setSalvandoIcone(false)
     }
   }
 
@@ -138,8 +164,29 @@ function DetalheComunidade() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="flex flex-col gap-4">
           <section className="rounded-xl border border-linha bg-branco p-6">
-            <h2 className="font-display text-xl text-tinta">Sobre</h2>
-            <p className="mt-3 leading-relaxed whitespace-pre-line text-tinta-2">{comunidade.descricao}</p>
+            <div className="flex items-start gap-4">
+              {iconeAtual ? (
+                <IconeAvatar valor={iconeAtual} forma="quadrado" className="size-14" />
+              ) : (
+                <span aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-[22%] bg-blush font-display text-xl text-vinho">
+                  {iniciais(comunidade.nome)}
+                </span>
+              )}
+              <div className="min-w-0 flex-1">
+                <h2 className="font-display text-xl text-tinta">Sobre</h2>
+                <p className="mt-2 leading-relaxed whitespace-pre-line text-tinta-2">{comunidade.descricao}</p>
+              </div>
+            </div>
+            {comunidade.minha && !trocandoIcone && (
+              <Botao variante="fantasma" tamanho="sm" className="mt-4" onClick={() => setTrocandoIcone(true)}>
+                {iconeAtual ? 'Trocar ícone' : 'Escolher um ícone'}
+              </Botao>
+            )}
+            {trocandoIcone && (
+              <div className="mt-4">
+                <SeletorIcone publico="comunidade" forma="quadrado" valor={iconeAtual} aoEscolher={salvarIcone} ocupado={salvandoIcone} aoCancelar={() => setTrocandoIcone(false)} />
+              </div>
+            )}
           </section>
           {souParticipante ? (
             <NovaPublicacao comunidadeId={comunidade.id} aoPublicar={(p) => setNovas((l) => [p, ...l])} />
@@ -157,10 +204,12 @@ function DetalheComunidade() {
           {participantes.length ? (
             <ul className="mt-3 divide-y divide-linha">
               {participantes.map((p) => (
-                <li key={p.id} className="flex items-center gap-3 py-2.5">
-                  <Avatar nome={p.nome} foto={p.foto} tamanho="sm" />
-                  <span className="min-w-0 flex-1 truncate text-sm font-semibold">{p.nome}</span>
-                  {p.criadora && <span className="text-xs text-suave">criou</span>}
+                <li key={p.id}>
+                  <Link to={`/candidata/pessoas/${p.id}`} className="flex items-center gap-3 py-2.5 hover:text-vinho">
+                    <Avatar nome={p.nome} foto={p.foto} tamanho="sm" />
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold">{p.nome}</span>
+                    {p.criadora && <span className="text-xs text-suave">criou</span>}
+                  </Link>
                 </li>
               ))}
             </ul>

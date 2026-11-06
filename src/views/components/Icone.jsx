@@ -248,6 +248,96 @@ const CAMINHOS = {
       <circle cx="12" cy="12.5" r="3.2" />
     </>
   ),
+  // Ícones de perfil e comunidades (tecnologia, carreira e rede; "codigo"
+  // e os demais já existentes acima também fazem parte do catálogo).
+  terminal: (
+    <>
+      <rect x="3.5" y="5" width="17" height="14" rx="2" />
+      <path d="m7.5 10 2.5 2-2.5 2" />
+      <path d="M12.5 14.5h4" />
+    </>
+  ),
+  dados: (
+    <>
+      <ellipse cx="12" cy="6.5" rx="7" ry="2.5" />
+      <path d="M5 6.5v11c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-11" />
+      <path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5" />
+    </>
+  ),
+  nuvem: <path d="M7.5 18.5a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17.6 9.6a4.5 4.5 0 0 1-.6 8.9Z" />,
+  chip: (
+    <>
+      <rect x="7" y="7" width="10" height="10" rx="1.5" />
+      <path d="M10 10h4v4h-4z" />
+      <path d="M10 3.5V7M14 3.5V7M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5" />
+    </>
+  ),
+  robo: (
+    <>
+      <rect x="5" y="8" width="14" height="10" rx="2.5" />
+      <path d="M12 8V5.5" />
+      <circle cx="12" cy="4.5" r="1" />
+      <circle cx="9.5" cy="12.5" r="1" />
+      <circle cx="14.5" cy="12.5" r="1" />
+      <path d="M10 15.5h4M3.5 12v2.5M20.5 12v2.5" />
+    </>
+  ),
+  celular: (
+    <>
+      <rect x="7" y="3.5" width="10" height="17" rx="2" />
+      <path d="M11 17.5h2" />
+    </>
+  ),
+  escudo: (
+    <>
+      <path d="M12 3.5 5.5 6v5.5c0 4.2 2.8 7.5 6.5 9 3.7-1.5 6.5-4.8 6.5-9V6Z" />
+      <path d="m9.3 12 1.9 1.9 3.6-3.8" />
+    </>
+  ),
+  foguete: (
+    <>
+      <path d="M12 3.5c3 2 4.5 5.3 4.5 9V16h-9v-3.5c0-3.7 1.5-7 4.5-9Z" />
+      <circle cx="12" cy="10" r="1.6" />
+      <path d="M7.5 13.5 5 16v3l2.5-1.5M16.5 13.5 19 16v3l-2.5-1.5" />
+      <path d="M10.5 19.5h3" />
+    </>
+  ),
+  trofeu: (
+    <>
+      <path d="M8 4.5h8v5a4 4 0 0 1-8 0Z" />
+      <path d="M8 6.5H5.5a2.5 2.5 0 0 0 2.6 3.4M16 6.5h2.5a2.5 2.5 0 0 1-2.6 3.4" />
+      <path d="M12 13.5v3M9 19.5h6M10 16.5h4v3h-4z" />
+    </>
+  ),
+  livro: (
+    <>
+      <path d="M12 6.5C10.5 5.3 8.3 4.5 5 4.5v13c3.3 0 5.5.8 7 2 1.5-1.2 3.7-2 7-2v-13c-3.3 0-5.5.8-7 2Z" />
+      <path d="M12 6.5v13" />
+    </>
+  ),
+  paleta: (
+    <>
+      <path d="M12 4a8 8 0 1 0 0 16c1.1 0 1.6-.8 1.3-1.7-.4-1.1.3-2.3 1.5-2.3H17a3 3 0 0 0 3-3C20 7.4 16.4 4 12 4Z" />
+      <circle cx="8" cy="11" r="1" />
+      <circle cx="11" cy="7.8" r="1" />
+      <circle cx="15" cy="8.5" r="1" />
+    </>
+  ),
+  globo: (
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M4 12h16" />
+      <path d="M12 4c2.2 2.2 3.3 4.9 3.3 8s-1.1 5.8-3.3 8c-2.2-2.2-3.3-4.9-3.3-8S9.8 6.2 12 4Z" />
+    </>
+  ),
+  rede: (
+    <>
+      <circle cx="12" cy="5.5" r="2" />
+      <circle cx="5.5" cy="17.5" r="2" />
+      <circle cx="18.5" cy="17.5" r="2" />
+      <path d="M11 7.3 6.5 15.7M13 7.3l4.5 8.4M7.5 17.5h9" />
+    </>
+  ),
 };
 
 function Icone({ nome, tamanho = 18, preenchido = false, className = "" }) {

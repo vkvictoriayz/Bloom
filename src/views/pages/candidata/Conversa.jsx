@@ -6,8 +6,7 @@ import { useRecurso } from '../../components/candidata/useRecurso'
 import Botao from '../../components/ui/Botao'
 import { AreaTexto, Aviso } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
-import { tempoRelativo } from '../../services/comunidade'
-import { DISPONIVEL, enviarMensagem, lerConversa } from '../../services/recursos'
+import { DISPONIVEL, enviarMensagem, enviarMensagemCandidata, lerConversa, lerConversaCandidata } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
 const LIMITE = 1000
@@ -16,10 +15,26 @@ const LIMITE = 1000
 // (sem tempo real), e as enviadas aparecem assim que o servidor confirma.
 const INTERVALO = 15000
 
-export function Conversa({ base = '/candidata/mensagens' }) {
+// "14:32" (hoje), "ontem, 14:32" ou "05 nov, 14:32".
+function horario(data) {
+  const d = new Date(data)
+  if (Number.isNaN(d.getTime())) return ''
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  const hoje = new Date()
+  const ontem = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 1)
+  if (d.toDateString() === hoje.toDateString()) return hora
+  if (d.toDateString() === ontem.toDateString()) return `ontem, ${hora}`
+  return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')}, ${hora}`
+}
+
+// tipo "candidatas": conversa entre integrantes; "empresas": com empresa
+// (ligada a uma candidatura). "base" é a rota da lista de mensagens.
+export function Conversa({ base = '/candidata/mensagens', tipo = 'empresas' }) {
   const { id } = useParams()
   const [versao, setVersao] = useState(0)
-  const r = useRecurso(DISPONIVEL.mensagens, () => lerConversa(id), [id, versao])
+  const entreCandidatas = tipo === 'candidatas'
+  const r = useRecurso(DISPONIVEL.mensagens, () => (entreCandidatas ? lerConversaCandidata(id) : lerConversa(id)), [id, versao, tipo])
+  const voltar = { para: base === '/candidata/mensagens' && !entreCandidatas ? `${base}?aba=empresas` : base, rotulo: 'Mensagens' }
   const [enviadas, setEnviadas] = useState([])
   const fim = useRef(null)
 
@@ -43,7 +58,7 @@ export function Conversa({ base = '/candidata/mensagens' }) {
   if (r.estado === 'indisponivel') {
     return (
       <>
-        <TituloPagina titulo="Conversa" voltar={{ para: base, rotulo: 'Mensagens' }} />
+        <TituloPagina titulo="Conversa" voltar={voltar} />
         <RecursoIndisponivel icone="mensagem" titulo="Mensagens ainda não disponíveis" descricao="Esta conversa não pode ser aberta porque a API de mensagens ainda não existe.">
           <Botao as={Link} to="/candidata/feed">
             Ir para o feed
@@ -69,7 +84,7 @@ export function Conversa({ base = '/candidata/mensagens' }) {
     setEnviando(true)
     setErro('')
     try {
-      const resposta = await enviarMensagem(id, limpo)
+      const resposta = entreCandidatas ? await enviarMensagemCandidata(id, limpo) : await enviarMensagem(id, limpo)
       setEnviadas((l) => [...l, resposta.mensagem])
       setTexto('')
     } catch (falha) {
@@ -81,13 +96,27 @@ export function Conversa({ base = '/candidata/mensagens' }) {
 
   return (
     <>
-      <TituloPagina titulo={conversa.participante.nome} descricao={conversa.vaga ? `Sobre a vaga ${conversa.vaga}` : undefined} voltar={{ para: base, rotulo: 'Mensagens' }} />
+      <TituloPagina
+        titulo={conversa.participante.nome}
+        descricao={conversa.vaga ? `Sobre a vaga ${conversa.vaga}` : entreCandidatas ? 'Conversa entre integrantes da Bloom' : undefined}
+        voltar={voltar}
+        acoes={
+          entreCandidatas && (
+            <Botao as={Link} to={`/candidata/pessoas/${conversa.participante.id}`} variante="secundario" tamanho="sm">
+              Ver perfil
+            </Botao>
+          )
+        }
+      />
       <div className="flex flex-col rounded-xl border border-linha bg-branco">
         <ol className="flex flex-col gap-3 p-5">
-          {todas.map((m) => (
-            <li key={m.id} className={cn('max-w-[80%] rounded-lg px-4 py-2.5 text-sm', m.minha ? 'self-end bg-vinho text-white' : 'self-start bg-papel-2 text-tinta')}>
-              <p className="whitespace-pre-line">{m.texto}</p>
-              <p className={cn('mt-1 text-[11px]', m.minha ? 'text-white/70' : 'text-suave')}>{tempoRelativo(m.enviadaEm)}</p>
+          {todas.map((m, i) => (
+            <li key={m.id} className={cn('max-w-[85%] rounded-lg px-4 py-2.5 text-sm sm:max-w-[75%]', m.minha ? 'self-end bg-vinho text-white' : 'self-start bg-papel-2 text-tinta')}>
+              <p className="break-words whitespace-pre-line">{m.texto}</p>
+              <p className={cn('mt-1 text-[11px]', m.minha ? 'text-white/75' : 'text-suave')}>
+                <time dateTime={new Date(m.enviadaEm).toISOString()}>{horario(m.enviadaEm)}</time>
+                {m.minha && i === todas.length - 1 && m.lida && ' · vista'}
+              </p>
             </li>
           ))}
           {todas.length === 0 && <li className="text-center text-sm text-suave">Nenhuma mensagem ainda. Escreva a primeira.</li>}

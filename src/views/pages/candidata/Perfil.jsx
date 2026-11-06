@@ -120,15 +120,22 @@ function Perfil() {
           {comunidade && (
             <dl className="mt-6 grid max-w-md grid-cols-3 divide-x divide-linha border-t border-linha pt-4 text-center">
               {[
-                ['Publicações', comunidade.numeros.publicacoes],
-                ['Seguindo', comunidade.numeros.seguindo],
-                ['Seguidoras', comunidade.numeros.seguidoras],
-              ].map(([rotulo, valor]) => (
-                <div key={rotulo} className="flex flex-col-reverse">
-                  <dt className="text-xs text-suave">{rotulo}</dt>
-                  <dd className="font-display text-2xl text-tinta tabular-nums">{valor}</dd>
-                </div>
-              ))}
+                ['Publicações', comunidade.numeros.publicacoes, null],
+                ['Seguidoras', comunidade.numeros.seguidoras, 'seguidoras'],
+                ['Seguindo', comunidade.numeros.seguindo, 'seguindo'],
+              ].map(([rotulo, valor, aba]) =>
+                aba ? (
+                  <Link key={rotulo} to={`/candidata/pessoas/${comunidade.perfil.id}/conexoes?aba=${aba}`} className="flex flex-col-reverse rounded-md hover:bg-papel">
+                    <dt className="text-xs text-suave">{rotulo}</dt>
+                    <dd className="font-display text-2xl text-tinta tabular-nums">{valor}</dd>
+                  </Link>
+                ) : (
+                  <div key={rotulo} className="flex flex-col-reverse">
+                    <dt className="text-xs text-suave">{rotulo}</dt>
+                    <dd className="font-display text-2xl text-tinta tabular-nums">{valor}</dd>
+                  </div>
+                )
+              )}
             </dl>
           )}
           {erroComunidade && (

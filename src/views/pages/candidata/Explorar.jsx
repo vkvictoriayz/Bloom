@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
+import { IconeAvatar } from '../../components/IconePerfil'
 import LinhaVaga from '../../components/LinhaVaga'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
@@ -12,6 +13,7 @@ import { correspondeBusca } from '../../data/vagas'
 import { cn } from '../../lib/cn'
 import { candidaturaDaVaga } from '../../services/candidaturas'
 import { lerFeed } from '../../services/comunidade'
+import { listarComunidades } from '../../services/recursos'
 import { useCandidaturas, useVagas } from '../../hooks/useVagasReais'
 
 const CATEGORIAS = [
@@ -73,6 +75,64 @@ function Publicacoes({ busca, limite }) {
       ))}
       {!limite && <p className="text-xs text-suave">A busca considera as publicações mais recentes.</p>}
     </div>
+  )
+}
+
+// Comunidades temáticas que combinam com a busca (nome, tema ou descrição).
+function ComunidadesBusca({ busca, limite }) {
+  const [lista, setLista] = useState(null)
+  const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    let ativo = true
+    listarComunidades()
+      .then((r) => ativo && setLista(r.comunidades ?? []))
+      .catch((e) => {
+        if (!ativo) return
+        setErro(e.message)
+        setLista([])
+      })
+    return () => {
+      ativo = false
+    }
+  }, [])
+
+  if (lista === null) return <Esqueleto className="h-24 rounded-xl" />
+  if (erro) return <Aviso tipo="erro">{erro}</Aviso>
+  const alvo = busca.trim().toLowerCase()
+  const achadas = lista.filter((c) => !alvo || `${c.nome} ${c.tema} ${c.descricao}`.toLowerCase().includes(alvo))
+  if (!achadas.length) {
+    return (
+      <AvisoVazio>
+        {alvo ? `Nenhuma comunidade sobre “${busca}”.` : 'Ainda não há comunidades.'}{' '}
+        <Link to="/candidata/comunidades" className="font-semibold text-vinho hover:underline">
+          Criar uma comunidade
+        </Link>
+      </AvisoVazio>
+    )
+  }
+  return (
+    <ul className="grid gap-3 sm:grid-cols-2">
+      {(limite ? achadas.slice(0, limite) : achadas).map((c) => (
+        <li key={c.id}>
+          <Link to={`/comunidades/${c.id}`} className="flex h-full items-center gap-3 rounded-xl border border-linha bg-branco p-4 transition-colors hover:border-vinho/40">
+            {c.icone ? (
+              <IconeAvatar valor={c.icone} forma="quadrado" className="size-11" />
+            ) : (
+              <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-blush text-vinho" aria-hidden="true">
+                <Icone nome="grupo" />
+              </span>
+            )}
+            <span className="min-w-0">
+              <span className="block truncate font-semibold text-tinta">{c.nome}</span>
+              <span className="block truncate text-xs text-suave">
+                {c.tema} · {c.participantes} {c.participantes === 1 ? 'participante' : 'participantes'}
+              </span>
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -170,14 +230,8 @@ function Explorar() {
         )}
 
         {(tudo || categoria === 'comunidades') && (
-          <Bloco titulo="Comunidades">
-            <AvisoVazio>
-              As comunidades temáticas ainda estão em desenvolvimento.{' '}
-              <Link to="/candidata/comunidades" className="font-semibold text-vinho hover:underline">
-                Saiba mais
-              </Link>
-              .
-            </AvisoVazio>
+          <Bloco titulo="Comunidades" verTudo={verTudo('comunidades')}>
+            <ComunidadesBusca busca={busca} limite={tudo ? 4 : undefined} />
           </Bloco>
         )}
       </div>

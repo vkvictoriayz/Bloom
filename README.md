@@ -39,14 +39,16 @@ importa arquivos de models, controllers ou services da API.
    ```
    Preencha no `.env` pelo menos `DB_PASSWORD` e `JWT_SECRET`. As demais
    variáveis estão explicadas no `.env.example`.
-3. Dois terminais, ambos na raiz:
+3. Na raiz:
    ```bash
-   npm run server    # API   -> http://localhost:3001  (teste: /api/saude)
-   npm run dev       # front -> http://localhost:5173
+   npm run dev       # front (http://localhost:5173) + API (http://localhost:3001)
    ```
+   O `npm run dev` sobe a API junto e a reinicia sozinha quando um arquivo
+   dela muda. Para rodar só a API: `npm run server`.
 
-**Erro 502 no login/cadastro** = o front não achou a API. Confira se
-`npm run server` mostrou "Conectado ao MySQL" e "API da Bloom rodando".
+**"O servidor da Bloom não está respondendo" no login** = a API parou. Olhe o
+terminal do `npm run dev`: a mensagem logo acima diz o motivo (o mais comum é
+o MySQL desligado ou o `.env` sem `DB_PASSWORD`/`JWT_SECRET`).
 
 Requer Node 20.6+.
 
@@ -55,3 +57,4 @@ Requer Node 20.6+.
 - [docs/autenticacao.md](docs/autenticacao.md) — login, cadastro, CPF/CNPJ, segurança
 - [docs/area-candidata.md](docs/area-candidata.md) — área da candidata
 - [docs/area-empresa-premium.md](docs/area-empresa-premium.md) — área da empresa, notificações e Bloom Premium
+- [docs/rede-social.md](docs/rede-social.md) — imagens nas publicações, edição, mensagens entre candidatas, ícones e seguir
