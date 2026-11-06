@@ -113,7 +113,7 @@ o resto da API continua com 20 kB.
   Ao se candidatar, a empresa daquela vaga sempre recebe o e-mail e o perfil
   profissional.
 - **Exclusão de conta** (candidata ou empresa): pede a senha e a palavra
-  EXCLUIR, e apaga tudo numa transação só (`backend/src/services/exclusaoConta.js`).
+  EXCLUIR, e apaga tudo numa transação só (`src/services/exclusaoConta.js`).
   - candidata: cadastro, perfil, projetos, imagens, candidaturas, vagas salvas,
     publicações (e as curtidas e comentários nelas), comentários e curtidas
     dela, conexões, mensagens, notificações, privacidade e as comunidades que

@@ -18,7 +18,7 @@ candidatas e empresas, e o que ainda depende de configuração externa.
 
 ## Limites contra abuso
 
-Em memória, por processo (`backend/src/utils/limitador.js`):
+Em memória, por processo (`src/utils/limitador.js`):
 
 | O quê | Limite |
 | --- | --- |
@@ -39,7 +39,7 @@ por um compartilhado (ex.: Redis).
 É o serviço oficial da Receita Federal, pago e sob contrato. Desde 2026 a v3 exige
 o CPF **e a data de nascimento**, por isso o cadastro pede a data.
 
-Como funciona (`backend/src/services/cpf.js`):
+Como funciona (`src/services/cpf.js`):
 
 1. O navegador confere os dígitos verificadores. O servidor confere de novo.
    Isso só mostra que o número é válido, não de quem ele é.
@@ -66,7 +66,7 @@ isso como "serviço indisponível" e se protege com o cache de 10 minutos por
 CNPJ e o limite de 10 consultas por minuto por IP. Para volume alto, troque
 `CNPJ_API_URL` por um provedor contratado.
 
-Como funciona (`backend/src/services/cnpj.js`):
+Como funciona (`src/services/cnpj.js`):
 
 1. O navegador confere os dígitos verificadores e consulta
    `GET /api/auth/empresa/cnpj/:cnpj` (o servidor chama a BrasilAPI).

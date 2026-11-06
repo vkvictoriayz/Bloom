@@ -1,7 +1,7 @@
 -- 001 — Área da empresa: status de candidatura, rascunho e campos de vaga,
 -- campos novos do perfil da empresa.
 -- Só acrescenta colunas e valores; nenhum dado é apagado.
--- Aplicada automaticamente pelo servidor (backend/src/migracoes.js), uma vez.
+-- Aplicada automaticamente pelo servidor (src/database/migracoes.js), uma vez.
 
 -- Candidaturas: novas etapas "Recebida" e "Em entrevista".
 -- 1) aceita os dois nomes durante a troca; 2) "Pendente" vira "Recebida";

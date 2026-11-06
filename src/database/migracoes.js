@@ -1,14 +1,14 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { sequelize } from "./config/database.js";
+import { sequelize } from "../config/database.js";
 
-// Executor de migrations SQL (backend/migrations/NNN_nome.sql).
+// Executor de migrations SQL (src/database/migrations/NNN_nome.sql).
 // Cada arquivo roda uma única vez, em ordem; o que já rodou fica registrado
 // em SCHEMA_MIGRACAO. "Coluna já existe" (erro 1060) conta como já aplicado,
 // para o caso de um banco que já tenha recebido parte da mudança.
 
-const PASTA = fileURLToPath(new URL("../migrations/", import.meta.url));
+const PASTA = fileURLToPath(new URL("./migrations/", import.meta.url));
 const JA_EXISTE = new Set([1060, 1061]); // coluna / índice duplicado
 
 // Divide o arquivo em comandos (ignora comentários "--" e linhas vazias).

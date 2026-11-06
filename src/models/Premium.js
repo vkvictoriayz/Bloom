@@ -1,7 +1,7 @@
 import { DataTypes, Op } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-// Tabelas da migration 002 (backend/migrations/002_notificacoes_premium.sql):
+// Tabelas da migration 002 (src/database/migrations/002_notificacoes_premium.sql):
 // preferências de notificação, convites e Bloom Premium. São criadas pela
 // migration, não por sync(): aqui só o mapeamento.
 

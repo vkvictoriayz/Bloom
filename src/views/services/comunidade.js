@@ -1,7 +1,7 @@
 import { api } from "./api.js";
 import { obterSessao } from "./auth.js";
 
-// Cliente da API da comunidade (backend/src/routes/comunidadeRoutes.js).
+// Cliente da API da comunidade (src/routes/comunidadeRoutes.js).
 // Usa o token da sessão atual; sem sessão, nada é enviado.
 export const TIPOS = [
   { id: "dica", rotulo: "Dica" },

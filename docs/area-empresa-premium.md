@@ -7,8 +7,8 @@ do Bloom Premium (candidatas e empresas). Login e cadastro estão em
 
 ## Migrations
 
-Ficam em `backend/migrations/` e rodam sozinhas quando a API inicia
-(`backend/src/migracoes.js`). Cada arquivo roda uma vez só; o controle fica
+Ficam em `src/database/migrations/` e rodam sozinhas quando a API inicia
+(`src/database/migracoes.js`). Cada arquivo roda uma vez só; o controle fica
 na tabela `SCHEMA_MIGRACAO`. Elas só acrescentam colunas, valores e tabelas:
 nenhum dado existente é apagado.
 

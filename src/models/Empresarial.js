@@ -16,7 +16,7 @@ const opcoes = (tableName) => ({ tableName, freezeTableName: true, timestamps: f
 const refEmpresa = { model: "CADASTRO_EMPRESA", key: "id_empresa" };
 const refUsuaria = { model: "CADASTRO_USUARIA", key: "id_usuario" };
 
-// Valores depois da migration 001 (backend/migrations/001_area_empresa.sql).
+// Valores depois da migration 001 (src/database/migrations/001_area_empresa.sql).
 export const STATUS_VAGA = ["Rascunho", "Aberta", "Pausada", "Encerrada"];
 export const STATUS_CANDIDATURA = ["Recebida", "Em análise", "Em entrevista", "Aprovada", "Reprovada"];
 

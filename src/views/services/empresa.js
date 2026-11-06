@@ -1,7 +1,7 @@
 import { api } from './api.js'
 import { obterSessao } from './auth.js'
 
-// Cliente da API da área empresarial (backend/src/routes/empresaRoutes.js).
+// Cliente da API da área empresarial (src/routes/empresaRoutes.js).
 // O backend valida o token (conta "empresa") e a propriedade de cada registro.
 
 const chamar = (caminho, opcoes = {}) => {
