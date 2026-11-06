@@ -20,6 +20,7 @@ router.get("/publicacoes/:id/comentarios", C.listarComentarios);
 router.post("/publicacoes/:id/comentarios", express.json({ limit: "20kb" }), C.comentar);
 router.delete("/comentarios/:id", C.excluirComentario);
 
+router.get("/projetos", C.projetos);
 router.get("/perfis", C.perfis);
 router.get("/perfis/:id", C.perfilPublico);
 router.get("/perfis/:id/seguidoras", C.seguidoras);

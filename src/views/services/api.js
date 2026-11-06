@@ -13,8 +13,8 @@ export async function api(caminho, { method = "GET", corpo, token } = {}) {
   let resposta;
   let dados = null;
 
-  // Até 4 tentativas (~6 s) enquanto a API não responde: cobre o reinício
-  // automático dela no `npm run dev` sem mostrar erro à toa.
+  // Até 4 tentativas (~6 s) enquanto a API não responde: cobre um reinício
+  // da API (npm run server) sem mostrar erro à toa.
   for (let tentativa = 1; ; tentativa++) {
     try {
       resposta = await fetch(`${API_URL}${caminho}`, {
@@ -41,7 +41,7 @@ export async function api(caminho, { method = "GET", corpo, token } = {}) {
   }
 
   if (semApi(resposta, dados)) {
-    throw new Error("O servidor da Bloom não está respondendo. Confira o terminal do \"npm run dev\" e tente de novo.");
+    throw new Error("O servidor da Bloom não está respondendo. Confira o terminal do \"npm run server\" e tente de novo.");
   }
 
   if (!resposta.ok) {
@@ -56,4 +56,29 @@ export async function api(caminho, { method = "GET", corpo, token } = {}) {
 export function urlImagem(caminho) {
   if (typeof caminho === "string" && caminho.startsWith("/imagens/")) return `${API_URL}${caminho}`;
   return caminho || "";
+}
+
+// Baixa um arquivo protegido por login (ex.: currículo) e oferece para salvar.
+// O nome vem do cabeçalho Content-Disposition da API.
+export async function baixarArquivo(caminho, token, nomePadrao = "arquivo") {
+  let resposta;
+  try {
+    resposta = await fetch(`${API_URL}${caminho}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  } catch {
+    throw new Error("Não foi possível conectar ao servidor. Tente novamente.");
+  }
+  if (!resposta.ok) {
+    const dados = await resposta.json().catch(() => null);
+    throw new Error(dados?.erro ?? "Não foi possível baixar o arquivo.");
+  }
+  const cabecalho = resposta.headers.get("Content-Disposition") ?? "";
+  const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(cabecalho)?.[1];
+  const simples = /filename="([^"]+)"/i.exec(cabecalho)?.[1];
+  const nome = utf8 ? decodeURIComponent(utf8) : simples || nomePadrao;
+  const url = URL.createObjectURL(await resposta.blob());
+  const link = Object.assign(document.createElement("a"), { href: url, download: nome });
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

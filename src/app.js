@@ -9,7 +9,7 @@ import { candidaturaRoutes, empresaRoutes, vagaRoutes } from "./routes/empresaRo
 
 const app = express();
 
-app.use(cors({ origin: process.env.FRONTEND_URL ?? "http://localhost:5173" }));
+app.use(cors({ origin: process.env.FRONTEND_URL ?? "http://localhost:3006" }));
 // Foto e capa vêm antes do limite geral: essa rota aceita até 1 MB de imagem.
 app.use("/api/imagens", imagemRoutes);
 // Perfil completo e projetos com imagem: limites próprios (ver candidataRoutes.js).

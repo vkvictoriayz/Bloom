@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import Icone from '../../components/Icone'
 import MarcaEmpresa from '../../components/MarcaEmpresa'
 import { enderecoSeguro, LINKS } from '../../components/candidata/utilPerfil'
+import { tamanhoLegivel } from '../../utils/arquivos'
 import Botao from '../../components/ui/Botao'
 import { AreaTexto, Aviso, Campo } from '../../components/ui/Campo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
@@ -14,6 +15,7 @@ import { useSessao } from '../../hooks/useSessao'
 import { candidaturaDaVaga } from '../../services/candidaturas'
 import { lerPerfil } from '../../services/perfil'
 import { lerProjetos } from '../../services/projetos'
+import { lerCurriculo } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
 const LIMITE_APRESENTACAO = 1000
@@ -48,6 +50,19 @@ function Candidatar() {
   const [erro, setErro] = useState('')
   const [enviada, setEnviada] = useState(null)
   const [enviando, setEnviando] = useState(false)
+  // Currículo do perfil (undefined enquanto carrega; null se não houver).
+  const [curriculo, setCurriculo] = useState(undefined)
+  const [anexarCurriculo, setAnexarCurriculo] = useState(true)
+
+  useEffect(() => {
+    let ativo = true
+    lerCurriculo()
+      .then((c) => ativo && setCurriculo(c))
+      .catch(() => ativo && setCurriculo(null))
+    return () => {
+      ativo = false
+    }
+  }, [])
 
   useEffect(() => {
     document.title = `Candidatar-se · ${vaga?.titulo ?? 'Vaga'} · BLOOM`
@@ -108,6 +123,7 @@ function Candidatar() {
         titulo: perfil.cargo,
         competencias: perfil.tecnicas,
         apresentacao: apresentacao.trim(),
+        incluirCurriculo: Boolean(curriculo && anexarCurriculo),
         links: [
           ...links.map((l) => ({ rotulo: l.rotulo, url: l.url })),
           ...projetosEscolhidos
@@ -247,7 +263,27 @@ function Candidatar() {
                 </div>
               </fieldset>
             )}
-            <p className="mt-4 text-xs text-suave">O envio de arquivo de currículo ainda não está disponível: falta o upload no backend.</p>
+            <div className="mt-5 rounded-xl border border-linha bg-papel p-4">
+              <p className="text-sm font-semibold text-tinta-2">Currículo</p>
+              {curriculo === undefined ? (
+                <p className="mt-1 text-sm text-suave">Carregando…</p>
+              ) : curriculo ? (
+                <label className="mt-2 flex cursor-pointer items-center gap-3 text-sm">
+                  <input type="checkbox" className="size-4 accent-vinho" checked={anexarCurriculo} onChange={(e) => setAnexarCurriculo(e.target.checked)} />
+                  <span className="min-w-0">
+                    Anexar <span className="font-semibold text-tinta">{curriculo.nome}</span> <span className="text-suave">({tamanhoLegivel(curriculo.tamanho)})</span>
+                  </span>
+                </label>
+              ) : (
+                <p className="mt-1 text-sm text-suave">
+                  Você ainda não enviou um currículo.{' '}
+                  <Link to="/candidata/perfil/editar#curriculo" className="font-semibold text-vinho hover:underline">
+                    Enviar no perfil
+                  </Link>{' '}
+                  e volte para anexá-lo.
+                </p>
+              )}
+            </div>
           </Bloco>
 
           <Bloco titulo="Apresentação">
@@ -287,6 +323,10 @@ function Candidatar() {
                 <dd className="font-semibold text-tinta">
                   {[...links.map((l) => l.rotulo), ...projetosEscolhidos.map((p) => p.nome)].join(', ') || 'Nenhum'}
                 </dd>
+              </div>
+              <div>
+                <dt className="text-suave">Currículo</dt>
+                <dd className="font-semibold text-tinta">{curriculo && anexarCurriculo ? curriculo.nome : 'Não anexado'}</dd>
               </div>
               <div>
                 <dt className="text-suave">Apresentação</dt>

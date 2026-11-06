@@ -19,6 +19,10 @@ candidataRoutes.delete("/projetos/:id", C.excluirProjeto);
 candidataRoutes.get("/salvas", C.listarSalvas);
 candidataRoutes.put("/salvas/:vagaId", C.salvarVaga);
 candidataRoutes.delete("/salvas/:vagaId", C.removerSalva);
+candidataRoutes.get("/curriculo", C.curriculo);
+candidataRoutes.put("/curriculo", express.json({ limit: "8mb" }), C.enviarCurriculo);
+candidataRoutes.get("/curriculo/arquivo", C.baixarCurriculo);
+candidataRoutes.delete("/curriculo", C.removerCurriculo);
 candidataRoutes.get("/privacidade", C.privacidade);
 candidataRoutes.put("/privacidade", express.json({ limit: "2kb" }), C.atualizarPrivacidade);
 

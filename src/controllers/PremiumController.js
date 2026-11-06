@@ -40,7 +40,7 @@ function planoJson(p) {
   return { codigo: p.codigo, nome: p.nome, tipo: p.tipo, preco: Number(p.preco), rotuloPreco: p.rotuloPreco, beneficios: p.beneficios ?? [] };
 }
 
-const voltarPara = (tipo, extra) => `${(process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "")}/${tipo === "empresa" ? "empresa" : "candidata"}/premium?retorno=${extra}`;
+const voltarPara = (tipo, extra) => `${(process.env.FRONTEND_URL ?? "http://localhost:3006").replace(/\/$/, "")}/${tipo === "empresa" ? "empresa" : "candidata"}/premium?retorno=${extra}`;
 
 // ---------------------------------------------------------- Registro
 

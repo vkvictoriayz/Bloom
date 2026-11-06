@@ -28,8 +28,8 @@ const consulta = (params) => {
 
 // autora: "eu" traz só as publicações da própria usuária.
 // autora: também aceita o id de outra integrante (perfil público).
-export const lerFeed = ({ filtro, tipo, autora, pagina = 1 } = {}) =>
-  chamar(`/feed${consulta({ filtro, tipo, autora, pagina: pagina > 1 ? pagina : "" })}`);
+export const lerFeed = ({ filtro, tipo, autora, busca, pagina = 1 } = {}) =>
+  chamar(`/feed${consulta({ filtro, tipo, autora, busca, pagina: pagina > 1 ? pagina : "" })}`);
 export const publicar = (corpo) => chamar("/publicacoes", { method: "POST", corpo });
 // corpo.imagem: data URL troca; null remove; ausente mantém.
 export const editarPublicacao = (id, corpo) => chamar(`/publicacoes/${id}`, { method: "PUT", corpo });

@@ -28,6 +28,7 @@ router.post("/senha/redefinir", limiteSenha, AuthController.redefinirSenha);
 
 // Troca de senha de quem está logada
 router.put("/senha", exigirLogin(), limiteSenha, AuthController.alterarSenha);
+router.put("/email", exigirLogin(), limiteSenha, AuthController.alterarEmail);
 
 // Exclusão da própria conta
 router.delete("/conta", exigirLogin(), limiteSenha, AuthController.excluirConta);

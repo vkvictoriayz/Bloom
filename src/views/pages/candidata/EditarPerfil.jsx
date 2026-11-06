@@ -16,6 +16,7 @@ import { useSessao } from '../../hooks/useSessao'
 import { lerMeuPerfil, salvarMeuPerfil } from '../../services/comunidade'
 import { enviarImagem, escolherIcone, removerIcone, removerImagem, soNesteNavegador } from '../../services/imagens'
 import { SeletorIcone } from '../../components/IconePerfil'
+import GerenciarCurriculo from '../../components/candidata/GerenciarCurriculo'
 import { ehIcone } from '../../data/icones'
 import { aguardarSincronizacao, salvarSecoesPerfil, sincronizarAreaCandidata } from '../../services/candidataApi'
 import { completude, EVENTO_PERFIL, lerPerfil, salvarPerfil } from '../../services/perfil'
@@ -63,7 +64,6 @@ function FormularioPerfil() {
   const { hash } = useLocation()
   const [perfil, setPerfil] = useState(() => lerPerfil(sessao?.usuario))
   const [mensagens, setMensagens] = useState({})
-  const [curriculo, setCurriculo] = useState(null)
 
   const [dados, setDados] = useState(() => ({
     nome: perfil.nome,
@@ -86,7 +86,6 @@ function FormularioPerfil() {
 
   const arquivoFoto = useRef(null)
   const arquivoCapa = useRef(null)
-  const arquivoCurriculo = useRef(null)
 
   useEffect(() => {
     document.title = 'Editar perfil · BLOOM'
@@ -234,17 +233,6 @@ function FormularioPerfil() {
   const imagensLocais = ['foto', 'capa'].filter((campo) => soNesteNavegador(perfil[campo]))
   async function publicarImagensLocais() {
     for (const campo of imagensLocais) await publicarImagem(campo, perfil[campo])
-  }
-
-  function escolherCurriculo(e) {
-    const arquivo = e.target.files?.[0]
-    if (!arquivo) return
-    if (!/\.(pdf|doc|docx)$/i.test(arquivo.name)) {
-      e.target.value = ''
-      return avisar('curriculo', 'erro', 'Selecione um arquivo PDF, DOC ou DOCX.')
-    }
-    setCurriculo(arquivo)
-    avisar('curriculo', 'info', 'Currículo selecionado nesta sessão.')
   }
 
   function alternarPreferencia(lista, valor) {
@@ -572,18 +560,8 @@ function FormularioPerfil() {
             </form>
           </Secao>
 
-          <Secao id="curriculo" titulo="Currículo" descricao="PDF, DOC ou DOCX. Fica disponível só nesta sessão até o envio ao servidor existir.">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-md bg-blush text-vinho" aria-hidden="true">
-                <Icone nome="documento" tamanho={20} />
-              </span>
-              <p className="min-w-0 flex-1 truncate font-semibold text-tinta">{curriculo ? curriculo.name : 'Nenhum arquivo selecionado'}</p>
-              <input ref={arquivoCurriculo} type="file" accept=".pdf,.doc,.docx" hidden onChange={escolherCurriculo} />
-              <Botao variante="secundario" onClick={() => arquivoCurriculo.current?.click()}>
-                {curriculo ? 'Trocar' : 'Selecionar arquivo'}
-              </Botao>
-            </div>
-            {mensagem('curriculo')}
+          <Secao id="curriculo" titulo="Currículo" descricao="PDF, DOC ou DOCX, até 5 MB. Fica no seu perfil e pode ser anexado às candidaturas." origem="servidor">
+            <GerenciarCurriculo />
           </Secao>
         </div>
       </div>

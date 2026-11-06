@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 
 import ExcluirConta from '../../components/conta/ExcluirConta'
+import FormularioEmail from '../../components/conta/FormularioEmail'
 import FormularioSenha from '../../components/conta/FormularioSenha'
 import PreferenciasNotificacao from '../../components/conta/PreferenciasNotificacao'
 import Privacidade from '../../components/conta/Privacidade'
@@ -27,17 +28,7 @@ function Secao({ icone, titulo, descricao, children }) {
   )
 }
 
-function EmBreve({ children }) {
-  return (
-    <p className="flex items-start gap-2 rounded-lg bg-papel-2 px-4 py-3 text-sm text-tinta-2">
-      <Icone nome="info" tamanho={16} className="mt-0.5 shrink-0 text-suave" />
-      <span>{children}</span>
-    </p>
-  )
-}
-
-// Só as ações que o backend suporta hoje ficam ativas; as demais dizem o
-// que falta, sem botões que não fazem nada.
+// Configurações da conta: tudo aqui é salvo no servidor.
 function Configuracoes() {
   const sessao = useSessao()
   const navigate = useNavigate()
@@ -64,8 +55,15 @@ function Configuracoes() {
               <dd className="font-semibold text-tinta">{usuario?.email}</dd>
             </div>
           </dl>
+          <p className="mt-4 text-sm text-suave">
+            O nome é alterado em{' '}
+            <Link to="/candidata/perfil/editar" className="font-semibold text-vinho hover:underline">
+              Editar perfil
+            </Link>
+            .
+          </p>
           <div className="mt-4">
-            <EmBreve>O nome pode ser alterado em Editar perfil. O e-mail da conta ainda não pode ser alterado pela plataforma.</EmBreve>
+            <FormularioEmail emailAtual={usuario?.email} />
           </div>
         </Secao>
 

@@ -7,6 +7,7 @@ import LinhaVaga from '../../components/LinhaVaga'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
 import ListaPessoas from '../../components/comunidade/ListaPessoas'
+import ProjetosIntegrantes from '../../components/comunidade/ProjetosIntegrantes'
 import { Aviso, estiloControle } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { correspondeBusca } from '../../data/vagas'
@@ -41,39 +42,36 @@ function AvisoVazio({ children }) {
   return <p className="rounded-xl border border-dashed border-linha-forte bg-branco px-5 py-6 text-sm text-suave">{children}</p>
 }
 
-// Busca nas publicações: a API ainda não pesquisa por texto, então
-// procuramos entre as publicações mais recentes (primeira página do feed).
+// Busca nas publicações, feita pela API (texto das publicações).
 function Publicacoes({ busca, limite }) {
-  const [lista, setLista] = useState(null)
-  const [erro, setErro] = useState('')
+  const [resultado, setResultado] = useState(null) // { chave, lista } | { chave, erro }
+  const chave = busca.trim()
 
   useEffect(() => {
     let ativo = true
-    lerFeed()
-      .then((r) => ativo && setLista(r.publicacoes))
-      .catch((e) => {
-        if (!ativo) return
-        setErro(e.message)
-        setLista([])
-      })
+    const espera = setTimeout(
+      () =>
+        lerFeed({ busca: chave })
+          .then((r) => ativo && setResultado({ chave, lista: r.publicacoes }))
+          .catch((e) => ativo && setResultado({ chave, erro: e.message })),
+      chave ? 300 : 0
+    )
     return () => {
       ativo = false
+      clearTimeout(espera)
     }
-  }, [])
+  }, [chave])
 
-  if (lista === null) return <Esqueleto className="h-32 rounded-xl" />
-  if (erro) return <Aviso tipo="erro">{erro}</Aviso>
+  if (!resultado || resultado.chave !== chave) return <Esqueleto className="h-32 rounded-xl" />
+  if (resultado.erro) return <Aviso tipo="erro">{resultado.erro}</Aviso>
+  if (!resultado.lista.length) return <AvisoVazio>{chave ? `Nenhuma publicação menciona “${busca}”.` : 'Ainda não há publicações.'}</AvisoVazio>
 
-  const alvo = busca.trim().toLowerCase()
-  const achadas = lista.filter((p) => !alvo || `${p.texto} ${p.autora.nome} ${p.autora.area}`.toLowerCase().includes(alvo))
-  if (!achadas.length) return <AvisoVazio>{alvo ? `Nenhuma publicação recente menciona “${busca}”.` : 'Ainda não há publicações.'}</AvisoVazio>
-
+  const remover = (id) => setResultado((r) => ({ ...r, lista: r.lista.filter((x) => x.id !== id) }))
   return (
     <div className="flex flex-col gap-4">
-      {(limite ? achadas.slice(0, limite) : achadas).map((p) => (
-        <CartaoPublicacao key={p.id} publicacao={p} aoExcluir={(id) => setLista((l) => l.filter((x) => x.id !== id))} />
+      {(limite ? resultado.lista.slice(0, limite) : resultado.lista).map((p) => (
+        <CartaoPublicacao key={p.id} publicacao={p} aoExcluir={remover} />
       ))}
-      {!limite && <p className="text-xs text-suave">A busca considera as publicações mais recentes.</p>}
     </div>
   )
 }
@@ -218,14 +216,8 @@ function Explorar() {
         )}
 
         {(tudo || categoria === 'projetos') && (
-          <Bloco titulo="Projetos">
-            <AvisoVazio>
-              Ainda não é possível explorar projetos de outras integrantes: falta a API de projetos no backend. Os seus ficam em{' '}
-              <Link to="/candidata/projetos" className="font-semibold text-vinho hover:underline">
-                Meus projetos
-              </Link>
-              .
-            </AvisoVazio>
+          <Bloco titulo="Projetos" verTudo={verTudo('projetos')}>
+            <ProjetosIntegrantes busca={busca} limite={tudo ? 2 : undefined} />
           </Bloco>
         )}
 

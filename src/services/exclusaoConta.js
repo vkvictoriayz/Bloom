@@ -37,7 +37,9 @@ export async function excluirUsuaria(id) {
     await apagar("DELETE FROM PREFERENCIA_NOTIFICACAO WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
     await apagar("DELETE FROM CONVITE WHERE id_usuario = :id", r, t);
     await apagar("DELETE FROM CANDIDATURA_ENVIO WHERE id_candidatura IN (:candidaturas)", r, t);
+    await apagar("DELETE FROM CANDIDATURA_CURRICULO WHERE id_candidatura IN (:candidaturas)", r, t);
     await apagar("DELETE FROM CANDIDATURAS WHERE id_candidatura IN (:candidaturas)", r, t);
+    await apagar("DELETE FROM CURRICULO_CANDIDATA WHERE id_usuario = :id", r, t);
     await apagar("DELETE FROM FAVORITOS WHERE id_usuario = :id", r, t);
     await apagar("DELETE FROM PROJETO_CANDIDATA WHERE id_usuario = :id", r, t);
     await apagar("DELETE FROM PERFIL_CANDIDATA_DETALHES WHERE id_usuario = :id", r, t);
@@ -95,6 +97,7 @@ export async function excluirEmpresa(id) {
     await apagar("DELETE FROM CAMPANHA WHERE id_empresa = :id", r, t);
     await apagar("DELETE FROM ICONE_PERFIL WHERE dono_tipo = 'empresa' AND dono_id = :id", r, t);
     await apagar("DELETE FROM CANDIDATURA_ENVIO WHERE id_candidatura IN (:candidaturas)", r, t);
+    await apagar("DELETE FROM CANDIDATURA_CURRICULO WHERE id_candidatura IN (:candidaturas)", r, t);
     await apagar("DELETE FROM CANDIDATURAS WHERE id_candidatura IN (:candidaturas)", r, t);
     await apagar("DELETE FROM FAVORITOS WHERE id_vaga IN (:vagas)", r, t);
     await apagar("DELETE FROM VAGAS WHERE id_vaga IN (:vagas)", r, t);

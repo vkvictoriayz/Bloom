@@ -4,6 +4,7 @@ import { Comentario, Conexao, Curtida, PerfilComunidade, Publicacao } from "../m
 import { imagensDe } from "../models/Imagem.js";
 import { Usuaria } from "../models/index.js";
 import { PublicacaoImagem } from "../models/RedeSocial.js";
+import { Projeto } from "../models/Candidata.js";
 import { notificar } from "../services/notificacoes.js";
 import { perfisOcultos } from "../services/privacidade.js";
 import { lerImagem, novaChave } from "../utils/imagem.js";
@@ -123,7 +124,10 @@ async function integranteVisivel(id, meuId) {
 
 // ------------------------------------------------------------ Feed
 
-// GET /feed?filtro=todas|seguindo&autora=eu|<id>&tipo=dica&pagina=1
+// Texto para LIKE, sem curingas vindos da busca.
+const paraLike = (s) => `%${s.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+
+// GET /feed?filtro=todas|seguindo&autora=eu|<id>&tipo=dica&busca=&pagina=1
 export const feed = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const pagina = Math.max(1, Number(req.query.pagina) || 1);
@@ -144,6 +148,10 @@ export const feed = comTratamento(async (req, res) => {
     const seguidas = await Conexao.findAll({ where: { seguidoraId: meuId } });
     where.usuariaId = { [Op.in]: [meuId, ...seguidas.map((c) => c.seguidaId)] };
   }
+
+  // ?busca= procura no texto das publicações (até 100 caracteres).
+  const busca = texto(req.query.busca).slice(0, 100);
+  if (busca) where.texto = { [Op.like]: paraLike(busca) };
 
   const linhas = await Publicacao.findAll({
     where,
@@ -453,3 +461,52 @@ export const atualizarPerfil = comTratamento(async (req, res) => {
   const mapa = await perfisPor([eu(req)]);
   return res.json({ perfil: mapa.get(eu(req)) });
 });
+
+// ------------------------------------------------------------ Projetos
+
+const projetoPublico = (p, autora) => ({
+  id: String(p.id),
+  nome: p.nome,
+  descricao: p.descricao ?? "",
+  imagem: p.imagem ?? "",
+  tecnologias: p.tecnologias ?? [],
+  repositorio: p.repositorio ?? "",
+  demo: p.demo ?? "",
+  inicio: p.inicio ?? "",
+  fim: p.fim ?? "",
+  autora,
+});
+
+// GET /projetos?busca=&autora=<id> — projetos de outras integrantes (perfis
+// ocultos ficam de fora). Busca no nome, na descrição e nas tecnologias.
+export const projetos = comTratamento(async (req, res) => {
+  const meuId = eu(req);
+  const where = {};
+  if (req.query.autora) {
+    const id = idParam(req.query.autora);
+    if (!(await integranteVisivel(id, meuId))) return erro(res, 404, "Perfil não encontrado.");
+    where.usuariaId = id;
+  } else {
+    const ocultos = [...(await perfisOcultos())].filter((i) => i !== meuId);
+    if (ocultos.length) where.usuariaId = { [Op.notIn]: ocultos };
+  }
+  const busca = texto(req.query.busca).slice(0, 100);
+  if (busca) {
+    where[Op.or] = [
+      { nome: { [Op.like]: paraLike(busca) } },
+      { descricao: { [Op.like]: paraLike(busca) } },
+      sequelize.where(sequelize.cast(sequelize.col("tecnologias"), "CHAR"), { [Op.like]: paraLike(busca) }),
+    ];
+  }
+  const lista = await Projeto.findAll({ where, order: [["criadoEm", "DESC"], ["id", "DESC"]], limit: 24 });
+  const autoras = await perfisPor(lista.map((p) => p.usuariaId));
+  return res.json({
+    projetos: lista
+      .filter((p) => autoras.has(p.usuariaId))
+      .map((p) => {
+        const a = autoras.get(p.usuariaId);
+        return projetoPublico(p, { id: a.id, nome: a.nome, area: a.area, foto: a.foto });
+      }),
+  });
+});
+

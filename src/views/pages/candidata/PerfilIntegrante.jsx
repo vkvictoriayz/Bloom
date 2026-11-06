@@ -6,6 +6,7 @@ import Capa from '../../components/candidata/Capa'
 import Avatar from '../../components/comunidade/Avatar'
 import BotaoSeguir from '../../components/comunidade/BotaoSeguir'
 import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
+import ProjetosIntegrantes from '../../components/comunidade/ProjetosIntegrantes'
 import Botao from '../../components/ui/Botao'
 import { Aviso } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
@@ -144,6 +145,13 @@ function ConteudoPerfil({ id }) {
             </Aviso>
           )}
         </div>
+      </section>
+
+      <section aria-labelledby="titulo-projetos-integrante" className="flex flex-col gap-4">
+        <h2 id="titulo-projetos-integrante" className="font-display text-2xl text-tinta">
+          Projetos
+        </h2>
+        <ProjetosIntegrantes autora={perfil.id} vazio={`${perfil.nome.split(' ')[0]} ainda não publicou projetos.`} />
       </section>
 
       <section aria-labelledby="titulo-publicacoes-integrante" className="flex flex-col gap-4">

@@ -11,7 +11,8 @@ import Botao from '../../components/ui/Botao'
 import { Aviso, Selecao } from '../../components/ui/Campo'
 import Selo from '../../components/ui/Selo'
 import { dataCurta, lerCandidaturaEmpresa, mudarStatusCandidatura, STATUS_CANDIDATURA, VISUAL_CANDIDATURA } from '../../services/empresa'
-import { abrirConversa } from '../../services/recursos'
+import { abrirConversa, baixarCurriculoCandidatura } from '../../services/recursos'
+import { tamanhoLegivel } from '../../utils/arquivos'
 
 // Detalhe de uma candidatura recebida. O backend só devolve candidaturas
 // das vagas desta empresa; a candidata aparece com o que enviou, o perfil
@@ -23,6 +24,20 @@ function DetalheCandidatura() {
   const [novoStatus, setNovoStatus] = useState('')
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
   const [conversa, setConversa] = useState({ tipo: 'ocioso' })
+  const [baixando, setBaixando] = useState(false)
+  const [erroCurriculo, setErroCurriculo] = useState('')
+
+  async function baixarCurriculo() {
+    setBaixando(true)
+    setErroCurriculo('')
+    try {
+      await baixarCurriculoCandidatura(id)
+    } catch (e) {
+      setErroCurriculo(e.message)
+    } finally {
+      setBaixando(false)
+    }
+  }
 
   async function conversar() {
     setConversa({ tipo: 'abrindo' })
@@ -112,6 +127,27 @@ function DetalheCandidatura() {
             <h2 className="font-display text-xl text-tinta">Apresentação enviada</h2>
             <p className="mt-3 leading-relaxed whitespace-pre-line text-tinta-2">{envio.apresentacao || 'A candidata não escreveu uma apresentação.'}</p>
             <h3 className="mt-6 text-sm font-bold text-tinta">Currículo e portfólio</h3>
+            {envio.curriculo ? (
+              <div className="mt-2 flex flex-wrap items-center gap-3 rounded-xl border border-linha bg-papel p-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-md bg-blush text-vinho" aria-hidden="true">
+                  <Icone nome="documento" tamanho={18} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-tinta">{envio.curriculo.nome}</span>
+                  <span className="block text-xs text-suave">{tamanhoLegivel(envio.curriculo.tamanho)}</span>
+                </span>
+                <Botao tamanho="sm" variante="secundario" disabled={baixando} onClick={baixarCurriculo}>
+                  {baixando ? 'Baixando…' : 'Baixar currículo'}
+                </Botao>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-suave">A candidata não anexou currículo.</p>
+            )}
+            {erroCurriculo && (
+              <Aviso tipo="erro" className="mt-2">
+                {erroCurriculo}
+              </Aviso>
+            )}
             {envio.links.length ? (
               <ul className="mt-2 flex flex-wrap gap-2">
                 {envio.links.map((l) => (
@@ -123,7 +159,7 @@ function DetalheCandidatura() {
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-suave">Nenhum link enviado. O envio de arquivo de currículo ainda não existe na plataforma.</p>
+              <p className="mt-2 text-sm text-suave">Nenhum link enviado.</p>
             )}
           </section>
 

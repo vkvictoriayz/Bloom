@@ -1,6 +1,7 @@
 import { Op } from "sequelize";
 import { Empresa } from "../models/index.js";
 import { Candidatura, CandidaturaEnvio, PerfilEmpresa, Vaga } from "../models/Empresarial.js";
+import { CandidaturaCurriculo, CurriculoCandidata } from "../models/Curriculo.js";
 import { imagensDe } from "../models/Imagem.js";
 import { contasPremium } from "../models/Premium.js";
 import { Usuaria } from "../models/Usuaria.js";
@@ -138,6 +139,9 @@ export const candidatar = comTratamento(async (req, res) => {
 
   const existente = await Candidatura.findOne({ where: { usuariaId: eu(req), vagaId } });
   if (existente) return erro(res, 409, "Você já se candidatou a esta vaga.");
+  // Currículo do perfil, se ela escolheu enviar (vai uma cópia, que não muda depois).
+  const curriculo = req.body.incluirCurriculo === true ? await CurriculoCandidata.findOne({ where: { usuariaId: eu(req) } }) : null;
+  if (req.body.incluirCurriculo === true && !curriculo) return erro(res, 400, "Envie um currículo no seu perfil antes de anexá-lo.", "curriculo");
 
   let cand;
   try {
@@ -147,6 +151,9 @@ export const candidatar = comTratamento(async (req, res) => {
     throw e;
   }
   await CandidaturaEnvio.create({ candidaturaId: cand.id, titulo: titulo || null, competencias: competencias || null, apresentacao: apresentacao || null, links: JSON.stringify(links) });
+  if (curriculo) {
+    await CandidaturaCurriculo.create({ candidaturaId: cand.id, nomeArquivo: curriculo.nomeArquivo, mime: curriculo.mime, tamanho: curriculo.tamanho, dados: curriculo.dados });
+  }
   const [perfilEmpresa, candidata] = await Promise.all([PerfilEmpresa.findByPk(vaga.perfilEmpresaId), Usuaria.findByPk(eu(req))]);
   if (perfilEmpresa) {
     await notificar({
@@ -157,7 +164,7 @@ export const candidatar = comTratamento(async (req, res) => {
       link: `/empresa/candidaturas/${cand.id}`,
     });
   }
-  return res.status(201).json({ candidatura: { id: cand.id, vagaId, data: cand.data, status: cand.status } });
+  return res.status(201).json({ candidatura: { id: cand.id, vagaId, data: cand.data, status: cand.status, comCurriculo: Boolean(curriculo) } });
 });
 
 // GET /api/candidaturas/minhas

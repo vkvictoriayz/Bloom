@@ -127,3 +127,28 @@ o resto da API continua com 20 kB.
 - Envio de arquivo de currículo.
 - Preferências de notificação e aviso por e-mail.
 - Troca de e-mail da conta.
+
+## Currículo, busca, projetos e e-mail (migration 004)
+
+`src/database/migrations/004_curriculo.sql` cria `CURRICULO_CANDIDATA` (o
+arquivo do perfil, um por candidata) e `CANDIDATURA_CURRICULO` (a cópia
+enviada com cada candidatura, para a empresa ver a versão daquele momento).
+Os arquivos ficam no banco (MEDIUMBLOB): PDF, DOC ou DOCX até 5 MB, com o tipo
+conferido pelos primeiros bytes.
+
+| Rota | O que faz |
+| --- | --- |
+| `GET /api/candidata/curriculo` | Nome, tamanho e data do currículo (ou `null`). |
+| `PUT /api/candidata/curriculo` | `{ nome, arquivo }` (base64). Envia ou troca. |
+| `GET /api/candidata/curriculo/arquivo` | Baixa o próprio currículo. |
+| `DELETE /api/candidata/curriculo` | Tira do perfil (as cópias das candidaturas continuam). |
+| `POST /api/candidaturas` | `incluirCurriculo: true` anexa uma cópia do currículo do perfil. |
+| `GET /api/empresa/candidaturas/:id/curriculo` | Só a empresa dona da vaga baixa o anexo. |
+| `GET /api/comunidade/feed?busca=` | Busca no texto das publicações. |
+| `GET /api/comunidade/projetos?busca=&autora=` | Projetos de integrantes com perfil público (nome, descrição, tecnologias). |
+| `PUT /api/auth/email` | `{ email, senha }`: troca o e-mail de login (candidata ou empresa). |
+
+## Como rodar em desenvolvimento
+
+`npm run server` (API, porta 3001) e `npm run dev` (front, porta 3006), em
+terminais separados. O `.env` usa `FRONTEND_URL=http://localhost:3006`.

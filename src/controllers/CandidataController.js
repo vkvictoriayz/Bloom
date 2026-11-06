@@ -4,6 +4,8 @@ import { Usuaria } from "../models/index.js";
 import { ConfigUsuaria, Experiencia, Favorito, Formacao, Habilidade, PerfilDetalhes, PerfilHabilidade, PerfilUsuaria, Projeto } from "../models/Candidata.js";
 import { deLinha } from "../services/privacidade.js";
 import { Vaga } from "../models/Empresarial.js";
+import { CurriculoCandidata, enviarArquivo, resumoArquivo } from "../models/Curriculo.js";
+import { lerCurriculo } from "../utils/documento.js";
 
 // Área da candidata: perfil profissional, projetos e vagas salvas.
 // Rotas protegidas por exigirLogin(["usuaria"]); cada uma só mexe nos dados
@@ -344,4 +346,37 @@ export const atualizarPrivacidade = comTratamento(async (req, res) => {
   const [config] = await ConfigUsuaria.findOrCreate({ where: { usuariaId: eu(req) }, defaults: { usuariaId: eu(req), perfilPublico: true, mostrarExperiencia: false, mostrarContato: false } });
   await config.update(mudancas);
   return res.json({ privacidade: deLinha(config) });
+});
+
+// ------------------------------------------------------------ Currículo
+
+// GET /api/candidata/curriculo — nome, tamanho e data do arquivo (ou null).
+export const curriculo = comTratamento(async (req, res) => {
+  const atual = await CurriculoCandidata.findOne({ attributes: ["nomeArquivo", "tamanho", "enviadoEm"], where: { usuariaId: eu(req) } });
+  return res.json({ curriculo: resumoArquivo(atual) });
+});
+
+// PUT /api/candidata/curriculo { nome, arquivo (base64) } — PDF, DOC ou DOCX até 5 MB.
+export const enviarCurriculo = comTratamento(async (req, res) => {
+  const lido = lerCurriculo(req.body?.nome, req.body?.arquivo);
+  if (lido.erro) return erro(res, 400, lido.erro, "curriculo");
+  const valores = { nomeArquivo: lido.nomeArquivo, mime: lido.mime, tamanho: lido.dados.length, dados: lido.dados, enviadoEm: new Date() };
+  const atual = await CurriculoCandidata.findOne({ where: { usuariaId: eu(req) } });
+  if (atual) await atual.update(valores);
+  else await CurriculoCandidata.create({ usuariaId: eu(req), ...valores });
+  return res.json({ curriculo: resumoArquivo(valores) });
+});
+
+// GET /api/candidata/curriculo/arquivo — baixa o próprio currículo.
+export const baixarCurriculo = comTratamento(async (req, res) => {
+  const atual = await CurriculoCandidata.findOne({ where: { usuariaId: eu(req) } });
+  if (!atual) return erro(res, 404, "Você ainda não enviou um currículo.");
+  return enviarArquivo(res, atual);
+});
+
+// DELETE /api/candidata/curriculo — tira do perfil (as cópias já enviadas
+// em candidaturas continuam com as empresas).
+export const removerCurriculo = comTratamento(async (req, res) => {
+  await CurriculoCandidata.destroy({ where: { usuariaId: eu(req) } });
+  return res.json({ curriculo: null });
 });

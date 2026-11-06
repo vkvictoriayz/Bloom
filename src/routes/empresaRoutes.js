@@ -20,6 +20,7 @@ empresaRoutes.get("/dashboard", E.dashboard);
 
 empresaRoutes.get("/candidaturas", E.listarCandidaturas);
 empresaRoutes.get("/candidaturas/:id", E.verCandidatura);
+empresaRoutes.get("/candidaturas/:id/curriculo", E.baixarCurriculoCandidatura);
 empresaRoutes.patch("/candidaturas/:id/status", E.mudarStatusCandidatura);
 
 empresaRoutes.get("/publicacoes", E.listarPublicacoes);

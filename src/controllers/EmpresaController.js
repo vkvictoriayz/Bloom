@@ -18,6 +18,7 @@ import {
   Vaga,
 } from "../models/Empresarial.js";
 import { TIPOS } from "./ComunidadeController.js";
+import { CandidaturaCurriculo, enviarArquivo, resumoArquivo } from "../models/Curriculo.js";
 
 // Área privada da empresa. Todas as rotas exigem login de empresa
 // (exigirLogin(["empresa"])) e só mexem em registros da própria empresa:
@@ -421,12 +422,13 @@ async function minhaCandidatura(req) {
 export const verCandidatura = comTratamento(async (req, res) => {
   const [cand, vaga] = await minhaCandidatura(req);
   if (!cand) return erro(res, 404, "Candidatura não encontrada.");
-  const [conta, pessoas, envio, profissional] = await Promise.all([
+  const [conta, pessoas, envio, profissional, curriculo] = await Promise.all([
     Usuaria.findByPk(cand.usuariaId),
     perfisPublicos([cand.usuariaId]),
     CandidaturaEnvio.findOne({ where: { candidaturaId: cand.id } }),
     // Perfil profissional completo, sem telefone: só para quem recebeu a candidatura.
     perfilCompleto(cand.usuariaId, { comContato: false }),
+    CandidaturaCurriculo.findOne({ attributes: ["nomeArquivo", "tamanho", "enviadoEm"], where: { candidaturaId: cand.id } }),
   ]);
   let links = [];
   try {
@@ -445,8 +447,19 @@ export const verCandidatura = comTratamento(async (req, res) => {
       competencias: lista(envio?.competencias),
       apresentacao: envio?.apresentacao ?? "",
       links: Array.isArray(links) ? links : [],
+      curriculo: resumoArquivo(curriculo),
     },
   });
+});
+
+// GET /api/empresa/candidaturas/:id/curriculo — o currículo enviado com a
+// candidatura (só para a empresa dona da vaga).
+export const baixarCurriculoCandidatura = comTratamento(async (req, res) => {
+  const [cand] = await minhaCandidatura(req);
+  if (!cand) return erro(res, 404, "Candidatura não encontrada.");
+  const arquivo = await CandidaturaCurriculo.findOne({ where: { candidaturaId: cand.id } });
+  if (!arquivo) return erro(res, 404, "Esta candidatura não tem currículo anexado.");
+  return enviarArquivo(res, arquivo);
 });
 
 export const mudarStatusCandidatura = comTratamento(async (req, res) => {

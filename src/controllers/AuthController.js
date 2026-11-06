@@ -283,7 +283,7 @@ export async function esqueciSenha(req, res) {
       expiraEm: new Date(Date.now() + VALIDADE_REDEFINICAO),
     });
 
-    const base = (process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "");
+    const base = (process.env.FRONTEND_URL ?? "http://localhost:3006").replace(/\/$/, "");
     const link = `${base}/redefinir-senha?token=${token}`;
     await enviarEmail({
       para: conta.email,
@@ -351,6 +351,34 @@ export async function alterarSenha(req, res) {
     falhasLogin.limpar(chave);
     await conta.update({ senhaHash: await bcrypt.hash(req.body.novaSenha, SALT_ROUNDS) });
     return res.json({ mensagem: "Senha alterada." });
+  } catch (e) {
+    return tratarErro(res, e);
+  }
+}
+
+// PUT /api/auth/email { email, senha } — troca o e-mail de login de quem está
+// logada (candidata ou empresa), conferindo a senha. O e-mail precisa estar
+// livre no mesmo tipo de conta.
+export async function alterarEmail(req, res) {
+  try {
+    const Model = req.auth.tipo === "empresa" ? Empresa : Usuaria;
+    const conta = await Model.findByPk(req.auth.sub);
+    if (!conta) return erro(res, 401, "Sessão inválida. Faça login novamente.");
+
+    const chave = `email:${req.auth.tipo}:${conta.id}`;
+    if (falhasLogin.bloqueado(chave)) return erro(res, 429, "Muitas tentativas. Aguarde alguns minutos e tente de novo.");
+    const email = texto(req.body.email).toLowerCase();
+    if (email.length > 150 || !EMAIL_REGEX.test(email)) return erro(res, 400, "Digite um e-mail válido.", "email");
+    if (email === conta.email) return erro(res, 400, "Este já é o e-mail da sua conta.", "email");
+    if (typeof req.body.senha !== "string" || !(await bcrypt.compare(req.body.senha, conta.senhaHash))) {
+      falhasLogin.registrar(chave);
+      return erro(res, 400, "A senha não confere.", "senha");
+    }
+    if (await Model.findOne({ where: { email } })) return erro(res, 409, "Este e-mail já está cadastrado.", "email");
+
+    falhasLogin.limpar(chave);
+    await conta.update({ email });
+    return res.json({ mensagem: "E-mail alterado.", usuario: { id: conta.id, nome: conta.nome, email, tipo: req.auth.tipo } });
   } catch (e) {
     return tratarErro(res, e);
   }

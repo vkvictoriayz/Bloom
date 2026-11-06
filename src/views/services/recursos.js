@@ -1,4 +1,4 @@
-import { api } from './api.js'
+import { api, baixarArquivo } from './api.js'
 import { obterSessao } from './auth.js'
 
 // Recursos que dependem de API, para candidatas e empresas.
@@ -59,3 +59,21 @@ export const excluirConta = (corpo) => chamar('/auth/conta', { method: 'DELETE',
 
 // Conta
 export const alterarSenha = (corpo) => chamar('/auth/senha', { method: 'PUT', corpo })
+
+// Currículo da candidata (PDF, DOC ou DOCX, até 5 MB)
+export const lerCurriculo = () => chamar('/candidata/curriculo').then((r) => r.curriculo)
+export const enviarCurriculo = (nome, arquivo) => chamar('/candidata/curriculo', { method: 'PUT', corpo: { nome, arquivo } }).then((r) => r.curriculo)
+export const removerCurriculo = () => chamar('/candidata/curriculo', { method: 'DELETE' })
+export const baixarMeuCurriculo = () => baixarArquivo('/candidata/curriculo/arquivo', obterSessao()?.token, 'curriculo')
+// Empresa: currículo enviado junto com uma candidatura
+export const baixarCurriculoCandidatura = (id) => baixarArquivo(`/empresa/candidaturas/${encodeURIComponent(id)}/curriculo`, obterSessao()?.token, 'curriculo')
+
+// E-mail de login (confere a senha)
+export const alterarEmail = (corpo) => chamar('/auth/email', { method: 'PUT', corpo })
+
+// Projetos de outras integrantes (Explorar e perfil público)
+export const listarProjetosComunidade = ({ busca, autora } = {}) => {
+  const q = new URLSearchParams(Object.entries({ busca, autora }).filter(([, v]) => v)).toString()
+  return chamar(`/comunidade/projetos${q ? `?${q}` : ''}`).then((r) => r.projetos)
+}
+
