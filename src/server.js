@@ -9,6 +9,7 @@ import { prepararCandidata } from "./models/Candidata.js";
 import { prepararInteracao } from "./models/Interacao.js";
 import { prepararGrupos } from "./models/Grupos.js";
 import { aplicarMigracoes } from "./database/migracoes.js";
+import { registrarFotoDoDia } from "./controllers/AdminController.js";
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16) {
   console.error("Defina JWT_SECRET (mínimo 16 caracteres) no arquivo .env");
@@ -60,6 +61,11 @@ try {
 const servidor = app.listen(porta, () =>
   console.log(`API da Bloom rodando em http://localhost:${porta}`)
 );
+
+// Foto diária dos totais para o painel da administração (DASHBOARD_ADMIN).
+const fotoDoDia = () => registrarFotoDoDia().catch((e) => console.error("Painel:", e.message));
+fotoDoDia();
+setInterval(fotoDoDia, 6 * 60 * 60 * 1000).unref();
 
 servidor.on("error", (e) => {
   if (e.code === "EADDRINUSE") return avisarPortaOcupada();

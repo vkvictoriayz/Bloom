@@ -1,6 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 
 import RotaPrivada from './components/RotaPrivada'
+import LayoutAdmin from './components/admin/LayoutAdmin'
+import LoginAdmin from './pages/admin/LoginAdmin'
+import PainelAdmin from './pages/admin/Painel'
+import { Candidatas as CandidatasAdmin, DetalheCandidata as DetalheCandidataAdmin, DetalheEmpresa as DetalheEmpresaAdmin, Empresas as EmpresasAdmin } from './pages/admin/Contas'
+import { ComunidadesAdmin, PublicacoesAdmin, VagasAdmin } from './pages/admin/Conteudo'
+import { Administradores, ContaAdmin, PagamentosAdmin, RegistroAdmin } from './pages/admin/Sistema'
 import { obterSessao } from './services/auth'
 import LayoutCandidata from './components/candidata/LayoutCandidata'
 
@@ -190,6 +196,28 @@ function App() {
         </Route>
 
         {/* Qualquer outro endereço volta para a Home */}
+        {/* Administração: login próprio e área só para contas "admin" */}
+        <Route path="/admin/login" element={<LoginAdmin />} />
+        <Route
+          element={
+            <RotaPrivada tipo="admin">
+              <LayoutAdmin />
+            </RotaPrivada>
+          }
+        >
+          <Route path="/admin" element={<PainelAdmin />} />
+          <Route path="/admin/candidatas" element={<CandidatasAdmin />} />
+          <Route path="/admin/candidatas/:id" element={<DetalheCandidataAdmin />} />
+          <Route path="/admin/empresas" element={<EmpresasAdmin />} />
+          <Route path="/admin/empresas/:id" element={<DetalheEmpresaAdmin />} />
+          <Route path="/admin/vagas" element={<VagasAdmin />} />
+          <Route path="/admin/publicacoes" element={<PublicacoesAdmin />} />
+          <Route path="/admin/comunidades" element={<ComunidadesAdmin />} />
+          <Route path="/admin/pagamentos" element={<PagamentosAdmin />} />
+          <Route path="/admin/registro" element={<RegistroAdmin />} />
+          <Route path="/admin/administradores" element={<Administradores />} />
+          <Route path="/admin/conta" element={<ContaAdmin />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

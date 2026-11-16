@@ -266,7 +266,7 @@ function BuscaGeral({ busca }) {
 
 // Quantas notificações não lidas: consulta ao trocar de página, a cada
 // minuto (com a aba visível) e quando algo é marcado como lido.
-function useNaoLidas() {
+function useNaoLidas(ativo = true) {
   const { pathname } = useLocation()
   const [total, setTotal] = useState(0)
   const [versao, setVersao] = useState(0)
@@ -282,20 +282,22 @@ function useNaoLidas() {
   }, [])
 
   useEffect(() => {
-    let ativo = true
+    if (!ativo) return
+    let vivo = true
     contarNaoLidas()
-      .then((n) => ativo && setTotal(n))
+      .then((n) => vivo && setTotal(n))
       .catch(() => {})
     return () => {
-      ativo = false
+      vivo = false
     }
-  }, [pathname, versao])
+  }, [pathname, versao, ativo])
 
   return total
 }
 
 function LayoutPrivado({ config, usuario, foto, contexto }) {
-  const naoLidas = useNaoLidas()
+  // A administração não tem mensagens nem notificações (config sem esses atalhos).
+  const naoLidas = useNaoLidas(Boolean(config.notificacoes))
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [recolhido, setRecolhido] = useState(() => lerRecolhido(config.chavePreferencia))
@@ -403,9 +405,12 @@ function LayoutPrivado({ config, usuario, foto, contexto }) {
           <BuscaGeral busca={config.busca} />
 
           <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
-            <NavLink to={config.mensagens} className={atalho} aria-label="Mensagens" title="Mensagens">
-              <Icone nome="mensagem" tamanho={20} />
-            </NavLink>
+            {config.mensagens && (
+              <NavLink to={config.mensagens} className={atalho} aria-label="Mensagens" title="Mensagens">
+                <Icone nome="mensagem" tamanho={20} />
+              </NavLink>
+            )}
+            {config.notificacoes && (
             <NavLink
               to={config.notificacoes}
               className={cn(atalho, 'relative')}
@@ -419,6 +424,7 @@ function LayoutPrivado({ config, usuario, foto, contexto }) {
                 </span>
               )}
             </NavLink>
+            )}
             <MenuConta usuario={usuario} foto={foto} config={config} aoSair={handleSair} />
           </div>
         </header>

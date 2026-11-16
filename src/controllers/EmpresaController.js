@@ -634,7 +634,7 @@ export const convidar = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const conta = id && (await Usuaria.findByPk(id));
   const privacidade = conta && (await privacidadeDe([id])).get(id);
-  if (!conta || !privacidade.perfilPublico) return erro(res, 404, "Perfil não encontrado.");
+  if (!conta || !privacidade.perfilPublico || conta.suspensaEm) return erro(res, 404, "Perfil não encontrado.");
   req.params.id = String(req.body?.vagaId ?? "");
   const vaga = await minhaVaga(req);
   if (!vaga) return erro(res, 404, "Vaga não encontrada.", "vagaId");
@@ -660,7 +660,7 @@ export const talento = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const conta = id && (await Usuaria.findByPk(id));
   const privacidade = conta && (await privacidadeDe([id])).get(id);
-  if (!conta || !privacidade.perfilPublico) return erro(res, 404, "Perfil não encontrado.");
+  if (!conta || !privacidade.perfilPublico || conta.suspensaEm) return erro(res, 404, "Perfil não encontrado.");
   const mapa = await perfisPublicos([id]);
   const pubs = await Publicacao.findAll({ where: { usuariaId: id }, order: [["criadaEm", "DESC"]], limit: 20 });
   return res.json({

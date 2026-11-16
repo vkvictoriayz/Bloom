@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import comunidadeRoutes from "./routes/comunidadeRoutes.js";
 import imagemRoutes from "./routes/imagemRoutes.js";
@@ -18,6 +19,8 @@ app.use("/api/candidata", candidataRoutes);
 app.use("/api/comunidade", comunidadeRoutes);
 app.use("/api/comunidades", grupoRoutes);
 app.use("/api/mensagens/candidatas", mensagemDiretaRoutes);
+// Administração: limite próprio de corpo (ver adminRoutes.js).
+app.use("/api/admin", adminRoutes);
 app.use(express.json({ limit: "20kb" }));
 
 app.get("/api/saude", (req, res) => res.json({ ok: true }));

@@ -1,3 +1,4 @@
+import { MENSAGEM_SUSPENSA } from "../services/suspensao.js";
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcrypt";
 import { Op } from "sequelize";
@@ -247,6 +248,8 @@ async function login(req, res, Model, tipo) {
     }
 
     falhasLogin.limpar(chave);
+    // Só depois da senha certa, para não revelar quais contas estão suspensas.
+    if (conta.suspensaEm) return erro(res, 403, MENSAGEM_SUSPENSA);
     return res.json(gerarSessao(conta, tipo));
   } catch (e) {
     return tratarErro(res, e);

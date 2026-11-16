@@ -83,7 +83,7 @@ export const listar = comTratamento(async (req, res) => {
 export const empresaPublica = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const conta = id && (await Empresa.findByPk(id));
-  if (!conta) return erro(res, 404, "Empresa não encontrada.");
+  if (!conta || conta.suspensaEm) return erro(res, 404, "Empresa não encontrada.");
   const p = await PerfilEmpresa.findOne({ where: { empresaId: id } });
   const vagas = p ? await Vaga.findAll({ where: { perfilEmpresaId: p.id, status: "Aberta" }, order: [["dataPublicacao", "DESC"], ["id", "DESC"]] }) : [];
   const [imagens, premium] = await Promise.all([imagensDe("empresa", [id]), contasPremium("empresa", [id])]);
