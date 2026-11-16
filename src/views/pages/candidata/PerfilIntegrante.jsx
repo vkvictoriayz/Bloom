@@ -9,6 +9,7 @@ import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
 import ProjetosIntegrantes from '../../components/comunidade/ProjetosIntegrantes'
 import Botao from '../../components/ui/Botao'
 import { Aviso } from '../../components/ui/Campo'
+import Denunciar from '../../components/conta/Denunciar'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { definirSeguindo, lerFeed, lerPerfilIntegrante } from '../../services/comunidade'
@@ -144,6 +145,9 @@ function ConteudoPerfil({ id }) {
               {erroAcao}
             </Aviso>
           )}
+          <div className="mt-5 border-t border-linha pt-4">
+            <Denunciar alvoTipo="perfil" alvoId={perfil.id} rotulo="Denunciar perfil" />
+          </div>
         </div>
       </section>
 

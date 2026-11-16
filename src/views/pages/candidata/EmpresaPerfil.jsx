@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
+import Denunciar from '../../components/conta/Denunciar'
 
 import Icone from '../../components/Icone'
 import MarcaEmpresa from '../../components/MarcaEmpresa'
@@ -62,6 +63,9 @@ function EmpresaPerfil() {
           <p className="mt-1 text-suave">{[empresa.areaAtuacao, empresa.localizacao].filter(Boolean).join(' · ') || 'Área e localização não informadas'}</p>
           {empresa.descricao && <p className="mt-4 max-w-3xl leading-relaxed text-tinta-2">{empresa.descricao}</p>}
           {empresa.informacoes && <p className="mt-3 max-w-3xl text-sm leading-relaxed whitespace-pre-line text-tinta-2">{empresa.informacoes}</p>}
+          <div className="mt-4">
+            <Denunciar alvoTipo="empresa" alvoId={Number(id)} rotulo="Denunciar empresa" />
+          </div>
           <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2">
             {empresa.site && (
               <Contato icone="link" href={empresa.site}>

@@ -34,6 +34,7 @@ export async function excluirUsuaria(id) {
     await apagar("DELETE FROM MENSAGEM WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM CONVERSA WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM NOTIFICACAO WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
+    await apagar("DELETE FROM DENUNCIA WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
     await apagar("DELETE FROM PREFERENCIA_NOTIFICACAO WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
     await apagar("DELETE FROM CONVITE WHERE id_usuario = :id", r, t);
     await apagar("DELETE FROM CANDIDATURA_ENVIO WHERE id_candidatura IN (:candidaturas)", r, t);
@@ -90,6 +91,7 @@ export async function excluirEmpresa(id) {
     await apagar("DELETE FROM MENSAGEM WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM CONVERSA WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM NOTIFICACAO WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
+    await apagar("DELETE FROM DENUNCIA WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
     await apagar("DELETE FROM PREFERENCIA_NOTIFICACAO WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
     await apagar("DELETE FROM CONVITE WHERE id_empresa = :id OR id_vaga IN (:vagas)", r, t);
     // Campanhas saem; os pagamentos delas ficam (registro financeiro), sem o vínculo.

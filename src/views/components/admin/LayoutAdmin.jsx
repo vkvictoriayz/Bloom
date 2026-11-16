@@ -29,6 +29,7 @@ function config(nivel) {
           { rotulo: 'Vagas', para: '/admin/vagas', icone: 'maleta' },
           { rotulo: 'Publicações', para: '/admin/publicacoes', icone: 'documento' },
           { rotulo: 'Comunidades', para: '/admin/comunidades', icone: 'grupo' },
+          { rotulo: 'Denúncias', para: '/admin/denuncias', icone: 'info' },
         ],
       },
       { divisor: true },

@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import denunciaRoutes from "./routes/denunciaRoutes.js";
 import comunidadeRoutes from "./routes/comunidadeRoutes.js";
 import imagemRoutes from "./routes/imagemRoutes.js";
 import { candidataRoutes, grupoRoutes, mensagemDiretaRoutes, mensagemRoutes, notificacaoRoutes } from "./routes/candidataRoutes.js";
@@ -32,6 +33,7 @@ app.use("/api/notificacoes", notificacaoRoutes);
 app.use("/api/mensagens", mensagemRoutes);
 app.use("/api/premium", premiumRoutes);
 app.use("/api/pagamentos", pagamentoRoutes);
+app.use("/api/denuncias", denunciaRoutes);
 
 app.use((req, res) => res.status(404).json({ erro: "Rota não encontrada." }));
 

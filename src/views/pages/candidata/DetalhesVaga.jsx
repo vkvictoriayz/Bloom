@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import Denunciar from '../../components/conta/Denunciar'
 
 import BotaoSalvar from '../../components/BotaoSalvar'
 import Icone from '../../components/Icone'
@@ -170,6 +171,11 @@ function DetalhesVaga() {
               </Botao>
             )}
             <BotaoSalvar vaga={vaga} comTexto className="mt-2 w-full" />
+            {vaga.real && (
+              <div className="mt-3 text-center">
+                <Denunciar alvoTipo="vaga" alvoId={Number(String(vaga.id).replace(/^b/, ''))} rotulo="Denunciar vaga" />
+              </div>
+            )}
 
             <dl className="mt-6 flex flex-col divide-y divide-linha border-t border-linha">
               {ficha.map(([rotulo, valor]) => (

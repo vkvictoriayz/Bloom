@@ -5,6 +5,7 @@ import { imagensDe } from "../models/Imagem.js";
 import { notificar } from "../services/notificacoes.js";
 import { perfilCompleto } from "./CandidataController.js";
 import { perfisOcultos, privacidadeDe } from "../services/privacidade.js";
+import { contasSuspensas } from "../services/suspensao.js";
 import { avisarVagaCompativel } from "../services/vagasCompativeis.js";
 import { Favorito } from "../models/Candidata.js";
 import { contasPremium, Convite } from "../models/Premium.js";
@@ -555,9 +556,13 @@ export const feed = comTratamento(async (req, res) => {
   const pagina = Math.max(1, Number(req.query.pagina) || 1);
   const porPagina = 20;
   const limite = porPagina * pagina + 1;
+  // Contas suspensas pela administração ficam de fora (a própria empresa ainda vê as dela).
+  const [suspU, suspE] = await Promise.all([contasSuspensas("usuaria"), contasSuspensas("empresa")]);
+  const semU = [...suspU].concat(0);
+  const semE = [...suspE].filter((i) => i !== eu(req)).concat(0);
   const [dasIntegrantes, dasEmpresas] = await Promise.all([
-    Publicacao.findAll({ order: [["criadaEm", "DESC"], ["id", "DESC"]], limit: limite }),
-    PublicacaoEmpresa.findAll({ order: [["criadaEm", "DESC"], ["id", "DESC"]], limit: limite }),
+    Publicacao.findAll({ where: { usuariaId: { [Op.notIn]: semU } }, order: [["criadaEm", "DESC"], ["id", "DESC"]], limit: limite }),
+    PublicacaoEmpresa.findAll({ where: { empresaId: { [Op.notIn]: semE } }, order: [["criadaEm", "DESC"], ["id", "DESC"]], limit: limite }),
   ]);
   const idsEmpresas = [...new Set(dasEmpresas.map((p) => p.empresaId))];
   const [autoras, empresas, fotosEmpresas] = await Promise.all([

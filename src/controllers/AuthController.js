@@ -258,6 +258,31 @@ async function login(req, res, Model, tipo) {
 
 const hashToken = (token) => createHash("sha256").update(token).digest("hex");
 
+// Cria um link de uso único (30 min) para a conta criar uma senha nova e envia
+// por e-mail. Usado pelo "esqueci minha senha" e pela administração. Devolve
+// true se o e-mail saiu; sem serviço de e-mail configurado, devolve false (em
+// desenvolvimento o link aparece no terminal da API).
+export async function enviarLinkRedefinicao(tipo, conta) {
+  // Um link novo invalida os anteriores ainda não usados.
+  await RedefinicaoSenha.update({ usadoEm: new Date() }, { where: { tipoConta: tipo, contaId: conta.id, usadoEm: null } });
+  const token = randomBytes(32).toString("hex");
+  await RedefinicaoSenha.create({
+    tipoConta: tipo,
+    contaId: conta.id,
+    tokenHash: hashToken(token),
+    expiraEm: new Date(Date.now() + VALIDADE_REDEFINICAO),
+  });
+
+  const base = (process.env.FRONTEND_URL ?? "http://localhost:3006").replace(/\/$/, "");
+  const link = `${base}/redefinir-senha?token=${token}`;
+  return enviarEmail({
+    para: conta.email,
+    assunto: "Redefina sua senha da Bloom",
+    texto: `Olá, ${conta.nome}.\n\nPara criar uma nova senha, acesse: ${link}\n\nO link vale por 30 minutos e só pode ser usado uma vez. Se você não pediu, ignore este e-mail.`,
+    html: `<p>Olá, ${escaparHtml(conta.nome)}.</p><p><a href="${link}">Clique aqui para criar uma nova senha</a>.</p><p>O link vale por 30 minutos e só pode ser usado uma vez. Se você não pediu, ignore este e-mail.</p>`,
+  });
+}
+
 // POST /api/auth/senha/esqueci { email, tipo: "usuaria" | "empresa" }
 // Responde sempre a mesma coisa, exista ou não a conta.
 export async function esqueciSenha(req, res) {
@@ -276,25 +301,7 @@ export async function esqueciSenha(req, res) {
     const conta = await Model.findOne({ where: { email } });
     if (!conta) return res.json(RESPOSTA);
 
-    // Um link novo invalida os anteriores ainda não usados.
-    await RedefinicaoSenha.update({ usadoEm: new Date() }, { where: { tipoConta: tipo, contaId: conta.id, usadoEm: null } });
-    const token = randomBytes(32).toString("hex");
-    await RedefinicaoSenha.create({
-      tipoConta: tipo,
-      contaId: conta.id,
-      tokenHash: hashToken(token),
-      expiraEm: new Date(Date.now() + VALIDADE_REDEFINICAO),
-    });
-
-    const base = (process.env.FRONTEND_URL ?? "http://localhost:3006").replace(/\/$/, "");
-    const link = `${base}/redefinir-senha?token=${token}`;
-    await enviarEmail({
-      para: conta.email,
-      assunto: "Redefina sua senha da Bloom",
-      texto: `Olá, ${conta.nome}.\n\nPara criar uma nova senha, acesse: ${link}\n\nO link vale por 30 minutos e só pode ser usado uma vez. Se você não pediu, ignore este e-mail.`,
-      html: `<p>Olá, ${escaparHtml(conta.nome)}.</p><p><a href="${link}">Clique aqui para criar uma nova senha</a>.</p><p>O link vale por 30 minutos e só pode ser usado uma vez. Se você não pediu, ignore este e-mail.</p>`,
-    });
-
+    await enviarLinkRedefinicao(tipo, conta);
     return res.json(RESPOSTA);
   } catch (e) {
     return tratarErro(res, e);

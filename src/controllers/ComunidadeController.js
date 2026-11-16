@@ -7,6 +7,7 @@ import { PublicacaoImagem } from "../models/RedeSocial.js";
 import { Projeto } from "../models/Candidata.js";
 import { notificar } from "../services/notificacoes.js";
 import { perfisOcultos } from "../services/privacidade.js";
+import { contasSuspensas } from "../services/suspensao.js";
 import { lerImagem, novaChave } from "../utils/imagem.js";
 
 export const TIPOS = ["dica", "experiencia", "projeto", "conquista", "oportunidade", "duvida"];
@@ -81,11 +82,12 @@ export async function montarPublicacoes(lista, meuId) {
   const [autoras, curtidas, comentarios, imagens, sigo] = await Promise.all([
     perfisPor(autorasIds),
     Curtida.findAll({ where: { publicacaoId: { [Op.in]: ids } } }),
-    Comentario.findAll({ attributes: ["publicacaoId"], where: { publicacaoId: { [Op.in]: ids } } }),
+    Comentario.findAll({ attributes: ["publicacaoId", "usuariaId"], where: { publicacaoId: { [Op.in]: ids } } }),
     PublicacaoImagem.findAll({ attributes: ["publicacaoId", "chave", "largura", "altura"], where: { publicacaoId: { [Op.in]: ids } } }),
     meuId > 0 ? Conexao.findAll({ attributes: ["seguidaId"], where: { seguidoraId: meuId, seguidaId: { [Op.in]: autorasIds } } }) : [],
   ]);
   const imagemDa = new Map(imagens.map((i) => [i.publicacaoId, { url: `/imagens/${i.chave}`, largura: i.largura, altura: i.altura }]));
+  const suspensas = await contasSuspensas("usuaria");
   const seguidas = new Set(sigo.map((c) => c.seguidaId));
   return lista.map((p) => {
     const dela = curtidas.filter((c) => c.publicacaoId === p.id);
@@ -101,7 +103,7 @@ export async function montarPublicacoes(lista, meuId) {
       minha: p.usuariaId === meuId,
       curtidas: dela.length,
       curtiu: dela.some((c) => c.usuariaId === meuId),
-      comentarios: comentarios.filter((c) => c.publicacaoId === p.id).length,
+      comentarios: comentarios.filter((c) => c.publicacaoId === p.id && (!suspensas.has(c.usuariaId) || c.usuariaId === meuId)).length,
     };
   });
 }
@@ -148,6 +150,10 @@ export const feed = comTratamento(async (req, res) => {
     const seguidas = await Conexao.findAll({ where: { seguidoraId: meuId } });
     where.usuariaId = { [Op.in]: [meuId, ...seguidas.map((c) => c.seguidaId)] };
   }
+
+  // Conta suspensa pela administração: as publicações dela somem do feed.
+  const suspensas = [...(await contasSuspensas("usuaria"))].filter((i) => i !== meuId);
+  if (suspensas.length) where[Op.and] = [{ usuariaId: { [Op.notIn]: suspensas } }];
 
   // ?busca= procura no texto das publicações (até 100 caracteres).
   const busca = texto(req.query.busca).slice(0, 100);
@@ -258,6 +264,7 @@ function comentarioJson(c, autoras, publicacao, meuId) {
     autora: autoras.get(c.usuariaId) ?? { id: c.usuariaId, nome: "Integrante", area: "" },
     // Quem escreveu exclui o próprio; a autora da publicação modera todos.
     podeExcluir: c.usuariaId === meuId || publicacao.usuariaId === meuId,
+    minha: c.usuariaId === meuId,
   };
 }
 
@@ -267,7 +274,10 @@ export const listarComentarios = comTratamento(async (req, res) => {
   const publicacao = id && (await Publicacao.findByPk(id));
   if (!publicacao) return erro(res, 404, "Publicação não encontrada.");
 
-  const linhas = await Comentario.findAll({ where: { publicacaoId: id }, order: [["criadoEm", "ASC"], ["id", "ASC"]] });
+  const suspensas = await contasSuspensas("usuaria");
+  const linhas = (await Comentario.findAll({ where: { publicacaoId: id }, order: [["criadoEm", "ASC"], ["id", "ASC"]] })).filter(
+    (c) => !suspensas.has(c.usuariaId) || c.usuariaId === eu(req)
+  );
   const autoras = await perfisPor(linhas.map((c) => c.usuariaId));
   return res.json({ comentarios: linhas.map((c) => comentarioJson(c, autoras, publicacao, eu(req))) });
 });

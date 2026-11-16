@@ -13,6 +13,7 @@ import {
   dataHora,
   definirRepresentante,
   ehSuper,
+  enviarRedefinicaoSenha,
   excluirContaAdmin,
   lerCandidataAdmin,
   lerEmpresaAdmin,
@@ -120,6 +121,20 @@ function AcoesConta({ tipo, conta, aoMudar, voltar }) {
   const [aviso, setAviso] = useState(null)
   const [confirmacao, setConfirmacao] = useState('')
   const [reativando, setReativando] = useState(false)
+  const [enviandoLink, setEnviandoLink] = useState(false)
+
+  async function enviarLink() {
+    setEnviandoLink(true)
+    setAviso(null)
+    try {
+      const r = await enviarRedefinicaoSenha(tipo, conta.id)
+      setAviso({ tipo: r.enviado ? 'sucesso' : 'info', texto: r.mensagem })
+    } catch (e) {
+      setAviso({ tipo: 'erro', texto: e.message })
+    } finally {
+      setEnviandoLink(false)
+    }
+  }
 
   async function reativar() {
     setReativando(true)
@@ -162,6 +177,9 @@ function AcoesConta({ tipo, conta, aoMudar, voltar }) {
             }}
           />
         )}
+        <Botao tamanho="sm" variante="secundario" onClick={enviarLink} disabled={enviandoLink}>
+          {enviandoLink ? 'Enviando…' : 'Enviar link para criar nova senha'}
+        </Botao>
         {ehSuper() && (
           <AcaoComMotivo
             rotulo="Excluir conta"

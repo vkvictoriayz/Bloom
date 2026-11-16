@@ -26,6 +26,7 @@ router.patch("/empresas/:id/representante", admin, A.definirRepresentante);
 router.post("/:tipo(candidatas|empresas)/:id/suspender", admin, A.suspender);
 router.post("/:tipo(candidatas|empresas)/:id/reativar", admin, A.reativar);
 router.delete("/:tipo(candidatas|empresas)/:id", soSuper, A.excluirConta);
+router.post("/:tipo(candidatas|empresas)/:id/redefinicao-senha", admin, A.enviarRedefinicao);
 
 router.get("/vagas", admin, A.listarVagas);
 router.patch("/vagas/:id/status", admin, A.moderarVaga);
@@ -37,6 +38,9 @@ router.delete("/publicacoes-empresa/:id", admin, A.removerPublicacaoEmpresa);
 router.delete("/comentarios/:id", admin, A.removerComentario);
 router.get("/comunidades", admin, A.listarComunidades);
 router.delete("/comunidades/:id", admin, A.removerComunidade);
+
+router.get("/denuncias", admin, A.listarDenuncias);
+router.patch("/denuncias/:id", admin, A.decidirDenuncia);
 
 router.get("/pagamentos", admin, A.pagamentos);
 router.get("/registro", admin, A.registro);

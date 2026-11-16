@@ -47,6 +47,10 @@ export const listarComunidadesAdmin = (busca) => chamar(`/comunidades${consulta(
 export const removerComunidadeAdmin = (id, motivo) => chamar(`/comunidades/${encodeURIComponent(id)}`, { method: 'DELETE', corpo: { motivo } })
 
 export const lerPagamentosAdmin = () => chamar('/pagamentos')
+export const listarDenuncias = (filtros = {}) => chamar(`/denuncias${consulta(filtros)}`)
+export const decidirDenuncia = (id, status, resolucao) => chamar(`/denuncias/${encodeURIComponent(id)}`, { method: 'PATCH', corpo: { status, resolucao } })
+// Manda para a conta o link oficial de "criar nova senha" (a equipe não vê a senha).
+export const enviarRedefinicaoSenha = (tipo, id) => chamar(`/${tipo}/${encodeURIComponent(id)}/redefinicao-senha`, { method: 'POST' })
 export const lerRegistro = (filtros = {}) => chamar(`/registro${consulta(filtros)}`)
 
 export const listarAdmins = () => chamar('/admins')

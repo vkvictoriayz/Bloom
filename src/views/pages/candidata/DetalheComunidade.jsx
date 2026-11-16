@@ -6,6 +6,7 @@ import { useRecurso } from '../../components/candidata/useRecurso'
 import { AnexoImagem } from '../../components/comunidade/AnexoImagem'
 import Avatar from '../../components/comunidade/Avatar'
 import { IconeAvatar, SeletorIcone } from '../../components/IconePerfil'
+import Denunciar from '../../components/conta/Denunciar'
 import { iniciais } from '../../hooks/useSessao'
 import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
 import Botao from '../../components/ui/Botao'
@@ -177,6 +178,11 @@ function DetalheComunidade() {
                 <p className="mt-2 leading-relaxed whitespace-pre-line text-tinta-2">{comunidade.descricao}</p>
               </div>
             </div>
+            {!comunidade.minha && (
+              <div className="mt-4">
+                <Denunciar alvoTipo="comunidade" alvoId={comunidade.id} rotulo="Denunciar comunidade" />
+              </div>
+            )}
             {comunidade.minha && !trocandoIcone && (
               <Botao variante="fantasma" tamanho="sm" className="mt-4" onClick={() => setTrocandoIcone(true)}>
                 {iconeAtual ? 'Trocar ícone' : 'Escolher um ícone'}

@@ -5,6 +5,7 @@ import { Comunidade, ComunidadeMembro, ComunidadePublicacao } from "../models/Gr
 import { imagensDe } from "../models/Imagem.js";
 import { Usuaria } from "../models/index.js";
 import { perfisOcultos } from "../services/privacidade.js";
+import { contasSuspensas } from "../services/suspensao.js";
 import { iconeValido } from "../services/icones.js";
 import { gravarImagem, lerPublicacao, montarPublicacoes } from "./ComunidadeController.js";
 
@@ -115,9 +116,12 @@ export const ver = comTratamento(async (req, res) => {
     imagensDe("usuaria", visiveis.map((m) => m.usuariaId)),
   ]);
   const nome = new Map(contas.map((c) => [c.id, c.nome]));
-  const pubs = vinculos.length
-    ? await Publicacao.findAll({ where: { id: { [Op.in]: vinculos.map((v) => v.publicacaoId) } }, order: [["criadaEm", "DESC"], ["id", "DESC"]] })
-    : [];
+  const suspensas = await contasSuspensas("usuaria");
+  const pubs = (
+    vinculos.length
+      ? await Publicacao.findAll({ where: { id: { [Op.in]: vinculos.map((v) => v.publicacaoId) } }, order: [["criadaEm", "DESC"], ["id", "DESC"]] })
+      : []
+  ).filter((p) => !suspensas.has(p.usuariaId) || p.usuariaId === meuId);
 
   return res.json({
     comunidade: comunidadeJson(comunidade, {

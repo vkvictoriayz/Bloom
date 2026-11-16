@@ -6,6 +6,7 @@ import Botao from '../ui/Botao'
 import { Aviso, AreaTexto, Selecao } from '../ui/Campo'
 import { AnexoImagem, ImagemPublicacao } from './AnexoImagem'
 import Avatar from './Avatar'
+import { FormularioDenuncia } from '../conta/Denunciar'
 import { ICONE_TIPO } from './tipos'
 import {
   comentar,
@@ -46,7 +47,7 @@ function useMenu() {
 const itemMenu = 'flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-tinta-2 hover:bg-papel-2 hover:text-tinta'
 
 // Menu discreto "⋯" de um comentário (só para quem pode excluir).
-function MenuComentario({ aoExcluir }) {
+function MenuComentario({ aoExcluir, aoDenunciar }) {
   const { aberto, setAberto, caixa } = useMenu()
   return (
     <div ref={caixa} className="relative -mt-1 -mr-1.5 shrink-0">
@@ -62,17 +63,32 @@ function MenuComentario({ aoExcluir }) {
       </button>
       {aberto && (
         <div role="menu" className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-xl border border-linha bg-branco py-1 shadow-menu">
-          <button
-            role="menuitem"
-            type="button"
-            className={cn(itemMenu, 'text-erro hover:text-erro')}
-            onClick={() => {
-              setAberto(false)
-              aoExcluir()
-            }}
-          >
-            <Icone nome="lixeira" tamanho={16} /> Excluir comentário
-          </button>
+          {aoExcluir && (
+            <button
+              role="menuitem"
+              type="button"
+              className={cn(itemMenu, 'text-erro hover:text-erro')}
+              onClick={() => {
+                setAberto(false)
+                aoExcluir()
+              }}
+            >
+              <Icone nome="lixeira" tamanho={16} /> Excluir comentário
+            </button>
+          )}
+          {aoDenunciar && (
+            <button
+              role="menuitem"
+              type="button"
+              className={itemMenu}
+              onClick={() => {
+                setAberto(false)
+                aoDenunciar()
+              }}
+            >
+              <Icone nome="info" tamanho={16} /> Denunciar comentário
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -80,7 +96,7 @@ function MenuComentario({ aoExcluir }) {
 }
 
 // Menu "⋯" da publicação: copiar o texto (todas); editar e excluir (só a autora).
-function MenuPublicacao({ minha, aoCopiar, aoEditar, aoExcluir }) {
+function MenuPublicacao({ minha, aoCopiar, aoEditar, aoExcluir, aoDenunciar }) {
   const { aberto, setAberto, caixa } = useMenu()
   const item = itemMenu
 
@@ -120,6 +136,19 @@ function MenuPublicacao({ minha, aoCopiar, aoEditar, aoExcluir }) {
               }}
             >
               <Icone nome="editar" tamanho={16} /> Editar publicação
+            </button>
+          )}
+          {!minha && (
+            <button
+              role="menuitem"
+              type="button"
+              className={item}
+              onClick={() => {
+                setAberto(false)
+                aoDenunciar()
+              }}
+            >
+              <Icone nome="info" tamanho={16} /> Denunciar publicação
             </button>
           )}
           {minha && (
@@ -211,6 +240,8 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar }) {
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
   const [confirmando, setConfirmando] = useState(false)
+  // Denúncia aberta: "publicacao" ou o id do comentário.
+  const [denunciando, setDenunciando] = useState(null)
 
   async function aoCurtir() {
     setErro('')
@@ -357,7 +388,7 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar }) {
               Seguir
             </Botao>
           )}
-          <MenuPublicacao minha={dados.minha} aoCopiar={copiar} aoEditar={() => setEditando(true)} aoExcluir={() => setConfirmando(true)} />
+          <MenuPublicacao minha={dados.minha} aoCopiar={copiar} aoEditar={() => setEditando(true)} aoExcluir={() => setConfirmando(true)} aoDenunciar={() => setDenunciando('publicacao')} />
         </header>
 
         {editando ? (
@@ -368,6 +399,8 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar }) {
             <ImagemPublicacao imagem={dados.imagem} descricao={`Imagem publicada por ${dados.autora.nome}`} className="mt-4" />
           </>
         )}
+
+        {denunciando === 'publicacao' && <FormularioDenuncia alvoTipo="publicacao" alvoId={dados.id} aoFechar={() => setDenunciando(null)} className="mt-4" />}
 
         {confirmando && (
           <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-erro-claro px-4 py-3 text-sm">
@@ -440,9 +473,12 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar }) {
                         </Link>{' '}
                         <span className="text-suave">· {tempoRelativo(c.criadoEm)}</span>
                       </p>
-                      {c.podeExcluir && <MenuComentario aoExcluir={() => setExcluindoComentario(c.id)} />}
+                      {(c.podeExcluir || !c.minha) && (
+                        <MenuComentario aoExcluir={c.podeExcluir ? () => setExcluindoComentario(c.id) : undefined} aoDenunciar={c.minha ? undefined : () => setDenunciando(c.id)} />
+                      )}
                     </div>
                     <p className="mt-0.5 text-sm leading-relaxed whitespace-pre-line text-tinta-2">{c.texto}</p>
+                    {denunciando === c.id && <FormularioDenuncia alvoTipo="comentario" alvoId={c.id} aoFechar={() => setDenunciando(null)} className="mt-2" />}
                     {excluindoComentario === c.id && (
                       <div role="alertdialog" aria-label="Confirmar exclusão do comentário" className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-erro-claro px-3 py-2 text-sm">
                         <span className="flex-1 font-semibold text-erro">Excluir este comentário?</span>

@@ -4,6 +4,7 @@ import RotaPrivada from './components/RotaPrivada'
 import LayoutAdmin from './components/admin/LayoutAdmin'
 import LoginAdmin from './pages/admin/LoginAdmin'
 import PainelAdmin from './pages/admin/Painel'
+import DenunciasAdmin from './pages/admin/Denuncias'
 import { Candidatas as CandidatasAdmin, DetalheCandidata as DetalheCandidataAdmin, DetalheEmpresa as DetalheEmpresaAdmin, Empresas as EmpresasAdmin } from './pages/admin/Contas'
 import { ComunidadesAdmin, PublicacoesAdmin, VagasAdmin } from './pages/admin/Conteudo'
 import { Administradores, ContaAdmin, PagamentosAdmin, RegistroAdmin } from './pages/admin/Sistema'
@@ -213,6 +214,7 @@ function App() {
           <Route path="/admin/vagas" element={<VagasAdmin />} />
           <Route path="/admin/publicacoes" element={<PublicacoesAdmin />} />
           <Route path="/admin/comunidades" element={<ComunidadesAdmin />} />
+              <Route path="/admin/denuncias" element={<DenunciasAdmin />} />
           <Route path="/admin/pagamentos" element={<PagamentosAdmin />} />
           <Route path="/admin/registro" element={<RegistroAdmin />} />
           <Route path="/admin/administradores" element={<Administradores />} />

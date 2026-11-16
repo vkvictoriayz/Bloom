@@ -12,10 +12,20 @@ na raiz do projeto:
 npm run admin:criar
 ```
 
-O comando pede nome, usuário, e-mail e senha (mínimo de 10 caracteres; ela não
-aparece na tela) e cria um administrador com **acesso total**. Depois, entre em
+O comando pede nome, usuário, e-mail e senha (mínimo de 10 caracteres; na tela
+aparece só `*`) e cria um administrador com **acesso total**. Depois, entre em
 http://localhost:3006/admin. Os demais administradores são criados no próprio
 painel, em **Administradores**.
+
+### Esqueci a senha do painel
+
+```bash
+npm run admin:senha
+```
+
+Pede o usuário (ou e-mail) do administrador e a senha nova (que aparece só como
+`*`). Se o administrador estiver desativado, ele é reativado. A ação fica no
+registro do painel. Só quem tem acesso ao servidor e ao `.env` consegue rodar.
 
 ## Níveis de acesso
 
@@ -44,12 +54,30 @@ acesso.
     Premium em aberto precisam ter a assinatura cancelada antes.
   - **Confirmar representante** da empresa, depois de conferir o vínculo por um
     canal oficial (a consulta do CNPJ confirma a empresa, não a pessoa).
+- **Ajuda com senha**: em cada conta, "Enviar link para criar nova senha" manda o
+  mesmo link do "esqueci minha senha" (vale 30 minutos). A equipe nunca vê nem
+  define a senha de ninguém.
 - **Vagas**: pausar ou encerrar uma vaga, com motivo; a empresa é avisada.
 - **Publicações, comentários e comunidades**: remover com motivo; quem publicou
   é avisado. Remover uma comunidade mantém as publicações no feed.
+- **Denúncias**: candidatas e empresas denunciam publicações, comentários,
+  perfis, empresas, vagas e comunidades (motivo + explicação opcional; uma por
+  pessoa e item; até 20 por hora). A fila mostra o conteúdo denunciado, quem
+  publicou, quantas denúncias o item tem e ações diretas (remover, encerrar a
+  vaga, abrir a conta para suspender). Remover o conteúdo ou suspender a conta
+  fecha as denúncias daquele item sozinho; também dá para resolver ou descartar
+  com uma explicação. Quem denunciou recebe um aviso, sem saber o que foi
+  decidido em detalhe, e quem foi denunciado não sabe quem denunciou.
 - **Pagamentos**: assinaturas e pagamentos do Mercado Pago (só leitura).
 - **Registro de ações**: tudo o que a equipe fez, com quem, quando e o motivo
   (`LOGS_ADMIN`).
+
+## Conta suspensa
+
+Enquanto a conta está suspensa, além de perder o acesso, o conteúdo dela some
+para as outras pessoas: publicações do feed e das comunidades, comentários (e a
+contagem deles), publicações de empresa no feed das empresas, perfil público e
+listas. Tudo volta ao reativar.
 
 ## Segurança
 
@@ -73,6 +101,19 @@ Cria `ADMINS`, `LOGS_ADMIN` e `DASHBOARD_ADMIN` se não existirem e acrescenta:
 | `LOGS_ADMIN` | `detalhes` |
 | `CADASTRO_USUARIA`, `CADASTRO_EMPRESA` | `suspensa_em`, `motivo_suspensao` |
 
+## Migration 006 (`src/database/migrations/006_denuncias.sql`)
+
+Cria a tabela `DENUNCIA` (quem denunciou, o alvo, motivo, explicação, situação
+`aberta`/`resolvida`/`descartada`, quem decidiu e quando). Uma denúncia por
+pessoa e item (índice único).
+
+## Denúncias (`/api/denuncias`, candidatas e empresas)
+
+| Rota | O que faz |
+| --- | --- |
+| `GET /motivos` | Motivos aceitos |
+| `POST /` | `{ alvoTipo, alvoId, motivo, descricao? }`. `alvoTipo`: `publicacao`, `publicacao_empresa`, `comentario`, `perfil`, `empresa`, `vaga`, `comunidade` |
+
 ## Rotas (`/api/admin`)
 
 | Rota | Quem |
@@ -85,5 +126,7 @@ Cria `ADMINS`, `LOGS_ADMIN` e `DASHBOARD_ADMIN` se não existirem e acrescenta:
 | `GET /vagas`, `PATCH /vagas/:id/status` | administradores |
 | `GET /publicacoes`, `GET /publicacoes/:id/comentarios`, `DELETE /publicacoes/:id`, `DELETE /publicacoes-empresa/:id`, `DELETE /comentarios/:id` | administradores |
 | `GET /comunidades`, `DELETE /comunidades/:id` | administradores |
+| `POST /candidatas/:id/redefinicao-senha`, `POST /empresas/:id/redefinicao-senha` | administradores |
+| `GET /denuncias?status=`, `PATCH /denuncias/:id` | administradores |
 | `GET /pagamentos`, `GET /registro` | administradores |
 | `GET /admins`, `POST /admins`, `PATCH /admins/:id` | só `super` |

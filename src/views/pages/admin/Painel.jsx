@@ -104,6 +104,10 @@ function Painel() {
   const t = d.totais
   const novasHoje = d.historico.at(-1)
   const pendencias = [
+    d.pendencias.denuncias > 0 && {
+      texto: `${d.pendencias.denuncias} ${d.pendencias.denuncias === 1 ? 'denúncia aberta' : 'denúncias abertas'}`,
+      para: '/admin/denuncias',
+    },
     d.pendencias.representantes > 0 && {
       texto: `${d.pendencias.representantes} ${d.pendencias.representantes === 1 ? 'empresa aguarda' : 'empresas aguardam'} a confirmação do representante`,
       para: '/admin/empresas?representante=pendente',

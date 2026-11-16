@@ -13,6 +13,8 @@ import { excluirEmpresa, excluirUsuaria } from "../services/exclusaoConta.js";
 import { notificar } from "../services/notificacoes.js";
 import { limparCacheSuspensao } from "../services/suspensao.js";
 import { criarToken } from "../utils/jwt.js";
+import { Denuncia, fecharDenunciasDoAlvo, MOTIVOS_DENUNCIA } from "../models/Denuncia.js";
+import { enviarLinkRedefinicao } from "./AuthController.js";
 import { criarLimitador } from "../utils/limitador.js";
 
 // Área de administração (/api/admin). Toda ação que muda algo fica em LOGS_ADMIN.
@@ -38,6 +40,15 @@ const comTratamento = (f) => async (req, res) => {
 };
 
 const adminJson = (a) => ({ id: a.id, nome: a.nome, usuario: a.usuario, email: a.email, nivel: a.nivel, ativo: a.ativo, criadoEm: a.criadoEm, ultimoAcesso: a.ultimoAcesso });
+
+// Fecha as denúncias abertas sobre algo em que a equipe agiu e avisa quem denunciou.
+async function encerrarDenuncias(alvoTipo, alvoId, adminId, resolucao) {
+  const fechadas = await fecharDenunciasDoAlvo(alvoTipo, alvoId, adminId, resolucao);
+  for (const d of fechadas) {
+    await notificar({ tipoConta: d.tipoConta, contaId: d.contaId, tipo: "plataforma", texto: "Analisamos a sua denúncia e tomamos uma providência. Obrigada por ajudar a cuidar da comunidade." });
+  }
+  return fechadas.length;
+}
 
 // Motivo obrigatório nas ações que afetam outra pessoa (vai para o registro e para o aviso).
 function lerMotivo(req, res) {
@@ -107,7 +118,9 @@ async function totais() {
 // são a diferença para o último dia anterior registrado.
 export async function registrarFotoDoDia() {
   const t = await totais();
-  const hoje = new Date().toISOString().slice(0, 10);
+  const agora = new Date();
+  // Data local (horário do servidor), não UTC: depois das 21h em Brasília o UTC já é amanhã.
+  const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")}`;
   const anterior = await DashboardAdmin.findOne({ where: { data: { [Op.lt]: hoje } }, order: [["data", "DESC"]] });
   const novos = (atual, campo) => (anterior ? Math.max(0, atual - (anterior[campo] ?? 0)) : 0);
   const dados = {
@@ -129,7 +142,7 @@ export async function registrarFotoDoDia() {
 // GET /api/admin/dashboard
 export const dashboard = comTratamento(async (req, res) => {
   const t = await registrarFotoDoDia();
-  const [porStatus, cpfs, pendentes, suspensasU, suspensasE, assinaturasAtivas, receita, historico, recentes] = await Promise.all([
+  const [porStatus, cpfs, pendentes, suspensasU, suspensasE, assinaturasAtivas, receita, historico, recentes, denunciasAbertas] = await Promise.all([
     Candidatura.findAll({ attributes: ["status", [fn("COUNT", col("id_candidatura")), "total"]], group: ["status"], raw: true }),
     UsuariaVerificacao.findAll({ attributes: ["cpfStatus", [fn("COUNT", sequelize.literal("*")), "total"]], group: ["cpfStatus"], raw: true }),
     EmpresaCadastro.count({ where: { representanteStatus: "pendente" } }),
@@ -139,13 +152,14 @@ export const dashboard = comTratamento(async (req, res) => {
     Pagamento.sum("valor", { where: { status: "approved" } }),
     DashboardAdmin.findAll({ order: [["data", "DESC"]], limit: 30 }),
     LogAdmin.findAll({ order: [["id", "DESC"]], limit: 8 }),
+    Denuncia.count({ where: { status: "aberta" } }),
   ]);
   const nomes = await nomesDosAdmins(recentes.map((l) => l.adminId));
   return res.json({
     totais: t,
     candidaturasPorStatus: Object.fromEntries(porStatus.map((l) => [l.status, Number(l.total)])),
     cpf: Object.fromEntries(cpfs.map((l) => [l.cpfStatus, Number(l.total)])),
-    pendencias: { representantes: pendentes },
+    pendencias: { representantes: pendentes, denuncias: denunciasAbertas },
     suspensas: { usuarias: suspensasU, empresas: suspensasE },
     premium: { assinaturasAtivas, receitaAprovada: Number(receita ?? 0) },
     historico: historico.reverse().map((h) => ({
@@ -341,6 +355,7 @@ export const suspender = comTratamento(async (req, res) => {
     }
   });
   limparCacheSuspensao();
+  await encerrarDenuncias(cfg.tipo === "empresa" ? "empresa" : "perfil", id, req.admin.id, `Conta suspensa: ${motivo}`);
   await registrarAcao(req.admin.id, `Suspendeu ${cfg.rotulo}`, cfg.tabela, id, `${conta.nome}: ${motivo}${pausadas ? ` (${pausadas} vaga(s) pausada(s))` : ""}`);
   return res.json({ suspensaEm: conta.suspensaEm, motivoSuspensao: motivo, vagasPausadas: pausadas });
 });
@@ -433,6 +448,7 @@ export const moderarVaga = comTratamento(async (req, res) => {
   await vaga.update({ status });
   const perfil = await PerfilEmpresa.findByPk(vaga.perfilEmpresaId);
   await registrarAcao(req.admin.id, status === "Pausada" ? "Pausou vaga" : "Encerrou vaga", "VAGAS", id, `${vaga.titulo}: ${motivo}`);
+  await encerrarDenuncias("vaga", id, req.admin.id, `Vaga ${status === "Pausada" ? "pausada" : "encerrada"}: ${motivo}`);
   if (perfil) {
     await notificar({
       tipoConta: "empresa",
@@ -515,6 +531,7 @@ export const removerPublicacao = comTratamento(async (req, res) => {
     await pub.destroy({ transaction });
   });
   await registrarAcao(req.admin.id, "Removeu publicação", "PUBLICACAO", id, `"${pub.texto.slice(0, 120)}": ${motivo}`);
+  await encerrarDenuncias("publicacao", id, req.admin.id, `Publicação removida: ${motivo}`);
   await notificar({ tipoConta: "usuaria", contaId: pub.usuariaId, tipo: "plataforma", texto: `Uma publicação sua foi removida pela equipe da Bloom. Motivo: ${motivo}`.slice(0, 300) });
   return res.status(204).end();
 });
@@ -528,6 +545,7 @@ export const removerPublicacaoEmpresa = comTratamento(async (req, res) => {
   if (!motivo) return undefined;
   await pub.destroy();
   await registrarAcao(req.admin.id, "Removeu publicação de empresa", "PUBLICACAO_EMPRESA", id, `"${pub.texto.slice(0, 120)}": ${motivo}`);
+  await encerrarDenuncias("publicacao_empresa", id, req.admin.id, `Publicação removida: ${motivo}`);
   await notificar({ tipoConta: "empresa", contaId: pub.empresaId, tipo: "plataforma", texto: `Uma publicação da empresa foi removida pela equipe da Bloom. Motivo: ${motivo}`.slice(0, 300) });
   return res.status(204).end();
 });
@@ -541,6 +559,7 @@ export const removerComentario = comTratamento(async (req, res) => {
   if (!motivo) return undefined;
   await c.destroy();
   await registrarAcao(req.admin.id, "Removeu comentário", "COMENTARIO", id, `"${c.texto.slice(0, 120)}": ${motivo}`);
+  await encerrarDenuncias("comentario", id, req.admin.id, `Comentário removido: ${motivo}`);
   await notificar({ tipoConta: "usuaria", contaId: c.usuariaId, tipo: "plataforma", texto: `Um comentário seu foi removido pela equipe da Bloom. Motivo: ${motivo}`.slice(0, 300) });
   return res.json({ comentarios: await Comentario.count({ where: { publicacaoId: c.publicacaoId } }) });
 });
@@ -577,6 +596,7 @@ export const removerComunidade = comTratamento(async (req, res) => {
     await c.destroy({ transaction });
   });
   await registrarAcao(req.admin.id, "Removeu comunidade", "COMUNIDADE", id, `${c.nome}: ${motivo}`);
+  await encerrarDenuncias("comunidade", id, req.admin.id, `Comunidade removida: ${motivo}`);
   await notificar({ tipoConta: "usuaria", contaId: c.criadoraId, tipo: "plataforma", texto: `A comunidade "${c.nome}" foi removida pela equipe da Bloom. Motivo: ${motivo}`.slice(0, 300) });
   return res.status(204).end();
 });
@@ -662,3 +682,122 @@ export const registro = comTratamento(async (req, res) => {
   const nomes = await nomesDosAdmins(rows.map((l) => l.adminId));
   return res.json({ total: count, porPagina: 50, registros: rows.map((l) => logJson(l, nomes)) });
 });
+
+// ------------------------------------------------------------ Ajuda com a senha
+
+// POST /api/admin/:tipo/:id/redefinicao-senha — manda para a conta o mesmo
+// link do "esqueci minha senha" (a equipe nunca vê nem define a senha).
+export const enviarRedefinicao = comTratamento(async (req, res) => {
+  const cfg = MODELOS[req.params.tipo];
+  const id = idParam(req.params.id);
+  const conta = cfg && id && (await cfg.Model.findByPk(id));
+  if (!conta) return erro(res, 404, "Conta não encontrada.");
+  const enviado = await enviarLinkRedefinicao(cfg.tipo, conta);
+  await registrarAcao(req.admin.id, "Enviou link de redefinição de senha", cfg.tabela, id, conta.email);
+  return res.json({
+    enviado,
+    mensagem: enviado
+      ? `Link enviado para ${conta.email}. Ele vale por 30 minutos.`
+      : "O link foi criado, mas o e-mail não está configurado (RESEND_API_KEY). Em desenvolvimento, o link aparece no terminal da API.",
+  });
+});
+
+// ------------------------------------------------------------ Denúncias
+
+// Resumo de cada alvo denunciado, para a equipe decidir sem sair da lista.
+async function resumirAlvos(denuncias) {
+  const ids = (tipo) => [...new Set(denuncias.filter((d) => d.alvoTipo === tipo).map((d) => d.alvoId))].concat(0);
+  const [pubs, pubsEmpresa, comentarios, perfis, empresas, vagas, comunidades] = await Promise.all([
+    Publicacao.findAll({ where: { id: { [Op.in]: ids("publicacao") } } }),
+    PublicacaoEmpresa.findAll({ where: { id: { [Op.in]: ids("publicacao_empresa") } } }),
+    Comentario.findAll({ where: { id: { [Op.in]: ids("comentario") } } }),
+    Usuaria.findAll({ where: { id: { [Op.in]: ids("perfil") } } }),
+    Empresa.findAll({ where: { id: { [Op.in]: ids("empresa") } } }),
+    Vaga.findAll({ where: { id: { [Op.in]: ids("vaga") } } }),
+    Comunidade.findAll({ where: { id: { [Op.in]: ids("comunidade") } } }),
+  ]);
+  const idsU = [...pubs.map((p) => p.usuariaId), ...comentarios.map((c) => c.usuariaId), ...comunidades.map((c) => c.criadoraId)];
+  const perfisEmpresa = await PerfilEmpresa.findAll({ where: { id: { [Op.in]: vagas.map((v) => v.perfilEmpresaId).concat(0) } } });
+  const idsE = [...pubsEmpresa.map((p) => p.empresaId), ...perfisEmpresa.map((p) => p.empresaId)];
+  const [us, es] = await Promise.all([
+    Usuaria.findAll({ attributes: ["id", "nome"], where: { id: { [Op.in]: idsU.concat(0) } } }),
+    Empresa.findAll({ attributes: ["id", "nome"], where: { id: { [Op.in]: idsE.concat(0) } } }),
+  ]);
+  const nomeU = new Map(us.map((u) => [u.id, u.nome]));
+  const nomeE = new Map(es.map((e) => [e.id, e.nome]));
+  const mapa = new Map();
+  for (const p of pubs) mapa.set(`publicacao:${p.id}`, { texto: p.texto || "(publicação só com imagem)", dono: { tipo: "usuaria", id: p.usuariaId, nome: nomeU.get(p.usuariaId) ?? "Conta removida" } });
+  for (const p of pubsEmpresa) mapa.set(`publicacao_empresa:${p.id}`, { texto: p.texto, dono: { tipo: "empresa", id: p.empresaId, nome: nomeE.get(p.empresaId) ?? "Empresa removida" } });
+  for (const c of comentarios) mapa.set(`comentario:${c.id}`, { texto: c.texto, publicacaoId: c.publicacaoId, dono: { tipo: "usuaria", id: c.usuariaId, nome: nomeU.get(c.usuariaId) ?? "Conta removida" } });
+  for (const u of perfis) mapa.set(`perfil:${u.id}`, { texto: u.nome, dono: { tipo: "usuaria", id: u.id, nome: u.nome }, suspensa: Boolean(u.suspensaEm) });
+  for (const e of empresas) mapa.set(`empresa:${e.id}`, { texto: e.nome, dono: { tipo: "empresa", id: e.id, nome: e.nome }, suspensa: Boolean(e.suspensaEm) });
+  for (const v of vagas) {
+    const empId = perfisEmpresa.find((p) => p.id === v.perfilEmpresaId)?.empresaId;
+    mapa.set(`vaga:${v.id}`, { texto: v.titulo, status: v.status, dono: { tipo: "empresa", id: empId, nome: nomeE.get(empId) ?? "Empresa removida" } });
+  }
+  for (const c of comunidades) mapa.set(`comunidade:${c.id}`, { texto: `${c.nome} — ${c.descricao}`, dono: { tipo: "usuaria", id: c.criadoraId, nome: nomeU.get(c.criadoraId) ?? "Conta removida" } });
+  return mapa;
+}
+
+// GET /api/admin/denuncias?status=aberta|resolvida|descartada&pagina=
+export const listarDenuncias = comTratamento(async (req, res) => {
+  const status = ["aberta", "resolvida", "descartada"].includes(req.query.status) ? req.query.status : "aberta";
+  const { rows, count } = await Denuncia.findAndCountAll({
+    where: { status },
+    order: status === "aberta" ? [["criadaEm", "ASC"]] : [["resolvidaEm", "DESC"]],
+    limit: POR_PAGINA,
+    offset: (pagina(req) - 1) * POR_PAGINA,
+  });
+  const [alvos, abertasPorAlvo] = await Promise.all([
+    resumirAlvos(rows),
+    Denuncia.findAll({ attributes: ["alvoTipo", "alvoId", [fn("COUNT", col("id_denuncia")), "n"]], where: { status: "aberta" }, group: ["alvoTipo", "alvoId"], raw: true }),
+  ]);
+  const nAbertas = new Map(abertasPorAlvo.map((x) => [`${x.alvoTipo}:${x.alvoId}`, Number(x.n)]));
+  const idsU = rows.filter((d) => d.tipoConta === "usuaria").map((d) => d.contaId).concat(0);
+  const idsE = rows.filter((d) => d.tipoConta === "empresa").map((d) => d.contaId).concat(0);
+  const [us, es, admins] = await Promise.all([
+    Usuaria.findAll({ attributes: ["id", "nome"], where: { id: { [Op.in]: idsU } } }),
+    Empresa.findAll({ attributes: ["id", "nome"], where: { id: { [Op.in]: idsE } } }),
+    nomesDosAdmins(rows.map((d) => d.adminId).filter(Boolean)),
+  ]);
+  const quem = (d) => (d.tipoConta === "empresa" ? es : us).find((x) => x.id === d.contaId)?.nome ?? "Conta removida";
+  return res.json({
+    total: count,
+    porPagina: POR_PAGINA,
+    denuncias: rows.map((d) => ({
+      id: d.id,
+      alvo: { tipo: d.alvoTipo, id: d.alvoId, ...(alvos.get(`${d.alvoTipo}:${d.alvoId}`) ?? { removido: true }) },
+      denunciasAbertasNoAlvo: nAbertas.get(`${d.alvoTipo}:${d.alvoId}`) ?? 0,
+      motivo: d.motivo,
+      motivoRotulo: MOTIVOS_DENUNCIA[d.motivo] ?? d.motivo,
+      descricao: d.descricao ?? "",
+      denunciante: { tipo: d.tipoConta, id: d.contaId, nome: quem(d) },
+      status: d.status,
+      criadaEm: d.criadaEm,
+      resolucao: d.resolucao ?? "",
+      resolvidaEm: d.resolvidaEm,
+      resolvidaPor: d.adminId ? admins.get(d.adminId) ?? "Administrador" : null,
+    })),
+  });
+});
+
+// PATCH /api/admin/denuncias/:id { status: "resolvida" | "descartada", resolucao }
+// Fecha todas as denúncias abertas do mesmo alvo e avisa quem denunciou.
+export const decidirDenuncia = comTratamento(async (req, res) => {
+  const id = idParam(req.params.id);
+  const d = id && (await Denuncia.findByPk(id));
+  if (!d) return erro(res, 404, "Denúncia não encontrada.");
+  if (d.status !== "aberta") return erro(res, 409, "Esta denúncia já foi analisada.");
+  const status = texto(req.body?.status);
+  if (!["resolvida", "descartada"].includes(status)) return erro(res, 400, "Escolha resolver ou descartar.", "status");
+  const resolucao = texto(req.body?.resolucao);
+  if (resolucao.length < 5 || resolucao.length > 300) return erro(res, 400, "Explique a decisão (de 5 a 300 caracteres). Ela fica no registro.", "resolucao");
+  const fechadas = await fecharDenunciasDoAlvo(d.alvoTipo, d.alvoId, req.admin.id, resolucao, status);
+  const texto_ = status === "resolvida"
+    ? "Analisamos a sua denúncia e tomamos uma providência. Obrigada por ajudar a cuidar da comunidade."
+    : "Analisamos a sua denúncia e não encontramos violação das regras da Bloom. Obrigada por avisar.";
+  for (const f of fechadas) await notificar({ tipoConta: f.tipoConta, contaId: f.contaId, tipo: "plataforma", texto: texto_ });
+  await registrarAcao(req.admin.id, status === "resolvida" ? "Resolveu denúncia" : "Descartou denúncia", "DENUNCIA", id, `${d.alvoTipo} #${d.alvoId} (${fechadas.length} denúncia(s)): ${resolucao}`);
+  return res.json({ fechadas: fechadas.length });
+});
+
