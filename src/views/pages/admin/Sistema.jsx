@@ -8,10 +8,11 @@ import TituloPagina from '../../components/candidata/TituloPagina'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
 import { useCarregar } from '../../components/empresa/useCarregar'
 import Botao from '../../components/ui/Botao'
-import { Aviso, Campo, Entrada, Selecao } from '../../components/ui/Campo'
+import { AreaTexto, Aviso, Campo, Entrada, Selecao } from '../../components/ui/Campo'
 import Selo from '../../components/ui/Selo'
 import { useSessao } from '../../hooks/useSessao'
-import { alterarAdmin, alterarSenhaAdmin, criarAdmin, dataHora, dinheiro, lerPagamentosAdmin, lerRegistro, listarAdmins } from '../../services/admin'
+import { alterarAdmin, criarAdmin, dataHora, dinheiro, ehSuper, enviarComunicado, lerPagamentosAdmin, lerRegistro, listarAdmins, listarComunicados } from '../../services/admin'
+import { BotaoRelatorio } from '../../components/admin/Comuns'
 
 const COR_ASSINATURA = { ativa: 'sucesso', pendente: 'alerta', pausada: 'alerta', cancelada: 'neutro', falhou: 'erro' }
 const COR_PAGAMENTO = { approved: ['sucesso', 'Aprovado'], pending: ['alerta', 'Pendente'], in_process: ['alerta', 'Em análise'], rejected: ['erro', 'Recusado'], refunded: ['neutro', 'Devolvido'], cancelled: ['neutro', 'Cancelado'] }
@@ -49,7 +50,11 @@ export function PagamentosAdmin() {
   const r = useCarregar(lerPagamentosAdmin)
   return (
     <>
-      <TituloPagina titulo="Pagamentos" descricao="Assinaturas Premium e pagamentos confirmados pelo Mercado Pago. Só leitura: cobranças e devoluções são feitas no painel do Mercado Pago." />
+      <TituloPagina
+        titulo="Pagamentos"
+        descricao="Assinaturas Premium e pagamentos confirmados pelo Mercado Pago. Só leitura: cobranças e devoluções são feitas no painel do Mercado Pago."
+        acoes={ehSuper() && <BotaoRelatorio recurso="pagamentos" />}
+      />
       {r.tipo === 'carregando' && <Carregando quantidade={2} altura="h-40" />}
       {r.tipo === 'erro' && <ErroAoCarregar erro={r.erro} aoTentar={r.recarregar} />}
       {r.tipo === 'pronto' && (
@@ -107,7 +112,7 @@ export function RegistroAdmin() {
 
   return (
     <>
-      <TituloPagina titulo="Registro de ações" descricao="Tudo o que a equipe fez no painel: quem, o quê, quando e por quê." />
+      <TituloPagina titulo="Registro de ações" descricao="Tudo o que a equipe fez no painel: quem, o quê, quando e por quê." acoes={ehSuper() && <BotaoRelatorio recurso="registro" />} />
       <form
         role="search"
         className="relative mb-4"
@@ -176,7 +181,7 @@ function NovoAdmin({ aoCriar }) {
     try {
       await criarAdmin({ ...dados, usuario: dados.usuario.trim().toLowerCase(), email: dados.email.trim() })
       setDados(VAZIO)
-      setEstado({ tipo: 'sucesso', texto: 'Administrador criado. Passe o usuário e a senha inicial por um canal seguro e peça para trocar a senha no primeiro acesso.' })
+      setEstado({ tipo: 'sucesso', texto: 'Administrador criado. Passe o usuário e a senha inicial por um canal seguro. No primeiro acesso, o painel pede uma senha nova.' })
       aoCriar()
     } catch (erro) {
       setEstado({ tipo: 'erro', texto: erro.message })
@@ -253,12 +258,19 @@ export function Administradores() {
                   </span>
                   <span className="flex flex-wrap items-center gap-2">
                     <Selo variante={a.nivel === 'super' ? 'vinho' : 'neutro'}>{a.nivel === 'super' ? 'Acesso total' : 'Moderação'}</Selo>
+                    {a.doisFatores ? <Selo variante="sucesso">Duas etapas</Selo> : <Selo variante="contorno">Sem duas etapas</Selo>}
+                    {a.deveTrocarSenha && <Selo variante="alerta">Senha inicial</Selo>}
                     {!a.ativo && <Selo variante="erro">Desativado</Selo>}
                     {!eu && (
                       <>
                         <Botao tamanho="sm" variante="fantasma" onClick={() => mudar(a, { nivel: a.nivel === 'super' ? 'moderador' : 'super' })}>
                           {a.nivel === 'super' ? 'Tornar moderação' : 'Dar acesso total'}
                         </Botao>
+                        {a.doisFatores && (
+                          <Botao tamanho="sm" variante="fantasma" onClick={() => mudar(a, { desligarDoisFatores: true })} title="Para quem perdeu o celular: a pessoa configura de novo">
+                            Desligar duas etapas
+                          </Botao>
+                        )}
                         <Botao tamanho="sm" variante="secundario" className={a.ativo ? 'text-erro' : undefined} onClick={() => mudar(a, { ativo: !a.ativo })}>
                           {a.ativo ? 'Desativar' : 'Reativar'}
                         </Botao>
@@ -277,45 +289,112 @@ export function Administradores() {
   )
 }
 
-// ------------------------------------------------------------ Minha conta
+// ------------------------------------------------------------ Comunicados (só "super")
 
-export function ContaAdmin() {
-  const sessao = useSessao()
-  const u = sessao?.usuario
-  const [senhaAtual, setSenhaAtual] = useState('')
-  const [novaSenha, setNovaSenha] = useState('')
-  const [confirmarSenha, setConfirmarSenha] = useState('')
+const PUBLICOS = [
+  ['todos', 'Todas as contas'],
+  ['usuarias', 'Só candidatas'],
+  ['empresas', 'Só empresas'],
+]
+
+export function Comunicados() {
+  const r = useCarregar(listarComunicados)
+  const [publico, setPublico] = useState('todos')
+  const [texto, setTexto] = useState('')
+  const [link, setLink] = useState('')
+  const [confirmando, setConfirmando] = useState(false)
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
 
-  async function enviar(e) {
-    e.preventDefault()
-    if (novaSenha.length < 10) return setEstado({ tipo: 'erro', texto: 'A nova senha precisa ter pelo menos 10 caracteres.' })
-    if (novaSenha !== confirmarSenha) return setEstado({ tipo: 'erro', texto: 'As senhas novas não são iguais.' })
+  async function enviar() {
     setEstado({ tipo: 'enviando' })
     try {
-      const r = await alterarSenhaAdmin({ senhaAtual, novaSenha, confirmarSenha })
-      setEstado({ tipo: 'sucesso', texto: r.mensagem })
-      setSenhaAtual('')
-      setNovaSenha('')
-      setConfirmarSenha('')
+      const resposta = await enviarComunicado({ publico, texto: texto.trim(), link: link.trim() })
+      setEstado({ tipo: 'sucesso', texto: `Comunicado entregue a ${resposta.enviados} de ${resposta.total} contas (as demais desligaram as "Atualizações da Bloom").` })
+      setTexto('')
+      setLink('')
+      setConfirmando(false)
+      r.recarregar()
     } catch (erro) {
       setEstado({ tipo: 'erro', texto: erro.message })
+      setConfirmando(false)
     }
   }
 
   return (
     <>
-      <TituloPagina titulo="Minha conta" descricao={`${u?.nome ?? ''} · ${u?.nivel === 'super' ? 'acesso total' : 'moderação'}`} />
-      <form onSubmit={enviar} noValidate className="flex max-w-md flex-col gap-4 rounded-xl border border-linha bg-branco p-6">
-        <h2 className="font-display text-xl text-tinta">Trocar senha</h2>
-        <CampoSenha rotulo="Senha atual" valor={senhaAtual} aoMudar={setSenhaAtual} autoComplete="current-password" />
-        <CampoSenha rotulo="Nova senha" valor={novaSenha} aoMudar={setNovaSenha} placeholder="Mínimo de 10 caracteres" autoComplete="new-password" />
-        <CampoSenha rotulo="Confirme a nova senha" valor={confirmarSenha} aoMudar={setConfirmarSenha} autoComplete="new-password" />
-        {(estado.tipo === 'erro' || estado.tipo === 'sucesso') && <Aviso tipo={estado.tipo}>{estado.texto}</Aviso>}
-        <Botao type="submit" variante="secundario" className="self-start" disabled={estado.tipo === 'enviando'}>
-          {estado.tipo === 'enviando' ? 'Salvando…' : 'Trocar senha'}
-        </Botao>
-      </form>
+      <TituloPagina titulo="Comunicados" descricao="Avisos da equipe que chegam nas notificações, como “Atualizações da Bloom”. Quem desligou essa categoria não recebe, e contas suspensas também não." />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <form
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (texto.trim().length < 10) return setEstado({ tipo: 'erro', texto: 'Escreva o comunicado (pelo menos 10 caracteres).' })
+            setEstado({ tipo: 'ocioso' })
+            setConfirmando(true)
+          }}
+          className="flex flex-col gap-4 rounded-xl border border-linha bg-branco p-6 lg:self-start"
+        >
+          <h2 className="font-display text-xl text-tinta">Novo comunicado</h2>
+          <Campo rotulo="Para quem">
+            {(p) => (
+              <Selecao {...p} value={publico} onChange={(e) => setPublico(e.target.value)}>
+                {PUBLICOS.map(([v, t]) => (
+                  <option key={v} value={v}>
+                    {t}
+                  </option>
+                ))}
+              </Selecao>
+            )}
+          </Campo>
+          <Campo rotulo="Mensagem" ajuda={`${texto.length}/300`}>
+            {(p) => <AreaTexto {...p} rows={4} maxLength={300} value={texto} onChange={(e) => setTexto(e.target.value)} />}
+          </Campo>
+          <Campo rotulo="Link no site" opcional ajuda="Um caminho da Bloom, como /candidata/vagas ou /empresa/premium.">
+            {(p) => <Entrada {...p} maxLength={200} placeholder="/candidata/vagas" value={link} onChange={(e) => setLink(e.target.value)} />}
+          </Campo>
+          {confirmando ? (
+            <div className="flex flex-col gap-2 rounded-xl bg-alerta-claro p-3 text-sm">
+              <p className="font-semibold text-alerta">Enviar para {PUBLICOS.find(([v]) => v === publico)[1].toLowerCase()}? Não dá para desfazer.</p>
+              <div className="flex gap-2">
+                <Botao tamanho="sm" type="button" onClick={enviar} disabled={estado.tipo === 'enviando'}>
+                  {estado.tipo === 'enviando' ? 'Enviando…' : 'Enviar agora'}
+                </Botao>
+                <Botao tamanho="sm" type="button" variante="fantasma" onClick={() => setConfirmando(false)}>
+                  Cancelar
+                </Botao>
+              </div>
+            </div>
+          ) : (
+            <Botao type="submit" className="self-start">
+              Revisar e enviar
+            </Botao>
+          )}
+          {(estado.tipo === 'erro' || estado.tipo === 'sucesso') && <Aviso tipo={estado.tipo}>{estado.texto}</Aviso>}
+        </form>
+
+        <section className="rounded-xl border border-linha bg-branco p-6">
+          <h2 className="font-display text-xl text-tinta">Enviados</h2>
+          {r.tipo === 'carregando' && <Carregando quantidade={2} altura="h-16" />}
+          {r.tipo === 'erro' && <ErroAoCarregar erro={r.erro} aoTentar={r.recarregar} />}
+          {r.tipo === 'pronto' &&
+            (r.dados.comunicados.length === 0 ? (
+              <p className="mt-3 text-sm text-suave">Nenhum comunicado enviado ainda.</p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-3">
+                {r.dados.comunicados.map((c) => (
+                  <li key={c.id} className="rounded-lg bg-papel px-4 py-3 text-sm">
+                    <p className="whitespace-pre-line text-tinta">{c.texto}</p>
+                    <p className="mt-1 text-xs text-suave">
+                      {PUBLICOS.find(([v]) => v === c.publico)?.[1]} · {c.enviados} entregues · {c.admin} · {dataHora(c.criadoEm)}
+                      {c.link && ` · ${c.link}`}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ))}
+        </section>
+      </div>
     </>
   )
 }
+

@@ -32,7 +32,9 @@ export function exigirLogin(tiposPermitidos = ["usuaria", "empresa"]) {
 
 // Área de administração: token de administrador ativo (conferido no banco a
 // cada requisição). "niveis" restringe a ação (ex.: só "super").
-export function exigirAdmin(niveis) {
+// Quem precisa trocar a senha (criado no painel com senha inicial) só acessa
+// as rotas marcadas com { durantetroca: true } até trocar.
+export function exigirAdmin(niveis, { durantetroca = false } = {}) {
   return async (req, res, next) => {
     const payload = lerToken(req);
     if (!payload || payload.tipo !== "admin") {
@@ -41,6 +43,9 @@ export function exigirAdmin(niveis) {
     try {
       const admin = await Admin.findByPk(payload.sub);
       if (!admin || !admin.ativo) return res.status(401).json({ erro: "Sessão de administração inválida. Entre de novo." });
+      if (admin.deveTrocarSenha && !durantetroca) {
+        return res.status(403).json({ erro: "Troque a senha inicial antes de usar o painel.", trocarSenha: true });
+      }
       if (niveis && !niveis.includes(admin.nivel)) {
         return res.status(403).json({ erro: "Só administradores com acesso total podem fazer isso." });
       }

@@ -1,6 +1,8 @@
 import { useId, useState } from 'react'
 
+import Icone from '../Icone'
 import Botao from '../ui/Botao'
+import { baixarRelatorio } from '../../services/admin'
 import { AreaTexto, Aviso } from '../ui/Campo'
 import { cn } from '../../lib/cn'
 
@@ -95,3 +97,26 @@ export function Filtros({ opcoes, valor, aoMudar, rotulo }) {
     </div>
   )
 }
+
+// Baixa a planilha (CSV) de uma lista. Só para quem tem acesso total.
+export function BotaoRelatorio({ recurso }) {
+  const [estado, setEstado] = useState(null)
+  async function baixar() {
+    setEstado('baixando')
+    try {
+      await baixarRelatorio(recurso)
+      setEstado(null)
+    } catch (e) {
+      setEstado(e.message)
+    }
+  }
+  return (
+    <span className="flex flex-col items-end gap-1">
+      <Botao tamanho="sm" variante="secundario" onClick={baixar} disabled={estado === 'baixando'}>
+        <Icone nome="documento" tamanho={15} /> {estado === 'baixando' ? 'Gerando…' : 'Exportar planilha'}
+      </Botao>
+      {estado && estado !== 'baixando' && <span className="text-xs text-erro">{estado}</span>}
+    </span>
+  )
+}
+

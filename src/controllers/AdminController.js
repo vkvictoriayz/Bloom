@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { fn, col, Op } from "sequelize";
 import { sequelize } from "../config/database.js";
-import { Admin, DashboardAdmin, LogAdmin, NIVEIS_ADMIN, registrarAcao } from "../models/Admin.js";
+import { Admin, Comunicado, DashboardAdmin, LogAdmin, NIVEIS_ADMIN, registrarAcao } from "../models/Admin.js";
 import { Comentario, Curtida, Publicacao } from "../models/Comunidade.js";
 import { Candidatura, PerfilEmpresa, PublicacaoEmpresa, Vaga } from "../models/Empresarial.js";
 import { Comunidade, ComunidadeMembro, ComunidadePublicacao } from "../models/Grupos.js";
@@ -12,7 +12,8 @@ import { EmpresaCadastro, UsuariaVerificacao } from "../models/Verificacao.js";
 import { excluirEmpresa, excluirUsuaria } from "../services/exclusaoConta.js";
 import { notificar } from "../services/notificacoes.js";
 import { limparCacheSuspensao } from "../services/suspensao.js";
-import { criarToken } from "../utils/jwt.js";
+import { criarToken, verificarToken } from "../utils/jwt.js";
+import { cifrar, conferirCodigo, decifrar, enderecoOtp, novoSegredo, novosCodigosRecuperacao, usarCodigoRecuperacao } from "../utils/totp.js";
 import { Denuncia, fecharDenunciasDoAlvo, MOTIVOS_DENUNCIA } from "../models/Denuncia.js";
 import { enviarLinkRedefinicao } from "./AuthController.js";
 import { criarLimitador } from "../utils/limitador.js";
@@ -39,7 +40,53 @@ const comTratamento = (f) => async (req, res) => {
   }
 };
 
-const adminJson = (a) => ({ id: a.id, nome: a.nome, usuario: a.usuario, email: a.email, nivel: a.nivel, ativo: a.ativo, criadoEm: a.criadoEm, ultimoAcesso: a.ultimoAcesso });
+const adminJson = (a) => ({
+  id: a.id,
+  nome: a.nome,
+  usuario: a.usuario,
+  email: a.email,
+  nivel: a.nivel,
+  ativo: a.ativo,
+  criadoEm: a.criadoEm,
+  ultimoAcesso: a.ultimoAcesso,
+  doisFatores: Boolean(a.totpAtivo),
+  deveTrocarSenha: Boolean(a.deveTrocarSenha),
+});
+const falhas2fa = criarLimitador({ janela: 15 * 60 * 1000, maximo: 5 });
+
+// Sessão de administração (4 h, mais curta que a das contas).
+async function abrirSessao(admin, res, comoEntrou = "Entrou no painel") {
+  await admin.update({ ultimoAcesso: new Date() });
+  await registrarAcao(admin.id, comoEntrou, "ADMINS", admin.id);
+  const token = criarToken({ sub: admin.id, tipo: "admin", nome: admin.nome }, process.env.JWT_SECRET, 4 * 3600);
+  return res.json({
+    token,
+    usuario: { id: admin.id, nome: admin.nome, email: admin.email, tipo: "admin", nivel: admin.nivel, deveTrocarSenha: Boolean(admin.deveTrocarSenha), doisFatores: Boolean(admin.totpAtivo) },
+  });
+}
+
+// Confere um código do app autenticador ou um código de recuperação (uso único).
+// Devolve uma descrição do que foi usado, ou null.
+async function conferirSegundoFator(admin, codigo) {
+  if (!admin.totpAtivo || !admin.totpSegredo) return null;
+  let segredo;
+  try {
+    segredo = decifrar(admin.totpSegredo);
+  } catch {
+    return null; // JWT_SECRET mudou: o segredo não abre mais (ver docs/administracao.md)
+  }
+  const passo = conferirCodigo(segredo, codigo, admin.totpUltimoPasso === null ? null : Number(admin.totpUltimoPasso));
+  if (passo !== null) {
+    await admin.update({ totpUltimoPasso: passo });
+    return "app";
+  }
+  const restantes = usarCodigoRecuperacao(admin.codigosRecuperacao, codigo);
+  if (restantes) {
+    await admin.update({ codigosRecuperacao: JSON.stringify(restantes) });
+    return `código de recuperação (restam ${restantes.length})`;
+  }
+  return null;
+}
 
 // Fecha as denúncias abertas sobre algo em que a equipe agiu e avisa quem denunciou.
 async function encerrarDenuncias(alvoTipo, alvoId, adminId, resolucao) {
@@ -77,11 +124,29 @@ export const login = comTratamento(async (req, res) => {
     return erro(res, 401, "Usuário ou senha incorretos.");
   }
   falhasLogin.limpar(chave);
-  await admin.update({ ultimoAcesso: new Date() });
-  await registrarAcao(admin.id, "Entrou no painel", "ADMINS", admin.id);
-  const horas = 4; // sessão de administração mais curta que a das contas
-  const token = criarToken({ sub: admin.id, tipo: "admin", nome: admin.nome }, process.env.JWT_SECRET, horas * 3600);
-  return res.json({ token, usuario: { id: admin.id, nome: admin.nome, email: admin.email, tipo: "admin", nivel: admin.nivel } });
+  // Com verificação em duas etapas: a senha só libera o segundo passo (5 min).
+  if (admin.totpAtivo) {
+    const desafio = criarToken({ sub: admin.id, tipo: "admin-2fa" }, process.env.JWT_SECRET, 5 * 60);
+    return res.json({ precisaCodigo: true, desafio });
+  }
+  return abrirSessao(admin, res);
+});
+
+// POST /api/admin/login/codigo { desafio, codigo } — segundo passo do login.
+export const loginCodigo = comTratamento(async (req, res) => {
+  const desafio = verificarToken(String(req.body?.desafio ?? ""), process.env.JWT_SECRET);
+  if (!desafio || desafio.tipo !== "admin-2fa") return erro(res, 401, "O tempo para digitar o código acabou. Entre de novo.");
+  const chave = `admin2fa:${desafio.sub}`;
+  if (falhas2fa.bloqueado(chave)) return erro(res, 429, "Muitos códigos errados. Aguarde alguns minutos e entre de novo.");
+  const admin = await Admin.findByPk(desafio.sub);
+  if (!admin || !admin.ativo || !admin.totpAtivo) return erro(res, 401, "Entre de novo.");
+  const usado = await conferirSegundoFator(admin, req.body?.codigo);
+  if (!usado) {
+    falhas2fa.registrar(chave);
+    return erro(res, 401, "Código inválido ou já usado. Confira o app autenticador.", "codigo");
+  }
+  falhas2fa.limpar(chave);
+  return abrirSessao(admin, res, `Entrou no painel (duas etapas: ${usado})`);
 });
 
 // GET /api/admin/me
@@ -93,7 +158,8 @@ export const alterarSenha = comTratamento(async (req, res) => {
   if (typeof senhaAtual !== "string" || !(await bcrypt.compare(senhaAtual, req.admin.senhaHash))) return erro(res, 400, "A senha atual não confere.", "senhaAtual");
   if (typeof novaSenha !== "string" || novaSenha.length < 10 || Buffer.byteLength(novaSenha) > 72) return erro(res, 400, "A nova senha precisa ter de 10 a 72 caracteres.", "novaSenha");
   if (novaSenha !== confirmarSenha) return erro(res, 400, "As senhas novas não são iguais.", "confirmarSenha");
-  await req.admin.update({ senhaHash: await bcrypt.hash(novaSenha, 12) });
+  if (novaSenha === senhaAtual) return erro(res, 400, "A nova senha precisa ser diferente da atual.", "novaSenha");
+  await req.admin.update({ senhaHash: await bcrypt.hash(novaSenha, 12), deveTrocarSenha: false });
   await registrarAcao(req.admin.id, "Trocou a própria senha", "ADMINS", req.admin.id);
   return res.json({ mensagem: "Senha alterada." });
 });
@@ -641,7 +707,8 @@ export const criarAdmin = comTratamento(async (req, res) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 150) return erro(res, 400, "Digite um e-mail válido.", "email");
   if (typeof senha !== "string" || senha.length < 10 || Buffer.byteLength(senha) > 72) return erro(res, 400, "A senha inicial precisa ter de 10 a 72 caracteres.", "senha");
   if (await Admin.findOne({ where: { [Op.or]: [{ usuario }, { email }] } })) return erro(res, 409, "Já existe um administrador com esse usuário ou e-mail.", "usuario");
-  const novo = await Admin.create({ nome, usuario, email, nivel, senhaHash: await bcrypt.hash(senha, 12), ativo: true });
+  // Senha inicial passada por outra pessoa: precisa ser trocada no primeiro acesso.
+  const novo = await Admin.create({ nome, usuario, email, nivel, senhaHash: await bcrypt.hash(senha, 12), ativo: true, deveTrocarSenha: true });
   await registrarAcao(req.admin.id, "Criou administrador", "ADMINS", novo.id, `${usuario} (${nivel})`);
   return res.status(201).json({ admin: adminJson(novo) });
 });
@@ -655,6 +722,8 @@ export const alterarAdmin = comTratamento(async (req, res) => {
   if (alvo.id === req.admin.id) return erro(res, 400, "Você não pode mudar o seu próprio acesso.");
   const mudancas = {};
   if (typeof req.body?.ativo === "boolean") mudancas.ativo = req.body.ativo;
+  // Celular perdido: desliga a verificação em duas etapas para a pessoa configurar de novo.
+  if (req.body?.desligarDoisFatores === true) Object.assign(mudancas, { totpAtivo: false, totpSegredo: null, totpUltimoPasso: null, codigosRecuperacao: null });
   if (req.body?.nivel !== undefined) {
     if (!NIVEIS_ADMIN.includes(req.body.nivel)) return erro(res, 400, "Nível inválido.", "nivel");
     mudancas.nivel = req.body.nivel;
@@ -799,5 +868,161 @@ export const decidirDenuncia = comTratamento(async (req, res) => {
   for (const f of fechadas) await notificar({ tipoConta: f.tipoConta, contaId: f.contaId, tipo: "plataforma", texto: texto_ });
   await registrarAcao(req.admin.id, status === "resolvida" ? "Resolveu denúncia" : "Descartou denúncia", "DENUNCIA", id, `${d.alvoTipo} #${d.alvoId} (${fechadas.length} denúncia(s)): ${resolucao}`);
   return res.json({ fechadas: fechadas.length });
+});
+
+// ------------------------------------------------------------ Duas etapas (da própria conta)
+
+async function conferirSenhaAtual(req, res) {
+  if (typeof req.body?.senha !== "string" || !(await bcrypt.compare(req.body.senha, req.admin.senhaHash))) {
+    erro(res, 400, "A senha não confere.", "senha");
+    return false;
+  }
+  return true;
+}
+
+// POST /api/admin/duas-etapas/iniciar { senha } — gera o segredo para o app.
+// Só passa a valer depois de confirmar um código (ativar).
+export const iniciarDuasEtapas = comTratamento(async (req, res) => {
+  if (req.admin.totpAtivo) return erro(res, 409, "A verificação em duas etapas já está ligada.");
+  if (!(await conferirSenhaAtual(req, res))) return undefined;
+  const segredo = novoSegredo();
+  await req.admin.update({ totpSegredo: cifrar(segredo), totpAtivo: false, totpUltimoPasso: null });
+  return res.json({ segredo, endereco: enderecoOtp(segredo, req.admin.usuario) });
+});
+
+// POST /api/admin/duas-etapas/ativar { codigo } — confirma o app e devolve os
+// códigos de recuperação (mostrados uma vez só).
+export const ativarDuasEtapas = comTratamento(async (req, res) => {
+  if (req.admin.totpAtivo) return erro(res, 409, "A verificação em duas etapas já está ligada.");
+  if (!req.admin.totpSegredo) return erro(res, 400, "Comece a configuração de novo.");
+  const passo = conferirCodigo(decifrar(req.admin.totpSegredo), req.body?.codigo);
+  if (passo === null) return erro(res, 400, "Código inválido. Confira se o relógio do celular está certo e tente o código atual.", "codigo");
+  const { codigos, hashes } = novosCodigosRecuperacao();
+  await req.admin.update({ totpAtivo: true, totpUltimoPasso: passo, codigosRecuperacao: JSON.stringify(hashes) });
+  await registrarAcao(req.admin.id, "Ligou a verificação em duas etapas", "ADMINS", req.admin.id);
+  return res.json({ codigosRecuperacao: codigos });
+});
+
+// POST /api/admin/duas-etapas/desativar { senha, codigo }
+export const desativarDuasEtapas = comTratamento(async (req, res) => {
+  if (!req.admin.totpAtivo) return erro(res, 409, "A verificação em duas etapas não está ligada.");
+  if (!(await conferirSenhaAtual(req, res))) return undefined;
+  if (!(await conferirSegundoFator(req.admin, req.body?.codigo))) return erro(res, 400, "Código inválido.", "codigo");
+  await req.admin.update({ totpAtivo: false, totpSegredo: null, totpUltimoPasso: null, codigosRecuperacao: null });
+  await registrarAcao(req.admin.id, "Desligou a verificação em duas etapas", "ADMINS", req.admin.id);
+  return res.json({ doisFatores: false });
+});
+
+// POST /api/admin/duas-etapas/novos-codigos { senha, codigo } — troca os códigos de recuperação.
+export const novosCodigos = comTratamento(async (req, res) => {
+  if (!req.admin.totpAtivo) return erro(res, 409, "A verificação em duas etapas não está ligada.");
+  if (!(await conferirSenhaAtual(req, res))) return undefined;
+  if (!(await conferirSegundoFator(req.admin, req.body?.codigo))) return erro(res, 400, "Código inválido.", "codigo");
+  const { codigos, hashes } = novosCodigosRecuperacao();
+  await req.admin.update({ codigosRecuperacao: JSON.stringify(hashes) });
+  await registrarAcao(req.admin.id, "Gerou novos códigos de recuperação", "ADMINS", req.admin.id);
+  return res.json({ codigosRecuperacao: codigos });
+});
+
+// ------------------------------------------------------------ Comunicados (só "super")
+
+const PUBLICOS = { todos: "todas as contas", usuarias: "candidatas", empresas: "empresas" };
+
+// POST /api/admin/comunicados { publico, texto, link? } — aviso "Atualizações da
+// Bloom" nas notificações (respeita quem desligou essa categoria; contas
+// suspensas não recebem).
+export const enviarComunicado = comTratamento(async (req, res) => {
+  const publico = texto(req.body?.publico);
+  const msg = texto(req.body?.texto);
+  const link = texto(req.body?.link);
+  if (!PUBLICOS[publico]) return erro(res, 400, "Escolha para quem enviar.", "publico");
+  if (msg.length < 10 || msg.length > 300) return erro(res, 400, "O comunicado deve ter de 10 a 300 caracteres.", "texto");
+  // Só caminhos do próprio site ("//outro-site" levaria para fora da Bloom).
+  if (link && (link.startsWith("//") || !/^\/[A-Za-z0-9\-._~/?#=&%]*$/.test(link))) return erro(res, 400, "Use um caminho do próprio site, como /candidata/vagas.", "link");
+  if (link.length > 200) return erro(res, 400, "O caminho pode ter até 200 caracteres.", "link");
+
+  const destinos = [];
+  if (publico !== "empresas") for (const u of await Usuaria.findAll({ attributes: ["id"], where: { suspensaEm: null } })) destinos.push(["usuaria", u.id]);
+  if (publico !== "usuarias") for (const e of await Empresa.findAll({ attributes: ["id"], where: { suspensaEm: null } })) destinos.push(["empresa", e.id]);
+  let enviados = 0;
+  for (const [tipoConta, contaId] of destinos) {
+    if (await notificar({ tipoConta, contaId, tipo: "plataforma", texto: msg, link: link || null })) enviados++;
+  }
+  const c = await Comunicado.create({ adminId: req.admin.id, publico, texto: msg, link: link || null, enviados });
+  await registrarAcao(req.admin.id, "Enviou comunicado", "COMUNICADO", c.id, `Para ${PUBLICOS[publico]} (${enviados} de ${destinos.length}): ${msg}`);
+  return res.status(201).json({ enviados, total: destinos.length });
+});
+
+// GET /api/admin/comunicados
+export const listarComunicados = comTratamento(async (req, res) => {
+  const lista = await Comunicado.findAll({ order: [["id", "DESC"]], limit: 100 });
+  const nomes = await nomesDosAdmins(lista.map((c) => c.adminId));
+  return res.json({
+    comunicados: lista.map((c) => ({ id: c.id, publico: c.publico, texto: c.texto, link: c.link ?? "", enviados: c.enviados, criadoEm: c.criadoEm, admin: nomes.get(c.adminId) ?? "Administrador" })),
+  });
+});
+
+// ------------------------------------------------------------ Relatórios em CSV (só "super")
+
+// Célula de CSV: aspas escapadas e sem fórmulas (=, +, -, @) que o Excel executaria.
+function celula(v) {
+  let t = v === null || v === undefined ? "" : v instanceof Date ? v.toISOString().replace("T", " ").slice(0, 19) : String(v);
+  if (/^[=+\-@\t\r]/.test(t)) t = `'${t}`;
+  return /[";\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+}
+const linhaCsv = (valores) => valores.map(celula).join(";");
+
+async function dadosRelatorio(recurso) {
+  switch (recurso) {
+    case "candidatas": {
+      const lista = await Usuaria.findAll({ order: [["id", "ASC"]] });
+      const verif = new Map((await UsuariaVerificacao.findAll()).map((v) => [v.usuariaId, v.cpfStatus]));
+      return [["id", "nome", "email", "cpf (mascarado)", "cpf_status", "suspensa_em", "motivo_suspensao"], ...lista.map((u) => [u.id, u.nome, u.email, mascararCpf(u.cpf), verif.get(u.id) ?? "nao_verificado", u.suspensaEm, u.motivoSuspensao])];
+    }
+    case "empresas": {
+      const lista = await Empresa.findAll({ order: [["id", "ASC"]] });
+      const cad = new Map((await EmpresaCadastro.findAll()).map((c) => [c.empresaId, c]));
+      return [["id", "nome", "email", "cnpj", "razao_social", "situacao_receita", "representante", "suspensa_em", "motivo_suspensao"], ...lista.map((e) => [e.id, e.nome, e.email, formatarCnpj(e.cnpj), cad.get(e.id)?.razaoSocial, cad.get(e.id)?.situacaoCadastral, cad.get(e.id)?.representanteStatus, e.suspensaEm, e.motivoSuspensao])];
+    }
+    case "vagas": {
+      const lista = await Vaga.findAll({ order: [["id", "ASC"]] });
+      const perfis = new Map((await PerfilEmpresa.findAll()).map((p) => [p.id, p.empresaId]));
+      const nomes = new Map((await Empresa.findAll({ attributes: ["id", "nome"] })).map((e) => [e.id, e.nome]));
+      const cands = new Map((await Candidatura.findAll({ attributes: ["vagaId", [fn("COUNT", col("id_candidatura")), "n"]], group: ["vagaId"], raw: true })).map((c) => [c.vagaId, Number(c.n)]));
+      return [["id", "titulo", "empresa", "status", "modalidade", "publicada_em", "candidaturas"], ...lista.map((v) => [v.id, v.titulo, nomes.get(perfis.get(v.perfilEmpresaId)) ?? "", v.status, v.modalidade, v.dataPublicacao, cands.get(v.id) ?? 0])];
+    }
+    case "denuncias": {
+      const lista = await Denuncia.findAll({ order: [["id", "ASC"]] });
+      return [["id", "alvo", "alvo_id", "motivo", "descricao", "status", "criada_em", "resolucao", "resolvida_em"], ...lista.map((d) => [d.id, d.alvoTipo, d.alvoId, MOTIVOS_DENUNCIA[d.motivo] ?? d.motivo, d.descricao, d.status, d.criadaEm, d.resolucao, d.resolvidaEm])];
+    }
+    case "pagamentos": {
+      const lista = await Pagamento.findAll({ order: [["id", "ASC"]] });
+      const planos = new Map((await Plano.findAll()).map((p) => [p.id, p.nome]));
+      return [["id", "tipo_conta", "id_conta", "plano", "status", "valor", "moeda", "pago_em", "registrado_em"], ...lista.map((p) => [p.id, p.tipoConta, p.contaId, planos.get(p.planoId) ?? "", p.status, Number(p.valor).toFixed(2).replace(".", ","), p.moeda, p.pagoEm, p.registradoEm])];
+    }
+    case "registro": {
+      const lista = await LogAdmin.findAll({ order: [["id", "ASC"]] });
+      const nomes = await nomesDosAdmins(lista.map((l) => l.adminId));
+      return [["id", "administrador", "acao", "tabela", "registro_id", "detalhes", "em"], ...lista.map((l) => [l.id, nomes.get(l.adminId) ?? "", l.acao, l.tabela, l.registroId, l.detalhes, l.em])];
+    }
+    default:
+      return null;
+  }
+}
+
+// GET /api/admin/relatorios/:recurso — CSV (separado por ";", abre no Excel).
+export const relatorio = comTratamento(async (req, res) => {
+  const linhas = await dadosRelatorio(req.params.recurso);
+  if (!linhas) return erro(res, 404, "Relatório não encontrado.");
+  await registrarAcao(req.admin.id, "Exportou relatório", null, null, `${req.params.recurso} (${linhas.length - 1} linhas)`);
+  const dia = new Date().toISOString().slice(0, 10);
+  res.set({
+    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Disposition": `attachment; filename="bloom-${req.params.recurso}-${dia}.csv"`,
+    "Cache-Control": "private, no-store",
+    "X-Content-Type-Options": "nosniff",
+  });
+  // BOM: faz o Excel reconhecer os acentos.
+  return res.send(`\uFEFF${linhas.map(linhaCsv).join("\r\n")}\r\n`);
 });
 

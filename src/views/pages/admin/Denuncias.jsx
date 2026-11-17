@@ -1,14 +1,14 @@
 import { useId, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-import { AcaoComMotivo, Filtros, Paginacao } from '../../components/admin/Comuns'
+import { AcaoComMotivo, BotaoRelatorio, Filtros, Paginacao } from '../../components/admin/Comuns'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
 import { useCarregar } from '../../components/empresa/useCarregar'
 import Botao from '../../components/ui/Botao'
 import { AreaTexto, Aviso } from '../../components/ui/Campo'
 import Selo from '../../components/ui/Selo'
-import { dataHora, decidirDenuncia, listarDenuncias, moderarVaga, removerComentarioAdmin, removerComunidadeAdmin, removerPublicacaoAdmin } from '../../services/admin'
+import { dataHora, decidirDenuncia, ehSuper, listarDenuncias, moderarVaga, removerComentarioAdmin, removerComunidadeAdmin, removerPublicacaoAdmin } from '../../services/admin'
 
 const TIPOS = {
   publicacao: 'Publicação',
@@ -109,7 +109,11 @@ function Denuncias() {
 
   return (
     <>
-      <TituloPagina titulo="Denúncias" descricao="O que candidatas e empresas denunciaram. As mais antigas primeiro. Quem foi denunciado não sabe quem denunciou." />
+      <TituloPagina
+        titulo="Denúncias"
+        descricao="O que candidatas e empresas denunciaram. As mais antigas primeiro. Quem foi denunciado não sabe quem denunciou."
+        acoes={ehSuper() && <BotaoRelatorio recurso="denuncias" />}
+      />
       <div className="mb-4">
         <Filtros
           opcoes={[

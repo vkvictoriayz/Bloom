@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
-import { AcaoComMotivo, Filtros, Paginacao } from '../../components/admin/Comuns'
+import { AcaoComMotivo, BotaoRelatorio, Filtros, Paginacao } from '../../components/admin/Comuns'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
 import { useCarregar } from '../../components/empresa/useCarregar'
@@ -73,7 +73,7 @@ export function Candidatas() {
 
   return (
     <>
-      <TituloPagina titulo="Candidatas" descricao="Contas de candidatas. O CPF aparece mascarado." />
+      <TituloPagina titulo="Candidatas" descricao="Contas de candidatas. O CPF aparece mascarado." acoes={ehSuper() && <BotaoRelatorio recurso="candidatas" />} />
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
         <CampoBusca key={f.busca} valor={f.busca} aoMudar={(v) => definir('busca', v)} placeholder="Buscar por nome ou e-mail" />
         <Filtros opcoes={SITUACOES} valor={f.situacao} aoMudar={(v) => definir('situacao', v)} rotulo="Situação da conta" />
@@ -302,7 +302,7 @@ export function Empresas() {
 
   return (
     <>
-      <TituloPagina titulo="Empresas" descricao="Contas de empresas, com os dados da Receita e a confirmação do representante." />
+      <TituloPagina titulo="Empresas" descricao="Contas de empresas, com os dados da Receita e a confirmação do representante." acoes={ehSuper() && <BotaoRelatorio recurso="empresas" />} />
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
         <CampoBusca key={f.busca} valor={f.busca} aoMudar={(v) => definir('busca', v)} placeholder="Buscar por nome, e-mail ou CNPJ" />
         <Filtros opcoes={SITUACOES} valor={f.situacao} aoMudar={(v) => definir('situacao', v)} rotulo="Situação da conta" />

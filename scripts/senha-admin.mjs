@@ -21,8 +21,18 @@ try {
   console.log(`Administrador: ${admin.nome} (${admin.usuario})${admin.ativo ? "" : " — está desativado e será reativado"}`);
 
   const senha = await pedirSenhaNova();
-  await admin.update({ senhaHash: await bcrypt.hash(senha, 12), ativo: true });
-  await registrarAcao(admin.id, "Senha redefinida pelo terminal", "ADMINS", admin.id);
+  const mudancas = { senhaHash: await bcrypt.hash(senha, 12), ativo: true, deveTrocarSenha: false };
+  // Perdeu o celular? Desliga a verificação em duas etapas para configurar de novo no painel.
+  let desligou = false;
+  if (admin.totpAtivo) {
+    const r = (await perguntar("A verificação em duas etapas está ligada. Desligar (celular perdido)? [s/N]: ", { permitirVazio: true })).toLowerCase();
+    if (r === "s" || r === "sim") {
+      Object.assign(mudancas, { totpAtivo: false, totpSegredo: null, totpUltimoPasso: null, codigosRecuperacao: null });
+      desligou = true;
+    }
+  }
+  await admin.update(mudancas);
+  await registrarAcao(admin.id, desligou ? "Senha redefinida e duas etapas desligadas pelo terminal" : "Senha redefinida pelo terminal", "ADMINS", admin.id);
   console.log(`\nPronto. Entre em http://localhost:3006/admin com o usuário "${admin.usuario}".\n`);
 } catch (e) {
   console.error(`\n${e.message}\n`);

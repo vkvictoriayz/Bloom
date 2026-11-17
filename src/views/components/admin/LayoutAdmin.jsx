@@ -1,3 +1,5 @@
+import { Navigate, useLocation } from 'react-router-dom'
+
 import LayoutPrivado from '../layout/LayoutPrivado'
 import { useSessao } from '../../hooks/useSessao'
 
@@ -35,6 +37,7 @@ function config(nivel) {
       { divisor: true },
       {
         itens: [
+          ...(nivel === 'super' ? [{ rotulo: 'Comunicados', para: '/admin/comunicados', icone: 'sino' }] : []),
           { rotulo: 'Pagamentos', para: '/admin/pagamentos', icone: 'coroa' },
           { rotulo: 'Registro de ações', para: '/admin/registro', icone: 'relogio' },
           ...(nivel === 'super' ? [{ rotulo: 'Administradores', para: '/admin/administradores', icone: 'escudo' }] : []),
@@ -54,7 +57,10 @@ function config(nivel) {
 
 function LayoutAdmin() {
   const sessao = useSessao()
+  const { pathname } = useLocation()
   const usuario = sessao?.usuario
+  // Senha inicial (criada por outra pessoa): só "Minha conta" até trocar.
+  if (usuario?.deveTrocarSenha && pathname !== '/admin/conta') return <Navigate to="/admin/conta" replace />
   return <LayoutPrivado config={config(usuario?.nivel)} usuario={usuario} foto="" />
 }
 

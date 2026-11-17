@@ -58,4 +58,5 @@ Requer Node 20.6+.
 - [docs/area-candidata.md](docs/area-candidata.md) — área da candidata
 - [docs/area-empresa-premium.md](docs/area-empresa-premium.md) — área da empresa, notificações e Bloom Premium
 - [docs/rede-social.md](docs/rede-social.md) — imagens nas publicações, edição, mensagens entre candidatas, ícones e seguir
-- [docs/administracao.md](docs/administracao.md) — painel da equipe (`/admin`) e `npm run admin:criar`
+- [docs/administracao.md](docs/administracao.md) — painel da equipe (`/admin`), `npm run admin:criar` e `npm run admin:senha`
+- [docs/STATUS.md](docs/STATUS.md) — o que está feito e o que falta, por área (checklist)

@@ -10,12 +10,21 @@ router.use(express.json({ limit: "20kb" }));
 
 const limiteLogin = limitarPorIp(criarLimitador({ janela: 60 * 1000, maximo: 10 }), "Muitas tentativas. Aguarde um minuto e tente de novo.");
 router.post("/login", limiteLogin, A.login);
+// O passo do código tem limite próprio (além do bloqueio de 5 códigos errados por pessoa).
+const limiteCodigo = limitarPorIp(criarLimitador({ janela: 60 * 1000, maximo: 20 }), "Muitas tentativas. Aguarde um minuto e tente de novo.");
+router.post("/login/codigo", limiteCodigo, A.loginCodigo);
 
 const admin = exigirAdmin();
 const soSuper = exigirAdmin(["super"]);
+// Liberadas mesmo com a troca de senha pendente (para a pessoa conseguir trocar).
+const duranteTroca = exigirAdmin(undefined, { durantetroca: true });
 
-router.get("/me", admin, A.me);
-router.put("/senha", admin, A.alterarSenha);
+router.get("/me", duranteTroca, A.me);
+router.put("/senha", duranteTroca, A.alterarSenha);
+router.post("/duas-etapas/iniciar", admin, A.iniciarDuasEtapas);
+router.post("/duas-etapas/ativar", admin, A.ativarDuasEtapas);
+router.post("/duas-etapas/desativar", admin, A.desativarDuasEtapas);
+router.post("/duas-etapas/novos-codigos", admin, A.novosCodigos);
 router.get("/dashboard", admin, A.dashboard);
 
 router.get("/candidatas", admin, A.listarCandidatas);
@@ -44,6 +53,10 @@ router.patch("/denuncias/:id", admin, A.decidirDenuncia);
 
 router.get("/pagamentos", admin, A.pagamentos);
 router.get("/registro", admin, A.registro);
+
+router.get("/comunicados", soSuper, A.listarComunicados);
+router.post("/comunicados", soSuper, A.enviarComunicado);
+router.get("/relatorios/:recurso", soSuper, A.relatorio);
 
 router.get("/admins", soSuper, A.listarAdmins);
 router.post("/admins", soSuper, A.criarAdmin);

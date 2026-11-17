@@ -20,6 +20,12 @@ export const Admin = sequelize.define(
     criadoEm: { type: DataTypes.DATE, defaultValue: DataTypes.NOW, field: "data_criacao" },
     ativo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     ultimoAcesso: { type: DataTypes.DATE, field: "ultimo_acesso" },
+    // Migration 007: verificação em duas etapas e troca de senha obrigatória.
+    totpSegredo: { type: DataTypes.STRING(200), field: "totp_segredo" }, // cifrado (utils/totp.js)
+    totpAtivo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: "totp_ativo" },
+    totpUltimoPasso: { type: DataTypes.BIGINT, field: "totp_ultimo_passo" },
+    codigosRecuperacao: { type: DataTypes.TEXT, field: "codigos_recuperacao" }, // JSON de hashes
+    deveTrocarSenha: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: "deve_trocar_senha" },
   },
   opcoes("ADMINS")
 );
@@ -55,6 +61,21 @@ export const DashboardAdmin = sequelize.define(
     atualizadoEm: { type: DataTypes.DATE, defaultValue: DataTypes.NOW, field: "atualizacao_em" },
   },
   opcoes("DASHBOARD_ADMIN")
+);
+
+// Comunicados da equipe para candidatas e/ou empresas (migration 007).
+export const Comunicado = sequelize.define(
+  "Comunicado",
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, field: "id_comunicado" },
+    adminId: { type: DataTypes.INTEGER, allowNull: false, field: "id_admin" },
+    publico: { type: DataTypes.ENUM("todos", "usuarias", "empresas"), allowNull: false },
+    texto: { type: DataTypes.STRING(300), allowNull: false },
+    link: { type: DataTypes.STRING(200) },
+    enviados: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+    criadoEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "criado_em" },
+  },
+  opcoes("COMUNICADO")
 );
 
 // Registra uma ação de administrador (quem, o quê, onde e por quê).

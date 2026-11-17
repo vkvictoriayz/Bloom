@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
 import { IconeAvatar } from '../../components/IconePerfil'
-import { AcaoComMotivo, Filtros, Paginacao } from '../../components/admin/Comuns'
+import { AcaoComMotivo, BotaoRelatorio, Filtros, Paginacao } from '../../components/admin/Comuns'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
 import { useCarregar } from '../../components/empresa/useCarregar'
@@ -12,6 +12,7 @@ import Selo from '../../components/ui/Selo'
 import { urlImagem } from '../../services/api'
 import {
   dataHora,
+  ehSuper,
   listarComentariosAdmin,
   listarComunidadesAdmin,
   listarPublicacoesAdmin,
@@ -73,7 +74,11 @@ export function VagasAdmin() {
 
   return (
     <>
-      <TituloPagina titulo="Vagas" descricao="Todas as vagas da plataforma. A equipe pode pausar ou encerrar uma vaga que fere as regras; a empresa é avisada com o motivo." />
+      <TituloPagina
+        titulo="Vagas"
+        descricao="Todas as vagas da plataforma. A equipe pode pausar ou encerrar uma vaga que fere as regras; a empresa é avisada com o motivo."
+        acoes={ehSuper() && <BotaoRelatorio recurso="vagas" />}
+      />
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
         <Busca key={f.busca} valor={f.busca} aoMudar={(v) => definir('busca', v)} placeholder="Buscar pelo título da vaga" />
         <Filtros opcoes={STATUS} valor={f.status} aoMudar={(v) => definir('status', v)} rotulo="Status da vaga" />

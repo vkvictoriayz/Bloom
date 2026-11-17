@@ -1,4 +1,4 @@
-import { api } from './api.js'
+import { api, baixarArquivo } from './api.js'
 import { obterSessao, salvarSessao } from './auth.js'
 
 // Cliente da API da administração (/api/admin). A sessão do administrador usa
@@ -15,11 +15,32 @@ const consulta = (params) => {
   return q ? `?${q}` : ''
 }
 
+// Login: com a verificação em duas etapas ligada, a senha devolve um
+// "desafio" e a sessão só abre depois do código (confirmarCodigo).
 export async function entrarAdmin(usuario, senha) {
   const r = await api('/admin/login', { method: 'POST', corpo: { usuario, senha } })
+  if (!r.precisaCodigo) salvarSessao(r)
+  return r
+}
+export async function confirmarCodigo(desafio, codigo) {
+  const r = await api('/admin/login/codigo', { method: 'POST', corpo: { desafio, codigo } })
   salvarSessao(r)
   return r
 }
+// Atualiza a sessão salva (ex.: depois de trocar a senha inicial).
+export function atualizarSessaoAdmin(mudancas) {
+  const sessao = obterSessao()
+  if (sessao?.usuario?.tipo === 'admin') salvarSessao({ token: sessao.token, usuario: { ...sessao.usuario, ...mudancas } })
+}
+export const lerMeuAdmin = () => chamar('/me').then((r) => r.admin)
+export const iniciarDuasEtapas = (senha) => chamar('/duas-etapas/iniciar', { method: 'POST', corpo: { senha } })
+export const ativarDuasEtapas = (codigo) => chamar('/duas-etapas/ativar', { method: 'POST', corpo: { codigo } })
+export const desativarDuasEtapas = (senha, codigo) => chamar('/duas-etapas/desativar', { method: 'POST', corpo: { senha, codigo } })
+export const gerarNovosCodigos = (senha, codigo) => chamar('/duas-etapas/novos-codigos', { method: 'POST', corpo: { senha, codigo } })
+export const listarComunicados = () => chamar('/comunicados')
+export const enviarComunicado = (corpo) => chamar('/comunicados', { method: 'POST', corpo })
+// Planilha CSV (abre no Excel): candidatas, empresas, vagas, denuncias, pagamentos, registro.
+export const baixarRelatorio = (recurso) => baixarArquivo(`/admin/relatorios/${encodeURIComponent(recurso)}`, obterSessao()?.token, `bloom-${recurso}.csv`)
 
 export const ehSuper = () => obterSessao()?.usuario?.nivel === 'super'
 

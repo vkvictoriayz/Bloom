@@ -12,7 +12,7 @@ export function exigirTerminal() {
 }
 
 // Pergunta e espera o Enter. Com "oculto", mostra * no lugar de cada caractere.
-export function perguntar(texto, { oculto = false } = {}) {
+export function perguntar(texto, { oculto = false, permitirVazio = false } = {}) {
   return new Promise((ok) => {
     const entrada = process.stdin;
     let resposta = "";
@@ -38,7 +38,7 @@ export function perguntar(texto, { oculto = false } = {}) {
         }
         ignorarProximoLf = false;
         if (ENTER.has(c)) {
-          if (!resposta && !oculto) continue; // Enter sem nada: continua esperando
+          if (!resposta && !oculto && !permitirVazio) continue; // Enter sem nada: continua esperando
           return terminar();
         }
         if (c === "\u0003") {

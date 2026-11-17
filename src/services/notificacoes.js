@@ -30,22 +30,25 @@ export async function preferenciasDe(tipoConta, contaId) {
 // "chave", não repete o aviso enquanto o anterior com a mesma chave não for
 // lido (ex.: várias mensagens da mesma conversa geram um aviso só). Falha
 // aqui nunca derruba a ação principal.
+// Devolve true se o aviso foi criado (false: a pessoa desligou a categoria ou deu erro).
 export async function notificar({ tipoConta, contaId, tipo, texto, link = null, chave = null }) {
   try {
     const categoria = CATEGORIA[tipo];
     if (categoria) {
       const prefs = await PreferenciaNotificacao.findOne({ where: { tipoConta, contaId } });
-      if (prefs && prefs[categoria] === false) return;
+      if (prefs && prefs[categoria] === false) return false;
     }
     if (chave) {
       const aberta = await Notificacao.findOne({ where: { tipoConta, contaId, chave, lidaEm: { [Op.is]: null } } });
       if (aberta) {
         await aberta.update({ texto: texto.slice(0, 300), criadaEm: new Date() });
-        return;
+        return true;
       }
     }
     await Notificacao.create({ tipoConta, contaId, tipo, texto: texto.slice(0, 300), link, chave });
+    return true;
   } catch (e) {
     console.error("Falha ao criar notificação:", e.message);
+    return false;
   }
 }

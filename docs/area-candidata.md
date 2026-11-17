@@ -124,9 +124,8 @@ o resto da API continua com 20 kB.
 
 ## Ainda não existe
 
-- Envio de arquivo de currículo.
-- Preferências de notificação e aviso por e-mail.
-- Troca de e-mail da conta.
+Os itens que estavam aqui (currículo, preferências de notificação, troca de
+e-mail) já foram feitos. O que falta está em [STATUS.md](STATUS.md).
 
 ## Currículo, busca, projetos e e-mail (migration 004)
 

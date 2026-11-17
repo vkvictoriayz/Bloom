@@ -7,7 +7,8 @@ import PainelAdmin from './pages/admin/Painel'
 import DenunciasAdmin from './pages/admin/Denuncias'
 import { Candidatas as CandidatasAdmin, DetalheCandidata as DetalheCandidataAdmin, DetalheEmpresa as DetalheEmpresaAdmin, Empresas as EmpresasAdmin } from './pages/admin/Contas'
 import { ComunidadesAdmin, PublicacoesAdmin, VagasAdmin } from './pages/admin/Conteudo'
-import { Administradores, ContaAdmin, PagamentosAdmin, RegistroAdmin } from './pages/admin/Sistema'
+import { Administradores, Comunicados as ComunicadosAdmin, PagamentosAdmin, RegistroAdmin } from './pages/admin/Sistema'
+import ContaAdmin from './pages/admin/MinhaConta'
 import { obterSessao } from './services/auth'
 import LayoutCandidata from './components/candidata/LayoutCandidata'
 
@@ -215,7 +216,8 @@ function App() {
           <Route path="/admin/publicacoes" element={<PublicacoesAdmin />} />
           <Route path="/admin/comunidades" element={<ComunidadesAdmin />} />
               <Route path="/admin/denuncias" element={<DenunciasAdmin />} />
-          <Route path="/admin/pagamentos" element={<PagamentosAdmin />} />
+          <Route path="/admin/comunicados" element={<ComunicadosAdmin />} />
+              <Route path="/admin/pagamentos" element={<PagamentosAdmin />} />
           <Route path="/admin/registro" element={<RegistroAdmin />} />
           <Route path="/admin/administradores" element={<Administradores />} />
           <Route path="/admin/conta" element={<ContaAdmin />} />

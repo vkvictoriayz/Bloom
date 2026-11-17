@@ -15,7 +15,8 @@ npm run admin:criar
 O comando pede nome, usuário, e-mail e senha (mínimo de 10 caracteres; na tela
 aparece só `*`) e cria um administrador com **acesso total**. Depois, entre em
 http://localhost:3006/admin. Os demais administradores são criados no próprio
-painel, em **Administradores**.
+painel, em **Administradores**: quem é criado assim precisa trocar a senha
+inicial no primeiro acesso (o painel só abre depois disso).
 
 ### Esqueci a senha do painel
 
@@ -26,12 +27,35 @@ npm run admin:senha
 Pede o usuário (ou e-mail) do administrador e a senha nova (que aparece só como
 `*`). Se o administrador estiver desativado, ele é reativado. A ação fica no
 registro do painel. Só quem tem acesso ao servidor e ao `.env` consegue rodar.
+Se o administrador perdeu o celular da verificação em duas etapas, o comando
+pergunta se deve desligá-la (`[s/N]`).
+
+## Verificação em duas etapas
+
+Em **Minha conta**, cada administrador pode ligar um código de 6 dígitos de um
+app autenticador (Google Authenticator, Microsoft Authenticator, 1Password etc.):
+
+1. "Ligar a verificação em duas etapas" pede a senha e mostra a chave (e o link
+   `otpauth://` para abrir no app).
+2. Digite o código do app para confirmar. Aparecem **8 códigos de recuperação**
+   (formato `ABCD-EFGH`), mostrados uma única vez. Cada um vale um login.
+3. Daí em diante o login pede o código depois da senha. Sem o celular, use um
+   código de recuperação.
+
+Dá para gerar novos códigos de recuperação ou desligar a verificação (pedem
+senha + código). Um administrador `super` pode desligar a de outra pessoa em
+**Administradores**; no servidor, `npm run admin:senha` também desliga.
+
+A chave fica cifrada no banco (AES-256-GCM, derivada do `JWT_SECRET`) e cada
+código só vale uma vez. **Se o `JWT_SECRET` mudar, as chaves salvas deixam de
+funcionar**: desligue a verificação de quem tinha (`npm run admin:senha`) e
+peça para ligar de novo.
 
 ## Níveis de acesso
 
 | Nível | Pode |
 | --- | --- |
-| `super` (acesso total) | Tudo da moderação, mais excluir contas e criar, promover ou desativar administradores |
+| `super` (acesso total) | Tudo da moderação, mais excluir contas, criar, promover ou desativar administradores, enviar comunicados e exportar planilhas |
 | `moderador` | Painel, contas (ver, suspender, reativar, confirmar representante), moderação de vagas, publicações, comentários e comunidades, pagamentos (leitura) e registro |
 
 Sempre fica pelo menos um administrador `super` ativo, e ninguém muda o próprio
@@ -68,6 +92,14 @@ acesso.
   fecha as denúncias daquele item sozinho; também dá para resolver ou descartar
   com uma explicação. Quem denunciou recebe um aviso, sem saber o que foi
   decidido em detalhe, e quem foi denunciado não sabe quem denunciou.
+- **Comunicados** (só `super`): aviso da equipe para todas as contas, só
+  candidatas ou só empresas (10 a 300 caracteres, com link opcional para uma
+  página da Bloom). Chega nas notificações, na categoria "Atualizações da
+  Bloom": quem desligou essa categoria não recebe, e contas suspensas também
+  não. A tela mostra quantas contas receberam.
+- **Exportar planilha** (só `super`): candidatas, empresas, vagas, denúncias,
+  pagamentos e registro em CSV (abre no Excel, com acentos). O CPF sai
+  mascarado e células que começam com `=`, `+`, `-` ou `@` são neutralizadas.
 - **Pagamentos**: assinaturas e pagamentos do Mercado Pago (só leitura).
 - **Registro de ações**: tudo o que a equipe fez, com quem, quando e o motivo
   (`LOGS_ADMIN`).
@@ -82,7 +114,12 @@ listas. Tudo volta ao reativar.
 ## Segurança
 
 - Login próprio (`POST /api/admin/login`), por usuário ou e-mail, com limite de
-  tentativas e a mesma resposta para usuário inexistente e senha errada.
+  tentativas (10 por minuto por IP) e a mesma resposta para usuário inexistente
+  e senha errada. Com a verificação em duas etapas ligada, o login devolve um
+  desafio de 5 minutos e o código vai em `POST /api/admin/login/codigo` (até 5
+  erros por administrador a cada 15 minutos).
+- Senha inicial (criada por outro administrador) precisa ser trocada antes de
+  usar o painel; a senha nova não pode ser igual à anterior.
 - Token com `tipo: "admin"`, válido por 4 horas. A cada requisição a API confere
   no banco se o administrador continua ativo.
 - O token de administrador não é aceito nas rotas de candidatas e empresas
@@ -107,6 +144,13 @@ Cria a tabela `DENUNCIA` (quem denunciou, o alvo, motivo, explicação, situaç�
 `aberta`/`resolvida`/`descartada`, quem decidiu e quando). Uma denúncia por
 pessoa e item (índice único).
 
+## Migration 007 (`src/database/migrations/007_admin_seguranca.sql`)
+
+Acrescenta em `ADMINS` as colunas `totp_segredo`, `totp_ativo`,
+`totp_ultimo_passo`, `codigos_recuperacao` (hashes) e `deve_trocar_senha`, e
+cria a tabela `COMUNICADO` (quem enviou, público, texto, link, quantas contas
+receberam). Roda sozinha ao iniciar a API.
+
 ## Denúncias (`/api/denuncias`, candidatas e empresas)
 
 | Rota | O que faz |
@@ -118,7 +162,8 @@ pessoa e item (índice único).
 
 | Rota | Quem |
 | --- | --- |
-| `POST /login`, `GET /me`, `PUT /senha`, `GET /dashboard` | administradores |
+| `POST /login`, `POST /login/codigo`, `GET /me`, `PUT /senha`, `GET /dashboard` | administradores |
+| `POST /duas-etapas/iniciar`, `/ativar`, `/desativar`, `/novos-codigos` | o próprio administrador |
 | `GET /candidatas`, `GET /candidatas/:id`, `GET /empresas`, `GET /empresas/:id` | administradores |
 | `POST /candidatas/:id/suspender`, `POST /candidatas/:id/reativar` (idem `/empresas/:id/...`) | administradores |
 | `PATCH /empresas/:id/representante` | administradores |
@@ -129,4 +174,6 @@ pessoa e item (índice único).
 | `POST /candidatas/:id/redefinicao-senha`, `POST /empresas/:id/redefinicao-senha` | administradores |
 | `GET /denuncias?status=`, `PATCH /denuncias/:id` | administradores |
 | `GET /pagamentos`, `GET /registro` | administradores |
-| `GET /admins`, `POST /admins`, `PATCH /admins/:id` | só `super` |
+| `GET /admins`, `POST /admins`, `PATCH /admins/:id` (inclui `desligarDoisFatores`) | só `super` |
+| `GET /comunicados`, `POST /comunicados` | só `super` |
+| `GET /relatorios/:recurso` (`candidatas`, `empresas`, `vagas`, `denuncias`, `pagamentos`, `registro`) | só `super` |
