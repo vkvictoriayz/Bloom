@@ -66,3 +66,17 @@ export const pedirRedefinicaoSenha = (dados) =>
 
 export const redefinirSenha = (dados) =>
   api("/auth/senha/redefinir", { method: "POST", corpo: dados });
+
+// Confirmação do e-mail da conta: o link do e-mail abre /confirmar-email.
+export const confirmarEmail = (token) =>
+  api("/auth/email/confirmar", { method: "POST", corpo: { token } });
+
+export const reenviarConfirmacaoEmail = (token) =>
+  api("/auth/email/reenviar", { method: "POST", token });
+
+// Atualiza campos do usuário guardado na sessão (sem trocar o token).
+export function atualizarUsuarioSessao(campos) {
+  const sessao = obterSessao();
+  if (!sessao) return;
+  salvarSessao({ token: sessao.token, usuario: { ...sessao.usuario, ...campos } });
+}

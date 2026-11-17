@@ -12,6 +12,7 @@ router.use(exigirLogin(["usuaria"]));
 export const corpoComImagem = express.json({ limit: "3mb" });
 
 router.get("/feed", C.feed);
+router.get("/em-alta", C.emAlta);
 router.post("/publicacoes", corpoComImagem, C.publicar);
 router.put("/publicacoes/:id", corpoComImagem, C.editar);
 router.delete("/publicacoes/:id", C.excluir);

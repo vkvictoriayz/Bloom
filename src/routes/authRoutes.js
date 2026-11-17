@@ -12,6 +12,8 @@ const limiteLogin = limitarPorIp(porMinuto(20), "Muitas tentativas. Aguarde um m
 const limiteCadastro = limitarPorIp(porHora(20), "Muitos cadastros a partir desta rede. Tente novamente mais tarde.");
 const limiteCnpj = limitarPorIp(porMinuto(10), "Muitas consultas de CNPJ. Aguarde um minuto e tente de novo.");
 const limiteSenha = limitarPorIp(porHora(10), "Muitos pedidos de redefinição. Tente novamente mais tarde.");
+// Confirmação de e-mail: limite próprio, para não gastar o da senha (o token tem 256 bits).
+const limiteConfirmacao = limitarPorIp(porMinuto(20), "Muitas tentativas. Aguarde um minuto e tente de novo.");
 
 // Usuária
 router.post("/cadastro", limiteCadastro, AuthController.cadastrarUsuaria);
@@ -29,6 +31,8 @@ router.post("/senha/redefinir", limiteSenha, AuthController.redefinirSenha);
 // Troca de senha de quem está logada
 router.put("/senha", exigirLogin(), limiteSenha, AuthController.alterarSenha);
 router.put("/email", exigirLogin(), limiteSenha, AuthController.alterarEmail);
+router.post("/email/confirmar", limiteConfirmacao, AuthController.confirmarEmail);
+router.post("/email/reenviar", exigirLogin(), AuthController.reenviarConfirmacao);
 
 // Exclusão da própria conta
 router.delete("/conta", exigirLogin(), limiteSenha, AuthController.excluirConta);

@@ -23,8 +23,8 @@ function FormularioEmail({ emailAtual }) {
     try {
       const r = await alterarEmail({ email: limpo, senha })
       const sessao = obterSessao()
-      if (sessao) salvarSessao({ token: sessao.token, usuario: { ...sessao.usuario, email: r.usuario.email } })
-      setEstado({ tipo: 'sucesso', texto: `E-mail alterado. Use ${r.usuario.email} para entrar.` })
+      if (sessao) salvarSessao({ token: sessao.token, usuario: { ...sessao.usuario, email: r.usuario.email, emailVerificado: false } })
+      setEstado({ tipo: 'sucesso', texto: `E-mail alterado. Use ${r.usuario.email} para entrar. Enviamos um link para confirmar o novo endereço.` })
       setEmail('')
       setSenha('')
       setAberto(false)

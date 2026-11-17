@@ -31,6 +31,7 @@ Todas exigem login; as permissões são conferidas no servidor.
 | `DELETE /comentarios/:id` | Quem escreveu o comentário ou a autora da publicação. Devolve o novo total. |
 | `GET /publicacoes/:id/comentarios` | Cada comentário traz `podeExcluir`. |
 | `GET /feed?autora=<id>` | Publicações de uma integrante (perfil oculto: 404, menos para ela). |
+| `GET /em-alta` | Até 6 `#hashtags` mais usadas nas publicações dos últimos 14 dias: `{ assuntos: [{ tag, publicacoes }] }`. Cada publicação conta uma vez por assunto, sem diferenciar maiúsculas; contas suspensas não entram; `#` dentro de links não conta. |
 
 As imagens são servidas por `GET /api/imagens/<chave>` (chave aleatória nova a cada envio).
 
@@ -66,6 +67,14 @@ front, em `src/views/data/icones.js` e `src/views/components/Icone.jsx`.
 
 ## Telas
 
+- **Feed** (`/candidata/feed`): em telas a partir de 1024 px, coluna lateral com
+  meu perfil (capa, foto, publicações, seguidoras e seguindo), "Complete seu
+  perfil" (some quando chega a 100%), "Assuntos em alta", "Comunidades para
+  você" (com Participar) e "Quem seguir". Em telas menores, "Pessoas para
+  conhecer" aparece entre as publicações. As `#hashtags` do texto viram links
+  para a busca de publicações em Explorar. A cada minuto (com a aba visível) o
+  feed confere se há publicações novas e mostra o botão "N publicações novas",
+  sem mexer na lista sozinho.
 - Feed e comunidades: botão **Imagem** (prévia, trocar, remover); a foto é
   reduzida no navegador (lado maior até 1600 px) antes do envio.
 - Menu da publicação: **Editar publicação**. Comentários: menu discreto com

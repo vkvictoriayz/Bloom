@@ -69,7 +69,7 @@ function Rodape() {
             <Coluna titulo="Plataforma">
               <ItemLink para={autenticada ? '/candidata/vagas' : '/#areas'}>Vagas</ItemLink>
               <ItemLink para="/empresas">Empresas</ItemLink>
-              {autenticada ? <ItemLink para="/contatos">Contatos</ItemLink> : <ItemLink para="/#como-funciona">Como funciona</ItemLink>}
+              {autenticada ? <ItemLink para="/candidata/mensagens">Mensagens</ItemLink> : <ItemLink para="/#como-funciona">Como funciona</ItemLink>}
             </Coluna>
 
             {!empresa && (

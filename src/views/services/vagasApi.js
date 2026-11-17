@@ -111,6 +111,13 @@ export const listarVagasServidor = () => chamar('/vagas').then((r) => r.vagas.ma
 export const lerVagaServidor = (id) => chamar(`/vagas/${idServidor(id)}`).then((r) => converterVaga(r.vaga))
 export const listarCandidaturasServidor = () => chamar('/candidaturas/minhas').then((r) => r.candidaturas.map(converterCandidatura))
 
+// Retira a candidatura (apaga o envio, a cópia do currículo e a conversa).
+export async function retirarCandidaturaServidor(idCandidatura) {
+  const r = await chamar(`/candidaturas/${encodeURIComponent(idCandidatura)}`, { method: 'DELETE' })
+  window.dispatchEvent(new Event(EVENTO_CANDIDATURAS_SERVIDOR))
+  return r
+}
+
 export async function candidatarServidor(vagaId, extras) {
   const r = await chamar('/candidaturas', { method: 'POST', corpo: { vagaId: idServidor(vagaId), ...extras } })
   window.dispatchEvent(new Event(EVENTO_CANDIDATURAS_SERVIDOR))

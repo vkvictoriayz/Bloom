@@ -17,9 +17,9 @@ import Login from './pages/Login'
 import Cadastro from './pages/Cadastro'
 import RecuperarSenha from './pages/RecuperarSenha'
 import RedefinirSenha from './pages/RedefinirSenha'
+import ConfirmarEmail from './pages/ConfirmarEmail'
 import Empresas from './pages/Empresas'
 import EmpresaDetalhe from './pages/EmpresaDetalhe'
-import Contatos from './pages/Contatos'
 
 // Área privada da candidata
 import Feed from './pages/candidata/Feed'
@@ -108,6 +108,7 @@ function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+        <Route path="/confirmar-email" element={<ConfirmarEmail />} />
 
         {/* Empresas: abertas para todos conhecerem */}
         <Route path="/empresas" element={<Empresas />} />
@@ -156,7 +157,8 @@ function App() {
         <Route path="/minhas-candidaturas" element={<Redirecionar para="/candidata/candidaturas" />} />
         <Route path="/vagas-salvas" element={<Redirecionar para="/candidata/vagas-salvas" />} />
         <Route path="/comunidade" element={<Redirecionar para="/candidata/feed" />} />
-        <Route path="/contatos" element={<Protegida><Contatos /></Protegida>} />
+        {/* Antiga tela de contatos: a conversa com empresas acontece em Mensagens. */}
+        <Route path="/contatos" element={<Redirecionar para="/candidata/mensagens" />} />
 
         {/* Acesso das empresas */}
         <Route path="/empresa" element={<AcessoEmpresa><LoginEmpresa /></AcessoEmpresa>} />

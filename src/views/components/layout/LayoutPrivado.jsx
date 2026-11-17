@@ -20,7 +20,8 @@ import { cn } from '../../lib/cn'
 //   busca: { placeholder, rotulo, para: (termo) => url },
 //   mensagens, notificacoes, perfil, configuracoes, selo?, aoSair?,
 // }
-// "contexto" chega às páginas por useOutletContext().
+// "contexto" chega às páginas por useOutletContext(); "faixa" aparece acima
+// do conteúdo de todas as páginas (ex.: aviso para confirmar o e-mail).
 // Item: { rotulo, para, icone, tambem?: ['/prefixo/'] }
 
 function lerRecolhido(chave) {
@@ -295,7 +296,7 @@ function useNaoLidas(ativo = true) {
   return total
 }
 
-function LayoutPrivado({ config, usuario, foto, contexto }) {
+function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
   // A administração não tem mensagens nem notificações (config sem esses atalhos).
   const naoLidas = useNaoLidas(Boolean(config.notificacoes))
   const navigate = useNavigate()
@@ -430,6 +431,7 @@ function LayoutPrivado({ config, usuario, foto, contexto }) {
         </header>
 
         <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-6xl px-4 py-8 focus:outline-none sm:px-6 lg:px-10 lg:py-10">
+          {faixa}
           <Outlet context={contexto} />
         </main>
       </div>

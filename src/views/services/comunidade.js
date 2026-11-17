@@ -30,6 +30,10 @@ const consulta = (params) => {
 // autora: também aceita o id de outra integrante (perfil público).
 export const lerFeed = ({ filtro, tipo, autora, busca, pagina = 1 } = {}) =>
   chamar(`/feed${consulta({ filtro, tipo, autora, busca, pagina: pagina > 1 ? pagina : "" })}`);
+// Assuntos (#hashtags) mais usados nas publicações dos últimos 14 dias.
+export const lerEmAlta = () => chamar("/em-alta");
+// Busca de publicações por um assunto (#tag), na tela Explorar.
+export const linkAssunto = (tag) => `/candidata/explorar?categoria=publicacoes&q=${encodeURIComponent(`#${tag}`)}`;
 export const publicar = (corpo) => chamar("/publicacoes", { method: "POST", corpo });
 // corpo.imagem: data URL troca; null remove; ausente mantém.
 export const editarPublicacao = (id, corpo) => chamar(`/publicacoes/${id}`, { method: "PUT", corpo });

@@ -12,7 +12,7 @@ import { cn } from '../../lib/cn'
 
 // Duas navegações com objetivos diferentes:
 //  - visitante: conhecer a Bloom e criar conta;
-//  - usuária autenticada: trabalhar — vagas, candidaturas, empresas, contatos.
+//  - usuária autenticada: trabalhar — vagas, candidaturas, empresas, mensagens.
 // A empresa autenticada tem uma terceira, que leva para a área dela.
 const NAV_PUBLICA = [
   { rotulo: 'Oportunidades', para: '/#areas' },
@@ -27,7 +27,7 @@ const NAV_PRIVADA = [
   { rotulo: 'Candidaturas', para: '/minhas-candidaturas' },
   { rotulo: 'Empresas', para: '/empresas' },
   { rotulo: 'Comunidade', para: '/comunidade' },
-  { rotulo: 'Contatos', para: '/contatos' },
+  { rotulo: 'Mensagens', para: '/candidata/mensagens' },
 ]
 
 const NAV_EMPRESA = [

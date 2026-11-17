@@ -44,3 +44,4 @@ export const candidaturaRoutes = Router();
 candidaturaRoutes.use(exigirLogin(["usuaria"]));
 candidaturaRoutes.post("/", V.candidatar);
 candidaturaRoutes.get("/minhas", V.minhas);
+candidaturaRoutes.delete("/:id", V.retirar);

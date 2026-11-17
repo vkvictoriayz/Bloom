@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
@@ -6,6 +6,7 @@ import MarcaEmpresa from '../../components/MarcaEmpresa'
 import { AnexoImagem } from '../../components/comunidade/AnexoImagem'
 import Avatar from '../../components/comunidade/Avatar'
 import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
+import LateralFeed from '../../components/comunidade/LateralFeed'
 import ListaPessoas from '../../components/comunidade/ListaPessoas'
 import { ICONE_TIPO } from '../../components/comunidade/tipos'
 import Botao from '../../components/ui/Botao'
@@ -15,7 +16,7 @@ import { Vazio, VazioDescricao, VazioIcone, VazioTitulo } from '../../components
 import { formatarPublicacao, recomendarVagas } from '../../data/vagas'
 import { useDadosLocais } from '../../hooks/useDadosLocais'
 import { useVagas } from '../../hooks/useVagasReais'
-import { useSessao } from '../../hooks/useSessao'
+import { primeiroNome, useSessao } from '../../hooks/useSessao'
 import { LIMITE_PUBLICACAO, TIPOS, lerFeed, publicar } from '../../services/comunidade'
 import { EVENTO_PERFIL, lerPerfil } from '../../services/perfil'
 import { cn } from '../../lib/cn'
@@ -27,6 +28,22 @@ const MODELOS = {
   conquista: 'Qual conquista profissional você quer celebrar?',
   oportunidade: 'Compartilhe uma oportunidade: vaga, evento, curso ou mentoria…',
   duvida: 'Qual é a sua dúvida? Outras mulheres da área podem ajudar…',
+}
+
+// A partir desta largura a coluna lateral aparece (pessoas, comunidades etc.).
+const TELA_LARGA = '(min-width: 1024px)'
+// De quanto em quanto tempo o feed confere se há publicações novas.
+const INTERVALO_NOVIDADES = 60 * 1000
+
+function useTelaLarga() {
+  const [larga, setLarga] = useState(() => typeof window !== 'undefined' && window.matchMedia(TELA_LARGA).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(TELA_LARGA)
+    const mudar = () => setLarga(mq.matches)
+    mq.addEventListener('change', mudar)
+    return () => mq.removeEventListener('change', mudar)
+  }, [])
+  return larga
 }
 
 // Depois de quais publicações entram os cartões de sugestão.
@@ -101,6 +118,9 @@ function Feed() {
   const [publicando, setPublicando] = useState(false)
   const [erroPublicar, setErroPublicar] = useState('')
   const [publicado, setPublicado] = useState(false)
+  const [novas, setNovas] = useState(0)
+  const larga = useTelaLarga()
+  const topo = useRef(null)
 
   useEffect(() => {
     document.title = 'Feed · BLOOM'
@@ -124,6 +144,31 @@ function Feed() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     carregarFeed()
   }, [carregarFeed])
+
+  // Enquanto a página está aberta (e visível), confere se alguém publicou algo
+  // novo e mostra o botão "Novas publicações" em vez de mexer na lista sozinha.
+  useEffect(() => {
+    if (!publicacoes) return
+    const conhecidas = new Set(publicacoes.map((p) => p.id))
+    const conferir = async () => {
+      if (document.visibilityState !== 'visible') return
+      try {
+        const r = await lerFeed({ filtro: aba === 'seguindo' ? 'seguindo' : '', tipo: tipoFiltro })
+        const maisRecente = publicacoes.reduce((max, p) => Math.max(max, new Date(p.criadaEm).getTime()), 0)
+        setNovas(r.publicacoes.filter((p) => !p.minha && !conhecidas.has(p.id) && new Date(p.criadaEm).getTime() >= maisRecente).length)
+      } catch {
+        // sem conexão agora: tenta de novo no próximo intervalo
+      }
+    }
+    const t = setInterval(conferir, INTERVALO_NOVIDADES)
+    return () => clearInterval(t)
+  }, [publicacoes, aba, tipoFiltro])
+
+  function verNovas() {
+    setNovas(0)
+    carregarFeed()
+    topo.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   async function maisPublicacoes() {
     setCarregandoMais(true)
@@ -182,14 +227,20 @@ function Feed() {
     />
   )
   const cartaoVagas = <CartaoVagas tecnicas={perfil.tecnicas} />
+  // Na tela larga, as pessoas ficam na coluna lateral; aqui, entre as publicações.
+  const pessoasNoFeed = larga ? null : cartaoPessoas
   const lista = publicacoes ?? []
 
   return (
-    <div className="mx-auto flex max-w-[760px] flex-col gap-5">
+    <div className="mx-auto grid max-w-[1120px] grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_330px]">
+    <div ref={topo} className="flex min-w-0 scroll-mt-24 flex-col gap-5">
       <h1 className="sr-only">Feed</h1>
 
       {/* Nova publicação */}
       <form onSubmit={enviar} className="rounded-2xl border border-linha bg-branco p-5 sm:p-6" aria-label="Nova publicação">
+        <p className="mb-3 text-sm font-semibold text-tinta-2">
+          {primeiroNome(nome) ? `Olá, ${primeiroNome(nome)}! O que você quer compartilhar hoje?` : 'O que você quer compartilhar hoje?'}
+        </p>
         <div className="flex gap-4">
           <Avatar nome={nome} foto={perfil.foto} tamanho="lg" className="max-sm:size-12 max-sm:text-base" />
           <div className="min-w-0 flex-1">
@@ -295,6 +346,20 @@ function Feed() {
         </Selecao>
       </div>
 
+      {/* Aviso de publicações novas (fica preso no topo ao rolar) */}
+      {novas > 0 && (
+        <div className="sticky top-20 z-10 flex justify-center">
+          <button
+            type="button"
+            onClick={verNovas}
+            className="inline-flex items-center gap-2 rounded-full bg-vinho px-4 py-2 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-vinho-escuro"
+          >
+            <Icone nome="seta" tamanho={15} className="-rotate-90" />
+            {novas === 1 ? '1 publicação nova' : `${novas} publicações novas`}
+          </button>
+        </div>
+      )}
+
       {/* Publicações, com sugestões entre elas */}
       <div className="flex flex-col gap-5">
         {erroFeed && (
@@ -323,7 +388,7 @@ function Feed() {
                 </VazioDescricao>
               </Vazio>
             )}
-            {cartaoPessoas}
+            {pessoasNoFeed}
             {cartaoVagas}
           </>
         ) : (
@@ -331,11 +396,11 @@ function Feed() {
             {lista.map((p, i) => (
               <Fragment key={p.id}>
                 <CartaoPublicacao publicacao={p} aoExcluir={aoExcluir} aoAtualizar={aoAtualizar} />
-                {i === POSICAO_PESSOAS && cartaoPessoas}
+                {i === POSICAO_PESSOAS && pessoasNoFeed}
                 {i === POSICAO_VAGAS && cartaoVagas}
               </Fragment>
             ))}
-            {lista.length <= POSICAO_PESSOAS && cartaoPessoas}
+            {lista.length <= POSICAO_PESSOAS && pessoasNoFeed}
             {lista.length <= POSICAO_VAGAS && cartaoVagas}
           </>
         )}
@@ -346,6 +411,13 @@ function Feed() {
           </Botao>
         )}
       </div>
+    </div>
+
+      {larga && (
+        <aside aria-label="Sua rede" className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto [scrollbar-width:thin]">
+          <LateralFeed nome={nome} perfil={perfil} aoMudarConexao={() => aba === 'seguindo' && carregarFeed()} />
+        </aside>
+      )}
     </div>
   )
 }

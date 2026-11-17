@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import LayoutPrivado from '../layout/LayoutPrivado'
+import { AvisoConfirmarEmail } from '../conta/ConfirmacaoEmail'
 import { useDadosLocais } from '../../hooks/useDadosLocais'
 import { useSessao } from '../../hooks/useSessao'
 import { sincronizarAreaCandidata } from '../../services/candidataApi'
@@ -74,7 +75,7 @@ function LayoutCandidata() {
     // Perfil, projetos e vagas salvas vêm da conta (ver candidataApi.js).
     sincronizarAreaCandidata(usuario).catch(() => {})
   }, [usuario])
-  return <LayoutPrivado config={CONFIG} usuario={usuario} foto={perfil.foto} />
+  return <LayoutPrivado config={CONFIG} usuario={usuario} foto={perfil.foto} faixa={<AvisoConfirmarEmail />} />
 }
 
 export default LayoutCandidata

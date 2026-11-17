@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 
+import { SituacaoEmail } from '../../components/conta/ConfirmacaoEmail'
 import ExcluirConta from '../../components/conta/ExcluirConta'
 import FormularioEmail from '../../components/conta/FormularioEmail'
 import FormularioSenha from '../../components/conta/FormularioSenha'
@@ -52,7 +53,9 @@ function Configuracoes() {
             </div>
             <div>
               <dt className="text-suave">E-mail</dt>
-              <dd className="font-semibold text-tinta">{usuario?.email}</dd>
+              <dd className="flex flex-wrap items-center gap-2 font-semibold text-tinta">
+                {usuario?.email} <SituacaoEmail />
+              </dd>
             </div>
           </dl>
           <p className="mt-4 text-sm text-suave">

@@ -12,6 +12,7 @@ import { Aviso } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { buscarCandidatura, situacao } from '../../services/candidaturas'
 import { abrirConversa } from '../../services/recursos'
+import { retirarCandidaturaServidor } from '../../services/vagasApi'
 import { useCandidaturasEstado } from '../../hooks/useVagasReais'
 
 // Só a própria candidata acessa: as candidaturas lidas são as dela.
@@ -59,6 +60,55 @@ function BotaoMensagem({ candidatura }) {
       </Botao>
       {estado.tipo === 'erro' && <Aviso tipo="erro">{estado.texto}</Aviso>}
     </>
+  )
+}
+
+// Etapas em que ainda dá para desistir (igual à API).
+const PODE_RETIRAR = ['Recebida', 'Em análise', 'Em entrevista']
+
+// Retirar a candidatura: pede confirmação, apaga no servidor e volta à lista.
+function RetirarCandidatura({ candidatura }) {
+  const navigate = useNavigate()
+  const [aberto, setAberto] = useState(false)
+  const [estado, setEstado] = useState({ tipo: 'ocioso' })
+
+  async function confirmar() {
+    setEstado({ tipo: 'enviando' })
+    try {
+      await retirarCandidaturaServidor(candidatura.idServidor)
+      navigate('/candidata/candidaturas', { replace: true, state: { aviso: `Candidatura para ${candidatura.cargo} retirada.` } })
+    } catch (erro) {
+      setEstado({ tipo: 'erro', texto: erro.message })
+    }
+  }
+
+  return (
+    <section className="rounded-xl border border-linha bg-branco p-6">
+      <h2 className="text-xs font-bold tracking-[0.12em] text-suave uppercase">Desistir da vaga</h2>
+      {!aberto ? (
+        <>
+          <p className="mt-3 text-sm text-tinta-2">Se você não quer mais participar deste processo, pode retirar a candidatura.</p>
+          <Botao variante="secundario" className="mt-4 w-full text-erro" onClick={() => setAberto(true)}>
+            Retirar candidatura
+          </Botao>
+        </>
+      ) : (
+        <div className="mt-3 flex flex-col gap-3">
+          <p className="text-sm text-tinta-2">
+            A empresa será avisada e deixa de ver o que você enviou (apresentação, links e currículo). A conversa sobre esta vaga também é apagada. Isso não pode ser desfeito.
+          </p>
+          {estado.tipo === 'erro' && <Aviso tipo="erro">{estado.texto}</Aviso>}
+          <div className="flex flex-wrap gap-2">
+            <Botao className="bg-erro hover:bg-erro/90" onClick={confirmar} disabled={estado.tipo === 'enviando'}>
+              {estado.tipo === 'enviando' ? 'Retirando…' : 'Sim, retirar'}
+            </Botao>
+            <Botao variante="fantasma" onClick={() => setAberto(false)} disabled={estado.tipo === 'enviando'}>
+              Cancelar
+            </Botao>
+          </div>
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -174,12 +224,13 @@ function DetalheCandidatura() {
             ) : (
               <p className="mt-4 text-sm text-suave">Esta vaga não está mais disponível.</p>
             )}
-            {empresa && (
-              <Link to={`/empresas/${empresa.slug}`} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-vinho hover:underline">
+            {empresa?.id ? (
+              <Link to={`/candidata/empresas/${empresa.id}`} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-vinho hover:underline">
                 Sobre a empresa <Icone nome="seta" tamanho={14} />
               </Link>
-            )}
+            ) : null}
           </section>
+          {PODE_RETIRAR.includes(candidatura.status) && <RetirarCandidatura candidatura={candidatura} />}
         </aside>
       </div>
     </>

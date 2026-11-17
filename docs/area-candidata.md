@@ -67,7 +67,9 @@ lê e altera dados da própria conta.
 | POST | `/api/mensagens` | `{ candidaturaId }` abre ou retoma a conversa da candidatura |
 | GET | `/api/mensagens/:id` | Mensagens da conversa (marca as recebidas como lidas) |
 | POST | `/api/mensagens/:id` | `{ texto }` envia (até 1000 caracteres) |
+| DELETE | `/api/candidaturas/:id` | Retira a candidatura (só Recebida, Em análise ou Em entrevista). Apaga a apresentação, a cópia do currículo e a conversa com a empresa, e avisa a empresa. Depois dá para se candidatar de novo se a vaga estiver aberta. |
 | PUT | `/api/auth/senha` | `{ senhaAtual, novaSenha, confirmarSenha }` troca a senha |
+| POST | `/api/auth/email/reenviar` | Manda outro link para confirmar o e-mail (ver [autenticacao.md](autenticacao.md)) |
 | DELETE | `/api/auth/conta` | `{ senha, confirmacao: "EXCLUIR" }` exclui a conta e todos os dados |
 | GET/PUT | `/api/candidata/privacidade` | `{ perfilPublico, mostrarExperiencia, mostrarContato }` |
 | GET | `/api/comunidades` | Lista (candidatas e empresas) |

@@ -170,6 +170,36 @@ export const feed = comTratamento(async (req, res) => {
   return res.json({ publicacoes, temMais });
 });
 
+// Hashtags (#assunto) das publicações dos últimos 14 dias, contando quantas
+// publicações usam cada uma. Mesmas regras do feed: contas suspensas não entram.
+const HASHTAG = /(?:^|[^\p{L}\p{N}_&/])#([\p{L}\p{N}_]{2,40})/gu;
+const JANELA_EM_ALTA = 14 * 24 * 60 * 60 * 1000;
+
+// GET /em-alta
+export const emAlta = comTratamento(async (req, res) => {
+  const where = { criadaEm: { [Op.gte]: new Date(Date.now() - JANELA_EM_ALTA) }, texto: { [Op.like]: "%#%" } };
+  const suspensas = [...(await contasSuspensas("usuaria"))];
+  if (suspensas.length) where.usuariaId = { [Op.notIn]: suspensas };
+  const linhas = await Publicacao.findAll({ where, attributes: ["texto"], order: [["criadaEm", "DESC"]], limit: 500 });
+
+  const contagem = new Map();
+  for (const { texto: t } of linhas) {
+    // Cada publicação conta uma vez por assunto; maiúsculas não importam.
+    const tags = new Map();
+    for (const m of (t ?? "").matchAll(HASHTAG)) {
+      const chave = m[1].toLocaleLowerCase("pt-BR");
+      if (!tags.has(chave)) tags.set(chave, m[1]);
+    }
+    for (const [chave, original] of tags) {
+      const atual = contagem.get(chave) ?? { tag: original, publicacoes: 0 };
+      atual.publicacoes += 1;
+      contagem.set(chave, atual);
+    }
+  }
+  const assuntos = [...contagem.values()].sort((a, b) => b.publicacoes - a.publicacoes || a.tag.localeCompare(b.tag, "pt-BR")).slice(0, 6);
+  return res.json({ assuntos });
+});
+
 // POST /publicacoes { texto, tipo, imagem?, largura?, altura? }
 export const publicar = comTratamento(async (req, res) => {
   const lida = lerPublicacao(req.body);

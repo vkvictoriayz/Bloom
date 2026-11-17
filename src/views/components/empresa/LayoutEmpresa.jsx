@@ -1,4 +1,5 @@
 import LayoutPrivado from '../layout/LayoutPrivado'
+import { AvisoConfirmarEmail } from '../conta/ConfirmacaoEmail'
 import { useCarregar } from './useCarregar'
 import { useSessao } from '../../hooks/useSessao'
 import { fotoEmpresa, lerPerfilEmpresa } from '../../services/empresa'
@@ -77,6 +78,7 @@ function LayoutEmpresa() {
       config={CONFIG}
       usuario={dados ? { nome: dados.empresa.nome, email: dados.empresa.email } : sessao?.usuario}
       foto={fotoEmpresa(dados)}
+      faixa={<AvisoConfirmarEmail />}
       contexto={{ perfil: dados, erroPerfil: perfil.tipo === 'erro' ? perfil.erro : '', recarregarPerfil: perfil.recarregar }}
     />
   )

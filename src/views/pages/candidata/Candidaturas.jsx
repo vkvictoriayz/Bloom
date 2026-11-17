@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
 import MarcaEmpresa from '../../components/MarcaEmpresa'
@@ -7,11 +7,12 @@ import { IlustracaoCrescimento } from '../../components/ilustracoes/Ilustracoes'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Botao from '../../components/ui/Botao'
 import Selo from '../../components/ui/Selo'
+import { Aviso } from '../../components/ui/Campo'
+import Esqueleto from '../../components/ui/Esqueleto'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
-import { buscarEmpresa, empresaPorNome } from '../../data/empresas'
 import { situacao } from '../../services/candidaturas'
 import { cn } from '../../lib/cn'
-import { useCandidaturas } from '../../hooks/useVagasReais'
+import { useCandidaturasEstado } from '../../hooks/useVagasReais'
 
 // Filtros pelos status reais do sistema (ENUM do banco + vaga encerrada).
 const FILTROS = [
@@ -24,7 +25,8 @@ const FILTROS = [
 
 function Candidaturas() {
   const [filtro, setFiltro] = useState('todas')
-  const candidaturas = useCandidaturas()
+  const { lista: candidaturas, carregando, erro } = useCandidaturasEstado()
+  const aviso = useLocation().state?.aviso
 
   const contagem = candidaturas.reduce((acc, c) => {
     const grupo = situacao(c).grupo
@@ -36,8 +38,17 @@ function Candidaturas() {
   return (
     <>
       <TituloPagina titulo="Minhas candidaturas" descricao="Acompanhe o status de cada processo seletivo." />
+      {aviso && (
+        <Aviso tipo="sucesso" className="mb-5">
+          {aviso}
+        </Aviso>
+      )}
 
-      {candidaturas.length === 0 ? (
+      {carregando ? (
+        <Esqueleto className="h-64 rounded-xl" />
+      ) : erro ? (
+        <Aviso tipo="erro">Não foi possível carregar suas candidaturas: {erro}</Aviso>
+      ) : candidaturas.length === 0 ? (
         <Vazio className="bg-branco">
           <IlustracaoCrescimento className="max-w-[240px]" />
           <VazioTitulo>Você ainda não se candidatou</VazioTitulo>
@@ -79,7 +90,7 @@ function Candidaturas() {
             <ul className="overflow-hidden rounded-xl border border-linha bg-branco">
               {filtradas.map((c) => {
                 const info = situacao(c)
-                const empresa = buscarEmpresa(c.empresaSlug) ?? empresaPorNome(c.empresa)
+                const empresa = c.dadosEmpresa
                 return (
                   <li key={c.id} className="border-b border-linha last:border-b-0">
                     <Link

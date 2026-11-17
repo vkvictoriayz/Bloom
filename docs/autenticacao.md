@@ -106,8 +106,24 @@ Sem o Resend configurado nenhum e-mail sai. Em desenvolvimento
 (`NODE_ENV` diferente de `production`) o e-mail aparece no terminal do servidor,
 para testar o fluxo.
 
-Verificação de e-mail no cadastro ainda não foi implementada: depende do mesmo
-serviço de e-mail e pode usar a mesma estrutura de token.
+## Confirmação de e-mail (migration 008)
+
+1. Ao se cadastrar (candidata ou empresa) e ao trocar o e-mail, a conta fica com
+   o e-mail **não confirmado** e recebe um link
+   `FRONTEND_URL/confirmar-email?token=...`, de uso único e válido por 24 horas.
+   Só o hash SHA-256 do token fica no banco (`VERIFICACAO_EMAIL`), junto com o
+   e-mail para o qual foi enviado: se a conta trocar de e-mail, o link antigo
+   deixa de valer. Um link novo invalida os anteriores.
+2. `POST /api/auth/email/confirmar { token }` (sem login) marca
+   `email_verificado_em` na conta.
+3. `POST /api/auth/email/reenviar` (logada) manda outro link, até 3 por hora por
+   conta.
+4. `/api/auth/me`, o login e o cadastro devolvem `usuario.emailVerificado`.
+
+A confirmação não bloqueia nada: a área logada mostra o aviso "Confirme seu
+e-mail" (com "Reenviar o link" e "Agora não") e Configurações mostra a
+situação. Contas que já existiam antes da migration aparecem como não
+confirmadas. Sem o Resend, em desenvolvimento o link aparece no terminal da API.
 
 ## Rotas
 
@@ -142,6 +158,6 @@ Veja `.env.example`. Nunca coloque os valores no código nem no frontend.
 - **Verificação de CPF:** contratar a Consulta CPF no Serpro e preencher as três
   variáveis `SERPRO_CPF_*`. Até lá, toda conta nova fica com o CPF
   "não verificado".
-- **E-mails de redefinição de senha:** criar conta no Resend, verificar um
-  domínio e preencher `RESEND_API_KEY` e `EMAIL_REMETENTE`.
+- **E-mails (redefinição de senha e confirmação de e-mail):** criar conta no
+  Resend, verificar um domínio e preencher `RESEND_API_KEY` e `EMAIL_REMETENTE`.
 - **Verificação de quem representa a empresa:** definir a regra e o processo.

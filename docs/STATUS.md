@@ -20,7 +20,7 @@ arquivos de `docs/`.
 
 | Área | Telas | Backend | Falta (código) | Depende de configuração |
 | --- | --- | --- | --- | --- |
-| Candidata | 23 | completo | verificação de e-mail no cadastro | CPF (Serpro), e-mails (Resend), Premium (Mercado Pago) |
+| Candidata | 23 (+ confirmar e-mail) | completo | nada | CPF (Serpro), e-mails (Resend), Premium (Mercado Pago) |
 | Empresa | 18 | completo | processo de verificar quem representa a empresa | e-mails (Resend), Premium (Mercado Pago) |
 | Administrador | 7 (+ subtelas) | completo | nada | e-mails dos links de senha (Resend) |
 
@@ -34,6 +34,7 @@ Documentação: [area-candidata.md](area-candidata.md),
 ### Páginas feitas
 
 - [x] Home pública, cadastro, login, recuperar e redefinir senha
+- [x] Confirmar e-mail (página aberta pelo link do e-mail)
 - [x] Início (painel), feed, explorar
 - [x] Vagas, detalhes da vaga, candidatar-se, vagas salvas
 - [x] Candidaturas, detalhe e andamento da candidatura
@@ -48,16 +49,25 @@ Documentação: [area-candidata.md](area-candidata.md),
 
 - [x] Todas as telas acima ligadas à API (sem dados fictícios)
 - [x] Publicações com imagem, edição, comentários, curtidas
+- [x] Feed com cara de rede social: coluna lateral (meu perfil com seguidoras/seguindo, "Complete seu perfil", assuntos em alta, comunidades para participar, quem seguir), saudação no campo de publicar, `#hashtags` clicáveis e aviso de "publicações novas" (confere a cada minuto)
 - [x] Botão "Denunciar" em publicações, comentários, perfis, vagas, empresas e comunidades
 - [x] Envio de currículo (PDF/DOC/DOCX até 5 MB)
+- [x] Aviso "Confirme seu e-mail" no topo da área (com reenviar) e situação do e-mail em Configurações
+- [x] Retirar candidatura (no detalhe da candidatura, com confirmação)
+- [x] Lista de candidaturas com carregamento, erro e logo real da empresa
+- [x] "Sobre a empresa" no detalhe da candidatura abre o perfil certo
+- [x] Antiga tela `/contatos` (não enviava nada) virou atalho para Mensagens
 
 ### Backend
 
 - [x] Login, cadastro, sessão (JWT), limites contra abuso
 - [x] Recuperação de senha (token de uso único, 30 min) e troca de e-mail
+- [x] Confirmação de e-mail (link de uso único, 24 h; trocar o e-mail pede nova confirmação)
 - [x] Exclusão da própria conta e dos dados
 - [x] Perfil, projetos, currículo, vagas, candidaturas com cópia do currículo
+- [x] Retirar candidatura (Recebida, Em análise ou Em entrevista; apaga o envio e a conversa e avisa a empresa)
 - [x] Rede social: feed, busca, seguir, comunidades, mensagens
+- [x] Assuntos em alta (`GET /api/comunidade/em-alta`: hashtags dos últimos 14 dias)
 - [x] Notificações com preferências por categoria
 - [x] Denúncias (`/api/denuncias`)
 - [x] Conteúdo de conta suspensa some para as outras pessoas
@@ -71,7 +81,9 @@ Documentação: [area-candidata.md](area-candidata.md),
 
 ### O que falta
 
-- [ ] Verificação de e-mail no cadastro (usa o Resend e a mesma estrutura de token da redefinição de senha)
+- Nada de código. Para usar:
+  - [ ] Reiniciar a API para aplicar a migration 008 (confirmação de e-mail)
+  - [~] Configurar o Resend para os e-mails de confirmação saírem de verdade
 
 ---
 
@@ -94,6 +106,8 @@ Documentação: [area-empresa-premium.md](area-empresa-premium.md).
 
 - [x] Todas as telas acima ligadas à API
 - [x] Download do currículo enviado na candidatura
+- [x] Aviso "Confirme seu e-mail" e situação do e-mail em Configurações
+- [x] Notificação quando uma candidata retira a candidatura
 
 ### Backend
 
@@ -168,4 +182,4 @@ http://localhost:3006/admin.
 - [ ] Criar conta no Resend, verificar o domínio e configurar
 - [ ] Trocar o token de teste do Mercado Pago pelo de produção e cadastrar o webhook
 - [ ] Definir a verificação de representante de empresa
-- [ ] Implementar a verificação de e-mail no cadastro
+- [x] Implementar a verificação de e-mail no cadastro (falta só o Resend, acima)

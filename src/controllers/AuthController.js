@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import { Op } from "sequelize";
 import { sequelize } from "../config/database.js";
 import { Empresa, Usuaria } from "../models/index.js";
-import { EmpresaCadastro, RedefinicaoSenha, UsuariaVerificacao } from "../models/Verificacao.js";
+import { EmpresaCadastro, RedefinicaoSenha, UsuariaVerificacao, VerificacaoEmail } from "../models/Verificacao.js";
 import { consultarCnpj, ErroConsultaCnpj } from "../services/cnpj.js";
 import { consultaCpfAtiva, ErroConsultaCpf, verificarCpf } from "../services/cpf.js";
 import { enviarEmail } from "../services/email.js";
@@ -18,6 +18,7 @@ const SALT_ROUNDS = 10;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SENHA_MINIMA = 8;
 const VALIDADE_REDEFINICAO = 30 * 60 * 1000; // 30 minutos
+const VALIDADE_CONFIRMACAO = 24 * 60 * 60 * 1000; // 24 horas
 
 const soDigitos = (v) => String(v ?? "").replace(/\D/g, "");
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
@@ -30,12 +31,14 @@ const HASH_FICTICIO = bcrypt.hashSync("senha-que-nao-existe", SALT_ROUNDS);
 const falhasLogin = criarLimitador({ janela: 15 * 60 * 1000, maximo: 5 });
 // Pedidos de redefinição: 3 por e-mail por hora.
 const pedidosRedefinicao = criarLimitador({ janela: 60 * 60 * 1000, maximo: 3 });
+// Reenvio do link de confirmação de e-mail: até 3 por hora por conta.
+const pedidosConfirmacao = criarLimitador({ janela: 60 * 60 * 1000, maximo: 3 });
 
 // Monta a resposta de sucesso: token + dados básicos (nunca a senha).
 function gerarSessao(conta, tipo) {
   const horas = Number(process.env.JWT_EXPIRES_HOURS ?? 8);
   const token = criarToken({ sub: conta.id, tipo, nome: conta.nome }, process.env.JWT_SECRET, horas * 3600);
-  return { token, usuario: { id: conta.id, nome: conta.nome, email: conta.email, tipo } };
+  return { token, usuario: { id: conta.id, nome: conta.nome, email: conta.email, tipo, emailVerificado: Boolean(conta.emailVerificadoEm) } };
 }
 
 function erro(res, status, mensagem, campo) {
@@ -115,7 +118,8 @@ export async function cadastrarUsuaria(req, res) {
       return conta;
     });
 
-    return res.status(201).json({ ...gerarSessao(usuaria, "usuaria"), verificacao: { cpf: verificacao.cpfStatus } });
+    const emailEnviado = await enviarConfirmacaoEmail("usuaria", usuaria);
+    return res.status(201).json({ ...gerarSessao(usuaria, "usuaria"), verificacao: { cpf: verificacao.cpfStatus, emailEnviado } });
   } catch (e) {
     return tratarErro(res, e);
   }
@@ -216,7 +220,8 @@ export async function cadastrarEmpresa(req, res) {
       return conta;
     });
 
-    return res.status(201).json({ ...gerarSessao(empresa, "empresa"), verificacao: { representante: "pendente" } });
+    const emailEnviado = await enviarConfirmacaoEmail("empresa", empresa);
+    return res.status(201).json({ ...gerarSessao(empresa, "empresa"), verificacao: { representante: "pendente", emailEnviado } });
   } catch (e) {
     return tratarErro(res, e);
   }
@@ -336,6 +341,82 @@ export async function redefinirSenha(req, res) {
   }
 }
 
+// Cria um link de uso único (24 h) para confirmar o e-mail da conta e envia.
+// Um link novo invalida os anteriores. Nunca derruba quem chamou: se algo
+// falhar, devolve false e a pessoa pode pedir outro link depois.
+async function enviarConfirmacaoEmail(tipo, conta) {
+  try {
+    await VerificacaoEmail.update({ usadoEm: new Date() }, { where: { tipoConta: tipo, contaId: conta.id, usadoEm: null } });
+    const token = randomBytes(32).toString("hex");
+    await VerificacaoEmail.create({
+      tipoConta: tipo,
+      contaId: conta.id,
+      email: conta.email,
+      tokenHash: hashToken(token),
+      expiraEm: new Date(Date.now() + VALIDADE_CONFIRMACAO),
+    });
+    const base = (process.env.FRONTEND_URL ?? "http://localhost:3006").replace(/\/$/, "");
+    const link = `${base}/confirmar-email?token=${token}`;
+    return await enviarEmail({
+      para: conta.email,
+      assunto: "Confirme seu e-mail na Bloom",
+      texto: `Olá, ${conta.nome}.\n\nPara confirmar que este e-mail é seu, acesse: ${link}\n\nO link vale por 24 horas. Se você não criou uma conta na Bloom, ignore este e-mail.`,
+      html: `<p>Olá, ${escaparHtml(conta.nome)}.</p><p><a href="${link}">Clique aqui para confirmar seu e-mail</a>.</p><p>O link vale por 24 horas. Se você não criou uma conta na Bloom, ignore este e-mail.</p>`,
+    });
+  } catch (e) {
+    console.error("Falha ao preparar a confirmação de e-mail:", e.message);
+    return false;
+  }
+}
+
+// POST /api/auth/email/confirmar { token } — aberto pelo link do e-mail; não
+// precisa estar logada.
+export async function confirmarEmail(req, res) {
+  try {
+    const token = texto(req.body.token);
+    const invalido = () => erro(res, 400, "Este link de confirmação é inválido ou expirou. Entre na sua conta e peça um novo.");
+    if (!/^[0-9a-f]{64}$/.test(token)) return invalido();
+
+    const pedido = await VerificacaoEmail.findOne({ where: { tokenHash: hashToken(token) } });
+    if (!pedido || pedido.usadoEm || pedido.expiraEm < new Date()) return invalido();
+
+    const Model = pedido.tipoConta === "empresa" ? Empresa : Usuaria;
+    const conta = await Model.findByPk(pedido.contaId);
+    // Link de um e-mail que a conta já trocou não confirma o e-mail atual.
+    if (!conta || conta.email !== pedido.email) return invalido();
+
+    await sequelize.transaction(async (transaction) => {
+      if (!conta.emailVerificadoEm) await conta.update({ emailVerificadoEm: new Date() }, { transaction });
+      await pedido.update({ usadoEm: new Date() }, { transaction });
+    });
+    return res.json({ mensagem: "E-mail confirmado.", tipo: pedido.tipoConta });
+  } catch (e) {
+    return tratarErro(res, e);
+  }
+}
+
+// POST /api/auth/email/reenviar — manda outro link para o e-mail da conta logada.
+export async function reenviarConfirmacao(req, res) {
+  try {
+    const Model = req.auth.tipo === "empresa" ? Empresa : Usuaria;
+    const conta = await Model.findByPk(req.auth.sub);
+    if (!conta) return erro(res, 401, "Sessão inválida. Faça login novamente.");
+    if (conta.emailVerificadoEm) return res.json({ mensagem: "Seu e-mail já está confirmado.", jaConfirmado: true });
+
+    const chave = `${req.auth.tipo}:${conta.id}`;
+    if (pedidosConfirmacao.bloqueado(chave)) return erro(res, 429, "Você já pediu alguns links. Aguarde um pouco e confira também a caixa de spam.");
+    pedidosConfirmacao.registrar(chave);
+
+    const enviado = await enviarConfirmacaoEmail(req.auth.tipo, conta);
+    if (!enviado && process.env.NODE_ENV === "production") {
+      return erro(res, 503, "Não foi possível enviar o e-mail agora. Tente de novo mais tarde.");
+    }
+    return res.json({ mensagem: `Enviamos um novo link para ${conta.email}. Ele vale por 24 horas.`, enviado });
+  } catch (e) {
+    return tratarErro(res, e);
+  }
+}
+
 function escaparHtml(valor) {
   return String(valor).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
@@ -387,8 +468,14 @@ export async function alterarEmail(req, res) {
     if (await Model.findOne({ where: { email } })) return erro(res, 409, "Este e-mail já está cadastrado.", "email");
 
     falhasLogin.limpar(chave);
-    await conta.update({ email });
-    return res.json({ mensagem: "E-mail alterado.", usuario: { id: conta.id, nome: conta.nome, email, tipo: req.auth.tipo } });
+    // O e-mail novo precisa ser confirmado de novo.
+    await conta.update({ email, emailVerificadoEm: null });
+    const emailEnviado = await enviarConfirmacaoEmail(req.auth.tipo, conta);
+    return res.json({
+      mensagem: "E-mail alterado. Enviamos um link para confirmar o novo endereço.",
+      emailEnviado,
+      usuario: { id: conta.id, nome: conta.nome, email, tipo: req.auth.tipo, emailVerificado: false },
+    });
   } catch (e) {
     return tratarErro(res, e);
   }
@@ -430,7 +517,7 @@ export async function me(req, res) {
     if (!conta) return erro(res, 401, "Sessão inválida. Faça login novamente.");
 
     return res.json({
-      usuario: { id: conta.id, nome: conta.nome, email: conta.email, tipo: req.auth.tipo },
+      usuario: { id: conta.id, nome: conta.nome, email: conta.email, tipo: req.auth.tipo, emailVerificado: Boolean(conta.emailVerificadoEm) },
     });
   } catch (e) {
     return tratarErro(res, e);

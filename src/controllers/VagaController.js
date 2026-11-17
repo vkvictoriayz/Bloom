@@ -1,8 +1,10 @@
 import { Op } from "sequelize";
+import { sequelize } from "../config/database.js";
 import { Empresa } from "../models/index.js";
 import { Candidatura, CandidaturaEnvio, PerfilEmpresa, Vaga } from "../models/Empresarial.js";
 import { CandidaturaCurriculo, CurriculoCandidata } from "../models/Curriculo.js";
 import { imagensDe } from "../models/Imagem.js";
+import { Conversa, Mensagem } from "../models/Interacao.js";
 import { contasPremium } from "../models/Premium.js";
 import { Usuaria } from "../models/Usuaria.js";
 import { notificar } from "../services/notificacoes.js";
@@ -194,4 +196,46 @@ export const minhas = comTratamento(async (req, res) => {
       };
     }),
   });
+});
+
+// Etapas em que a candidata ainda pode desistir. Depois de aprovada ou
+// reprovada o processo acabou, e a candidatura fica como histórico.
+const PODE_RETIRAR = ["Recebida", "Em análise", "Em entrevista"];
+
+// DELETE /api/candidaturas/:id — a candidata retira a candidatura. Apaga a
+// candidatura e o que foi enviado com ela (apresentação, cópia do currículo e a
+// conversa com a empresa), e avisa a empresa. Depois ela pode se candidatar de
+// novo, se a vaga continuar aberta.
+export const retirar = comTratamento(async (req, res) => {
+  const id = idParam(req.params.id);
+  const cand = id && (await Candidatura.findOne({ where: { id, usuariaId: eu(req) } }));
+  if (!cand) return erro(res, 404, "Candidatura não encontrada.");
+  if (!PODE_RETIRAR.includes(cand.status)) {
+    return erro(res, 400, `Esta candidatura já foi ${cand.status.toLowerCase()} e não pode mais ser retirada.`);
+  }
+
+  const vaga = await Vaga.findByPk(cand.vagaId);
+  await sequelize.transaction(async (transaction) => {
+    const conversa = await Conversa.findOne({ where: { candidaturaId: cand.id }, transaction });
+    if (conversa) {
+      await Mensagem.destroy({ where: { conversaId: conversa.id }, transaction });
+      await conversa.destroy({ transaction });
+    }
+    await CandidaturaEnvio.destroy({ where: { candidaturaId: cand.id }, transaction });
+    await CandidaturaCurriculo.destroy({ where: { candidaturaId: cand.id }, transaction });
+    await cand.destroy({ transaction });
+  });
+
+  const perfilEmpresa = vaga && (await PerfilEmpresa.findByPk(vaga.perfilEmpresaId));
+  if (perfilEmpresa) {
+    const candidata = await Usuaria.findByPk(eu(req));
+    await notificar({
+      tipoConta: "empresa",
+      contaId: perfilEmpresa.empresaId,
+      tipo: "candidatura",
+      texto: `${candidata?.nome ?? "Uma candidata"} retirou a candidatura para ${vaga.titulo}.`,
+      link: `/empresa/vagas/${vaga.id}`,
+    });
+  }
+  return res.json({ ok: true, podeCandidatarDeNovo: (vaga?.status ?? "Aberta") === "Aberta" });
 });

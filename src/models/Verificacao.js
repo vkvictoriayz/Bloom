@@ -84,6 +84,23 @@ export const RedefinicaoSenha = sequelize.define(
   opcoes("REDEFINICAO_SENHA", { indexes: [{ fields: ["tipo_conta", "id_conta"] }] })
 );
 
+// Links de confirmação de e-mail (migration 008). Guarda o e-mail para o qual
+// o link foi enviado: se a conta trocar de e-mail, o link antigo não vale.
+export const VerificacaoEmail = sequelize.define(
+  "VerificacaoEmail",
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, field: "id_verificacao_email" },
+    tipoConta: { type: DataTypes.ENUM("usuaria", "empresa"), allowNull: false, field: "tipo_conta" },
+    contaId: { type: DataTypes.INTEGER, allowNull: false, field: "id_conta" },
+    email: { type: DataTypes.STRING(150), allowNull: false },
+    tokenHash: { type: DataTypes.CHAR(64), allowNull: false, unique: true, field: "token_hash" },
+    expiraEm: { type: DataTypes.DATE, allowNull: false, field: "expira_em" },
+    usadoEm: { type: DataTypes.DATE, field: "usado_em" },
+    criadoEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "criado_em" },
+  },
+  opcoes("VERIFICACAO_EMAIL")
+);
+
 export async function prepararVerificacao() {
   for (const modelo of [UsuariaVerificacao, EmpresaCadastro, RedefinicaoSenha]) {
     await modelo.sync();

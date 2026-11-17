@@ -17,6 +17,7 @@ import {
   LIMITE_COMENTARIO,
   LIMITE_PUBLICACAO,
   lerComentarios,
+  linkAssunto,
   seguirPerfil,
   TIPOS,
   tempoRelativo,
@@ -225,6 +226,26 @@ function EdicaoPublicacao({ publicacao, aoSalvar, aoCancelar }) {
   )
 }
 
+// Texto com as #hashtags viradas em links para a busca de publicações.
+// Mesma regra do servidor (ver ComunidadeController.emAlta).
+const HASHTAG = /(^|[^\p{L}\p{N}_&/])#([\p{L}\p{N}_]{2,40})/gu
+function TextoComAssuntos({ texto }) {
+  const partes = []
+  let ultimo = 0
+  for (const m of texto.matchAll(HASHTAG)) {
+    const inicio = m.index + m[1].length
+    if (inicio > ultimo) partes.push(texto.slice(ultimo, inicio))
+    partes.push(
+      <Link key={inicio} to={linkAssunto(m[2])} className="font-semibold text-vinho hover:underline">
+        #{m[2]}
+      </Link>
+    )
+    ultimo = inicio + m[2].length + 1
+  }
+  if (ultimo < texto.length) partes.push(texto.slice(ultimo))
+  return partes
+}
+
 // Uma publicação do feed: autora, texto, imagem, curtir, comentar,
 // compartilhar e (para a autora) editar e excluir. Tudo ligado à API.
 // "aoAtualizar" avisa a lista quando a publicação muda (edição).
@@ -395,7 +416,11 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar }) {
           <EdicaoPublicacao publicacao={dados} aoSalvar={aoSalvarEdicao} aoCancelar={() => setEditando(false)} />
         ) : (
           <>
-            {dados.texto && <p className="mt-4 text-[15px] leading-relaxed whitespace-pre-line text-tinta">{dados.texto}</p>}
+            {dados.texto && (
+              <p className="mt-4 text-[15px] leading-relaxed break-words whitespace-pre-line text-tinta">
+                <TextoComAssuntos texto={dados.texto} />
+              </p>
+            )}
             <ImagemPublicacao imagem={dados.imagem} descricao={`Imagem publicada por ${dados.autora.nome}`} className="mt-4" />
           </>
         )}
