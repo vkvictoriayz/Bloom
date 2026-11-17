@@ -97,7 +97,8 @@ function MenuComentario({ aoExcluir, aoDenunciar }) {
 }
 
 // Menu "⋯" da publicação: copiar o texto (todas); editar e excluir (só a autora).
-function MenuPublicacao({ minha, aoCopiar, aoEditar, aoExcluir, aoDenunciar }) {
+// "extras": ações a mais de quem mostra o cartão ({ rotulo, icone, aoClicar }).
+function MenuPublicacao({ minha, aoCopiar, aoEditar, aoExcluir, aoDenunciar, extras = [] }) {
   const { aberto, setAberto, caixa } = useMenu()
   const item = itemMenu
 
@@ -152,6 +153,20 @@ function MenuPublicacao({ minha, aoCopiar, aoEditar, aoExcluir, aoDenunciar }) {
               <Icone nome="info" tamanho={16} /> Denunciar publicação
             </button>
           )}
+          {extras.map((x) => (
+            <button
+              key={x.rotulo}
+              role="menuitem"
+              type="button"
+              className={item}
+              onClick={() => {
+                setAberto(false)
+                x.aoClicar()
+              }}
+            >
+              <Icone nome={x.icone ?? "fechar"} tamanho={16} /> {x.rotulo}
+            </button>
+          ))}
           {minha && (
             <button
               role="menuitem"
@@ -249,7 +264,7 @@ function TextoComAssuntos({ texto }) {
 // Uma publicação do feed: autora, texto, imagem, curtir, comentar,
 // compartilhar e (para a autora) editar e excluir. Tudo ligado à API.
 // "aoAtualizar" avisa a lista quando a publicação muda (edição).
-function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar }) {
+function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar, acoesExtras }) {
   const [dados, setDados] = useState(publicacao)
   const [editando, setEditando] = useState(false)
   const [excluindoComentario, setExcluindoComentario] = useState(null)
@@ -409,7 +424,7 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar }) {
               Seguir
             </Botao>
           )}
-          <MenuPublicacao minha={dados.minha} aoCopiar={copiar} aoEditar={() => setEditando(true)} aoExcluir={() => setConfirmando(true)} aoDenunciar={() => setDenunciando('publicacao')} />
+          <MenuPublicacao minha={dados.minha} aoCopiar={copiar} aoEditar={() => setEditando(true)} aoExcluir={() => setConfirmando(true)} aoDenunciar={() => setDenunciando('publicacao')} extras={acoesExtras} />
         </header>
 
         {editando ? (

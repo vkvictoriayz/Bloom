@@ -11,6 +11,7 @@ const CATEGORIA = {
   curtida: "comunidade",
   comentario: "comunidade",
   conexao: "comunidade",
+  comunidade: "comunidade",
   plataforma: "plataforma",
 };
 

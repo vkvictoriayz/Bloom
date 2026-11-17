@@ -56,6 +56,8 @@ export const MensagemDireta = sequelize.define(
     texto: { type: DataTypes.STRING(1000), allowNull: false },
     enviadaEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "enviada_em" },
     lidaEm: { type: DataTypes.DATE, field: "lida_em" },
+    // Migration 009: quando quem enviou apagou a mensagem (o texto sai do banco).
+    apagadaEm: { type: DataTypes.DATE, field: "apagada_em" },
   },
   opcoes("MENSAGEM_DIRETA")
 );

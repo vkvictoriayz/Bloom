@@ -4,7 +4,7 @@ import { sequelize } from "../config/database.js";
 import { Admin, Comunicado, DashboardAdmin, LogAdmin, NIVEIS_ADMIN, registrarAcao } from "../models/Admin.js";
 import { Comentario, Curtida, Publicacao } from "../models/Comunidade.js";
 import { Candidatura, PerfilEmpresa, PublicacaoEmpresa, Vaga } from "../models/Empresarial.js";
-import { Comunidade, ComunidadeMembro, ComunidadePublicacao } from "../models/Grupos.js";
+import { Comunidade, ComunidadeCapa, ComunidadeMembro, ComunidadePublicacao } from "../models/Grupos.js";
 import { Empresa, Usuaria } from "../models/index.js";
 import { Assinatura, Pagamento, Plano } from "../models/Premium.js";
 import { PublicacaoImagem } from "../models/RedeSocial.js";
@@ -659,6 +659,7 @@ export const removerComunidade = comTratamento(async (req, res) => {
   await sequelize.transaction(async (transaction) => {
     await ComunidadePublicacao.destroy({ where: { comunidadeId: id }, transaction });
     await ComunidadeMembro.destroy({ where: { comunidadeId: id }, transaction });
+    await ComunidadeCapa.destroy({ where: { comunidadeId: id }, transaction });
     await c.destroy({ transaction });
   });
   await registrarAcao(req.admin.id, "Removeu comunidade", "COMUNIDADE", id, `${c.nome}: ${motivo}`);

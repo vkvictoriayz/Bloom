@@ -1,15 +1,17 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
 import { IconeAvatar, SeletorIcone } from '../../components/IconePerfil'
 import TituloPagina from '../../components/candidata/TituloPagina'
-import { useRecurso } from '../../components/candidata/useRecurso'
+import { CapaComunidade, IconeComunidade, PilhaAvatares } from '../../components/comunidade/ElementosComunidade'
 import Botao from '../../components/ui/Botao'
 import { AreaTexto, Aviso, Campo, Entrada } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
-import { Vazio, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
-import { criarComunidade, DISPONIVEL, listarComunidades } from '../../services/recursos'
+import { Vazio, VazioAcoes, VazioDescricao, VazioIcone, VazioTitulo } from '../../components/ui/Vazio'
+import { textoAtividade, textoParticipantes } from '../../services/comunidade'
+import { criarComunidade, listarComunidades, participarComunidade } from '../../services/recursos'
+import { cn } from '../../lib/cn'
 
 // Formulário para criar uma comunidade (quem cria entra como participante).
 function NovaComunidade({ aoCancelar }) {
@@ -93,16 +95,98 @@ function NovaComunidade({ aoCancelar }) {
   )
 }
 
+
+// Cartão de uma comunidade: capa, ícone, tema, quem participa e atividade.
+function CartaoComunidade({ c, aoParticipar, ocupada }) {
+  return (
+    <li className="group flex flex-col overflow-hidden rounded-2xl border border-linha bg-branco transition-shadow hover:shadow-md">
+      <Link to={`/comunidades/${c.id}`} tabIndex={-1} aria-hidden="true">
+        <CapaComunidade capa={c.capa} className="h-24" />
+      </Link>
+      <div className="flex flex-1 flex-col px-5 pb-5">
+        <div className="relative -mt-7 flex items-end justify-between gap-3">
+          <Link to={`/comunidades/${c.id}`} tabIndex={-1} aria-hidden="true" className="relative z-10 rounded-[22%] ring-4 ring-branco">
+            <IconeComunidade comunidade={c} className="size-14 text-lg" />
+          </Link>
+          {c.participando ? (
+            <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-sucesso-claro px-2.5 py-1 text-xs font-semibold text-sucesso">
+              <Icone nome="check" tamanho={13} /> {c.minha ? 'Você criou' : 'Participando'}
+            </span>
+          ) : (
+            <Botao tamanho="sm" className="mb-1 h-8 rounded-full px-4" onClick={() => aoParticipar(c)} disabled={ocupada} aria-label={`Participar de ${c.nome}`}>
+              {ocupada ? 'Entrando…' : 'Participar'}
+            </Botao>
+          )}
+        </div>
+        <h2 className="mt-3 font-display text-lg leading-snug text-tinta">
+          <Link to={`/comunidades/${c.id}`} className="hover:text-vinho hover:underline">
+            {c.nome}
+          </Link>
+        </h2>
+        <span className="mt-1 w-fit rounded-full bg-blush px-2.5 py-0.5 text-[11px] font-semibold text-vinho">{c.tema}</span>
+        <p className="mt-3 mb-4 line-clamp-2 text-sm text-tinta-2">{c.descricao}</p>
+        <div className="mt-auto flex items-center gap-3 border-t border-linha pt-4">
+          <PilhaAvatares pessoas={c.amostra} total={c.participantes} />
+          <span className="min-w-0 text-xs text-suave">
+            <span className="block font-semibold text-tinta-2">{textoParticipantes(c.participantes)}</span>
+            <span className="block truncate">{textoAtividade(c)}</span>
+          </span>
+        </div>
+      </div>
+    </li>
+  )
+}
+
+const ABAS = [
+  { id: 'descobrir', rotulo: 'Descobrir', icone: 'busca' },
+  { id: 'minhas', rotulo: 'Minhas comunidades', icone: 'grupo' },
+]
+
 // Comunidades temáticas (grupos por tema), criadas pelas integrantes.
 function Comunidades() {
-  const r = useRecurso(DISPONIVEL.comunidades, listarComunidades)
+  const [parametros, setParametros] = useSearchParams()
+  const aba = parametros.get('aba') === 'minhas' ? 'minhas' : 'descobrir'
+  const [busca, setBusca] = useState('')
+  const [estado, setEstado] = useState({ tipo: 'carregando' })
+  const [ocupada, setOcupada] = useState(null)
+  const [erroAcao, setErroAcao] = useState('')
   const [criando, setCriando] = useState(false)
+
+  useEffect(() => {
+    let ativo = true
+    const espera = setTimeout(
+      () =>
+        listarComunidades({ filtro: aba, busca: busca.trim() })
+          .then((r) => ativo && setEstado({ tipo: 'pronto', lista: r.comunidades }))
+          .catch((e) => ativo && setEstado({ tipo: 'erro', texto: e.message })),
+      busca ? 300 : 0
+    )
+    return () => {
+      ativo = false
+      clearTimeout(espera)
+    }
+  }, [aba, busca])
+
+  async function participar(c) {
+    setOcupada(c.id)
+    setErroAcao('')
+    try {
+      const r = await participarComunidade(c.id)
+      setEstado((e) => ({ ...e, lista: e.lista.map((x) => (x.id === c.id ? { ...x, participando: r.participando, participantes: r.participantes } : x)) }))
+    } catch (e) {
+      setErroAcao(e.message)
+    } finally {
+      setOcupada(null)
+    }
+  }
+
+  const lista = estado.lista ?? []
 
   return (
     <>
       <TituloPagina
         titulo="Comunidades"
-        descricao="Grupos de tecnologia por tema, criados pelas integrantes da Bloom."
+        descricao="Grupos por tema para trocar dicas, tirar dúvidas e se apoiar com outras mulheres da tecnologia."
         acoes={
           !criando && (
             <Botao onClick={() => setCriando(true)}>
@@ -113,53 +197,70 @@ function Comunidades() {
       />
       {criando && <NovaComunidade aoCancelar={() => setCriando(false)} />}
 
-      {r.estado === 'carregando' && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {[0, 1, 2, 3].map((i) => (
-            <Esqueleto key={i} className="h-44 rounded-xl" />
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div role="tablist" aria-label="Quais comunidades mostrar" className="flex rounded-full border border-linha bg-branco p-1">
+          {ABAS.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              role="tab"
+              aria-selected={aba === a.id}
+              onClick={() => setParametros(a.id === 'descobrir' ? {} : { aba: a.id }, { replace: true })}
+              className={cn(
+                'inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-colors sm:flex-none',
+                aba === a.id ? 'bg-vinho text-white' : 'text-tinta-2 hover:text-tinta'
+              )}
+            >
+              <Icone nome={a.icone} tamanho={15} /> {a.rotulo}
+            </button>
+          ))}
+        </div>
+        <Entrada type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome ou tema" aria-label="Buscar comunidade" className="h-10 sm:max-w-72" />
+      </div>
+
+      {erroAcao && (
+        <Aviso tipo="erro" className="mb-4">
+          {erroAcao}
+        </Aviso>
+      )}
+      {estado.tipo === 'carregando' && (
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <Esqueleto key={i} className="h-72 rounded-2xl" />
           ))}
         </div>
       )}
-      {r.estado === 'erro' && <Aviso tipo="erro">{r.erro}</Aviso>}
-      {r.estado === 'pronto' &&
-        (r.dados.comunidades?.length ? (
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {r.dados.comunidades.map((c) => (
-              <li key={c.id} className="flex flex-col rounded-xl border border-linha bg-branco p-5">
-                <div className="flex items-center gap-3">
-                  {c.icone ? (
-                    <IconeAvatar valor={c.icone} forma="quadrado" className="size-12" />
-                  ) : (
-                    <span className="grid size-12 shrink-0 place-items-center rounded-lg bg-blush text-vinho" aria-hidden="true">
-                      <Icone nome="grupo" />
-                    </span>
-                  )}
-                  <div className="min-w-0">
-                    <h2 className="truncate font-semibold text-tinta">{c.nome}</h2>
-                    <p className="text-xs text-suave">
-                      {c.tema} · {c.participantes} {c.participantes === 1 ? 'participante' : 'participantes'}
-                    </p>
-                  </div>
-                </div>
-                <p className="mt-3 line-clamp-2 text-sm text-tinta-2">{c.descricao}</p>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <Botao as={Link} to={`/comunidades/${c.id}`} variante="secundario">
-                    Ver comunidade
-                  </Botao>
-                  {c.participando && (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-sucesso">
-                      <Icone nome="check" tamanho={14} /> {c.minha ? 'Você criou' : 'Você participa'}
-                    </span>
-                  )}
-                </div>
-              </li>
+      {estado.tipo === 'erro' && <Aviso tipo="erro">{estado.texto}</Aviso>}
+      {estado.tipo === 'pronto' &&
+        (lista.length ? (
+          <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {lista.map((c) => (
+              <CartaoComunidade key={c.id} c={c} aoParticipar={participar} ocupada={ocupada === c.id} />
             ))}
           </ul>
         ) : (
           !criando && (
             <Vazio className="bg-branco">
-              <VazioTitulo>Nenhuma comunidade ainda</VazioTitulo>
-              <VazioDescricao>Crie a primeira: escolha um tema e convide outras integrantes.</VazioDescricao>
+              <VazioIcone>
+                <Icone nome="grupo" />
+              </VazioIcone>
+              <VazioTitulo>
+                {busca ? 'Nenhuma comunidade encontrada' : aba === 'minhas' ? 'Você ainda não participa de comunidades' : 'Você já participa de todas as comunidades'}
+              </VazioTitulo>
+              <VazioDescricao>
+                {busca
+                  ? 'Tente outro nome ou tema, ou crie uma comunidade sobre esse assunto.'
+                  : aba === 'minhas'
+                    ? 'Encontre um grupo em Descobrir ou crie o seu.'
+                    : 'Que tal criar uma nova sobre um tema que ainda não existe?'}
+              </VazioDescricao>
+              <VazioAcoes>
+                {aba === 'minhas' && !busca ? (
+                  <Botao onClick={() => setParametros({}, { replace: true })}>Descobrir comunidades</Botao>
+                ) : (
+                  <Botao onClick={() => setCriando(true)}>Criar comunidade</Botao>
+                )}
+              </VazioAcoes>
             </Vazio>
           )
         ))}

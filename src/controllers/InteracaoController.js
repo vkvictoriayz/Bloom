@@ -116,7 +116,10 @@ export const listarConversas = comTratamento(async (req, res) => {
       return {
         id: c.id,
         ...detalhes.get(c.id),
-        ultimaMensagem: delas[0]?.texto ?? "Conversa iniciada",
+        ultimaMensagem: delas[0] ? `${delas[0].autorTipo === tipo ? "Você: " : ""}${delas[0].texto}` : "Conversa iniciada",
+        ultimaEm: delas[0]?.enviadaEm ?? c.criadaEm,
+        ultimaMinha: Boolean(delas[0] && delas[0].autorTipo === tipo),
+        ultimaLida: Boolean(delas[0]?.lidaEm),
         atualizadaEm: c.atualizadaEm,
         naoLidas: delas.filter((m) => m.autorTipo !== tipo && !m.lidaEm).length,
       };
@@ -162,9 +165,13 @@ export const lerConversa = comTratamento(async (req, res) => {
   // O aviso de "nova mensagem" desta conversa deixa de fazer sentido.
   await Notificacao.update({ lidaEm: new Date() }, { where: { tipoConta: tipo, contaId: req.auth.sub, chave: `conversa-${conversa.id}`, lidaEm: { [Op.is]: null } } });
 
-  const mensagens = await Mensagem.findAll({ where: { conversaId: conversa.id }, order: [["enviadaEm", "ASC"], ["id", "ASC"]], limit: 500 });
+  // ?depois=<id>: só as mensagens novas (a tela consulta de tempos em tempos).
+  const depois = idParam(req.query.depois);
+  const onde = depois ? { conversaId: conversa.id, id: { [Op.gt]: depois } } : { conversaId: conversa.id };
+  const mensagens = await Mensagem.findAll({ where: onde, order: [["enviadaEm", "ASC"], ["id", "ASC"]], limit: 500 });
+  const ultimaLida = await Mensagem.findOne({ where: { conversaId: conversa.id, autorTipo: tipo, lidaEm: { [Op.ne]: null } }, order: [["id", "DESC"]] });
   const detalhes = await detalhesConversas([conversa], tipo);
-  return res.json({ conversa: { id: conversa.id, ...detalhes.get(conversa.id) }, mensagens: mensagens.map((m) => mensagemJson(m, tipo)) });
+  return res.json({ conversa: { id: conversa.id, ...detalhes.get(conversa.id) }, mensagens: mensagens.map((m) => mensagemJson(m, tipo)), temMais: false, lidasAte: ultimaLida?.id ?? null });
 });
 
 // POST /api/mensagens/:id { texto }

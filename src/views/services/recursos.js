@@ -20,7 +20,8 @@ const chamar = (caminho, opcoes = {}) => {
 
 // Mensagens
 export const listarConversas = () => chamar('/mensagens')
-export const lerConversa = (id) => chamar(`/mensagens/${encodeURIComponent(id)}`)
+// depois: id da última mensagem que a tela já tem (traz só as novas).
+export const lerConversa = (id, { depois } = {}) => chamar(`/mensagens/${encodeURIComponent(id)}${depois ? `?depois=${depois}` : ""}`)
 export const enviarMensagem = (id, texto) => chamar(`/mensagens/${encodeURIComponent(id)}`, { method: 'POST', corpo: { texto } })
 // Abre (ou retoma) a conversa de uma candidatura (id numérico do servidor).
 export const abrirConversa = (candidaturaId) => chamar('/mensagens', { method: 'POST', corpo: { candidaturaId } })
@@ -36,18 +37,31 @@ export const contarNaoLidas = () => chamar('/notificacoes?resumo=1').then((r) =>
 export const EVENTO_NOTIFICACOES = 'bloom-notificacoes-lidas'
 
 // Comunidades temáticas (grupos)
-export const listarComunidades = () => chamar('/comunidades')
-export const lerComunidadeTematica = (id) => chamar(`/comunidades/${encodeURIComponent(id)}`)
+// filtro: "minhas" | "descobrir" | "" (todas); busca: nome, tema ou descrição.
+export const listarComunidades = ({ filtro = "", busca = "" } = {}) => {
+  const q = new URLSearchParams(Object.entries({ filtro, busca }).filter(([, v]) => v)).toString()
+  return chamar(`/comunidades${q ? `?${q}` : ""}`)
+}
+export const lerComunidadeTematica = (id, pagina = 1) => chamar(`/comunidades/${encodeURIComponent(id)}${pagina > 1 ? `?pagina=${pagina}` : ""}`)
 export const participarComunidade = (id) => chamar(`/comunidades/${encodeURIComponent(id)}/participar`, { method: 'POST' })
 export const criarComunidade = (corpo) => chamar('/comunidades', { method: 'POST', corpo })
 export const excluirComunidade = (id) => chamar(`/comunidades/${encodeURIComponent(id)}`, { method: 'DELETE' })
 export const publicarNaComunidade = (id, corpo) => chamar(`/comunidades/${encodeURIComponent(id)}/publicacoes`, { method: 'POST', corpo })
 export const atualizarComunidade = (id, corpo) => chamar(`/comunidades/${encodeURIComponent(id)}`, { method: 'PUT', corpo })
+export const enviarCapaComunidade = (id, imagem) => chamar(`/comunidades/${encodeURIComponent(id)}/capa`, { method: 'PUT', corpo: { imagem } })
+export const removerCapaComunidade = (id) => chamar(`/comunidades/${encodeURIComponent(id)}/capa`, { method: 'DELETE' })
+// Quem criou tira uma publicação da comunidade (ela continua no perfil de quem publicou).
+export const tirarDaComunidade = (id, publicacaoId) => chamar(`/comunidades/${encodeURIComponent(id)}/publicacoes/${encodeURIComponent(publicacaoId)}`, { method: 'DELETE' })
 
 // Conversas entre candidatas (separadas das conversas com empresas)
 export const listarConversasCandidatas = () => chamar('/mensagens/candidatas')
 export const abrirConversaCandidata = (usuariaId) => chamar('/mensagens/candidatas', { method: 'POST', corpo: { usuariaId } })
-export const lerConversaCandidata = (id) => chamar(`/mensagens/candidatas/${encodeURIComponent(id)}`)
+// antes: carrega as anteriores; depois: só as novas.
+export const lerConversaCandidata = (id, { antes, depois } = {}) => {
+  const q = antes ? `?antes=${antes}` : depois ? `?depois=${depois}` : ""
+  return chamar(`/mensagens/candidatas/${encodeURIComponent(id)}${q}`)
+}
+export const apagarMensagemCandidata = (id, mensagemId) => chamar(`/mensagens/candidatas/${encodeURIComponent(id)}/mensagens/${encodeURIComponent(mensagemId)}`, { method: 'DELETE' })
 export const enviarMensagemCandidata = (id, texto) => chamar(`/mensagens/candidatas/${encodeURIComponent(id)}`, { method: 'POST', corpo: { texto } })
 
 // Privacidade da candidata

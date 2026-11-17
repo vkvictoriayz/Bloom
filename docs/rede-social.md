@@ -17,6 +17,14 @@ Aplicada sozinha quando a API inicia. Só acrescenta tabelas e colunas.
 
 Seguir usa a tabela `CONEXAO`, que já existia (índice único seguidora/seguida).
 
+## Migration 009 (`src/database/migrations/009_comunidade_mensagens.sql`)
+
+| Tabela / coluna | Para quê |
+| --- | --- |
+| `COMUNIDADE.regras` | regras escritas por quem criou (até 1000 caracteres) |
+| `COMUNIDADE_CAPA` (1 por comunidade) | capa da comunidade, guardada no banco e servida por `/api/imagens/<chave>` |
+| `MENSAGEM_DIRETA.apagada_em` | mensagem apagada por quem enviou (o texto sai do banco) |
+
 ## APIs
 
 Todas exigem login; as permissões são conferidas no servidor.
@@ -47,10 +55,25 @@ As imagens são servidas por `GET /api/imagens/<chave>` (chave aleatória nova a
 
 | Rota | O que faz |
 | --- | --- |
-| `GET /` | Conversas (outra participante, última mensagem, não lidas). |
+| `GET /` | Conversas: outra participante (com a área), prévia, `ultimaEm`, `ultimaMinha`/`ultimaLida` (para os "✓✓") e não lidas. |
 | `POST /` | `{ usuariaId }` abre ou reabre a conversa do par. Perfil oculto não recebe conversa nova. |
-| `GET /:id` | Histórico; marca como lidas as recebidas. Só as duas participantes. |
+| `GET /:id` | As 50 mais recentes e `temMais`. `?antes=<id>`: 50 anteriores. `?depois=<id>`: só as novas (a tela consulta a cada 5 s). Marca como lidas as recebidas e devolve `lidasAte` (até qual mensagem minha a outra leu, para o "Visto"). Só as duas participantes. |
 | `POST /:id` | `{ texto }` (até 1000). Avisa a outra pela notificação "mensagem" (respeita a preferência). |
+| `DELETE /:id/mensagens/:mensagemId` | Quem enviou apaga a própria mensagem: o texto sai do banco e as duas veem "mensagem apagada". |
+
+As conversas com empresas (`/api/mensagens`) também aceitam `?depois=<id>` e
+devolvem `lidasAte` e `ultimaEm`/`ultimaMinha`/`ultimaLida` na lista.
+
+### Comunidades (`/api/comunidades`)
+
+| Rota | O que faz |
+| --- | --- |
+| `GET /?filtro=minhas\|descobrir&busca=` | Lista com `capa`, `regras`, `publicacoesSemana`, `ultimaAtividade` e `amostra` (até 4 participantes visíveis, para as fotos do cartão). As mais movimentadas primeiro. |
+| `GET /:id?pagina=` | Comunidade, `criadora`, participantes (com `entrouEm`; sem perfis ocultos nem contas suspensas) e publicações, 20 por página, com `temMais`. |
+| `PUT /:id` | Só quem criou: `icone`, `tema`, `descricao`, `regras` (o que não vier não muda). |
+| `PUT /:id/capa` · `DELETE /:id/capa` | Só quem criou. `{ imagem }` data URL JPG/PNG/WebP até 1 MB (a tela reduz antes). |
+| `DELETE /:id/publicacoes/:publicacaoId` | Quem criou tira uma publicação da comunidade (moderação). Ela continua no feed e no perfil de quem publicou. |
+| `POST /:id/participar` | Entra ou sai. Quem criou recebe a notificação "X entrou na comunidade" (categoria Comunidade). |
 
 As conversas com empresas continuam em `/api/mensagens` (sem mudança).
 
@@ -67,6 +90,24 @@ front, em `src/views/data/icones.js` e `src/views/components/Icone.jsx`.
 
 ## Telas
 
+- **Comunidades** (`/candidata/comunidades`): abas **Descobrir** e **Minhas
+  comunidades**, busca por nome ou tema e cartões com capa, ícone, tema, fotos
+  de quem participa, número de participantes, atividade da semana e botão
+  **Participar** direto no cartão.
+- **Página da comunidade** (`/comunidades/:id`): capa (quem criou troca ou
+  remove), ícone, nome, tema, participantes e atividade; abas **Publicações**
+  (caixa de publicar, "Ver mais"; quem criou tem "Tirar da comunidade" no menu
+  das publicações), **Participantes** (busca, selo "Criadora", desde quando) e
+  **Sobre** (descrição, regras numeradas, criada em/por; quem criou edita,
+  troca o ícone e exclui). Coluna lateral com o resumo e quem participa.
+- **Mensagens** (`/candidata/mensagens` e `/empresa/mensagens`): duas colunas,
+  como num app de conversa. À esquerda, busca, abas Candidatas/Empresas (só
+  candidata), lista com foto, prévia, hora, "✓✓" e não lidas; o lápis abre
+  "Nova conversa". À direita, a conversa: balões agrupados, separador de dia
+  ("Hoje", "Ontem"…), "✓"/"✓✓", "Visto", apagar a própria mensagem (entre
+  candidatas), "Carregar mensagens anteriores", mensagens novas chegando a cada
+  5 s e Enter para enviar (Shift+Enter quebra a linha). No celular, uma coluna
+  por vez, com botão de voltar.
 - **Feed** (`/candidata/feed`): em telas a partir de 1024 px, coluna lateral com
   meu perfil (capa, foto, publicações, seguidoras e seguindo), "Complete seu
   perfil" (some quando chega a 100%), "Assuntos em alta", "Comunidades para

@@ -55,6 +55,9 @@ grupoRoutes.put("/:id", soCandidata, corpo, G.atualizar);
 grupoRoutes.delete("/:id", soCandidata, G.excluir);
 grupoRoutes.post("/:id/participar", soCandidata, G.participar);
 grupoRoutes.post("/:id/publicacoes", soCandidata, express.json({ limit: "3mb" }), G.publicar);
+grupoRoutes.delete("/:id/publicacoes/:publicacaoId", soCandidata, G.tirarPublicacao);
+grupoRoutes.put("/:id/capa", soCandidata, express.json({ limit: "1500kb" }), G.enviarCapa);
+grupoRoutes.delete("/:id/capa", soCandidata, G.removerCapa);
 
 // Conversas entre candidatas (separadas das conversas com empresas).
 export const mensagemDiretaRoutes = Router();
@@ -63,3 +66,4 @@ mensagemDiretaRoutes.get("/", D.listar);
 mensagemDiretaRoutes.post("/", D.abrir);
 mensagemDiretaRoutes.get("/:id", D.ler);
 mensagemDiretaRoutes.post("/:id", D.enviar);
+mensagemDiretaRoutes.delete("/:id/mensagens/:mensagemId", D.apagar);

@@ -49,6 +49,8 @@ Documentação: [area-candidata.md](area-candidata.md),
 
 - [x] Todas as telas acima ligadas à API (sem dados fictícios)
 - [x] Publicações com imagem, edição, comentários, curtidas
+- [x] Comunidades com cara de rede social: abas Descobrir/Minhas, busca, cartões com capa, fotos de quem participa e atividade da semana; página de cada comunidade com capa, abas Publicações/Participantes/Sobre, regras e moderação pela criadora
+- [x] Mensagens como app de conversa: lista + conversa lado a lado, "✓✓", "Visto", separador de dias, apagar mensagem, carregar anteriores e mensagens novas chegando sozinhas (também na área da empresa)
 - [x] Feed com cara de rede social: coluna lateral (meu perfil com seguidoras/seguindo, "Complete seu perfil", assuntos em alta, comunidades para participar, quem seguir), saudação no campo de publicar, `#hashtags` clicáveis e aviso de "publicações novas" (confere a cada minuto)
 - [x] Botão "Denunciar" em publicações, comentários, perfis, vagas, empresas e comunidades
 - [x] Envio de currículo (PDF/DOC/DOCX até 5 MB)
@@ -68,6 +70,8 @@ Documentação: [area-candidata.md](area-candidata.md),
 - [x] Retirar candidatura (Recebida, Em análise ou Em entrevista; apaga o envio e a conversa e avisa a empresa)
 - [x] Rede social: feed, busca, seguir, comunidades, mensagens
 - [x] Assuntos em alta (`GET /api/comunidade/em-alta`: hashtags dos últimos 14 dias)
+- [x] Comunidades: capa, regras, filtros minhas/descobrir, busca, estatísticas, publicações paginadas, criadora tira publicações, aviso de nova participante (migration 009)
+- [x] Mensagens: paginação (`antes`/`depois`), "Visto" (`lidasAte`), apagar a própria mensagem, área da pessoa no topo da conversa
 - [x] Notificações com preferências por categoria
 - [x] Denúncias (`/api/denuncias`)
 - [x] Conteúdo de conta suspensa some para as outras pessoas
@@ -82,7 +86,7 @@ Documentação: [area-candidata.md](area-candidata.md),
 ### O que falta
 
 - Nada de código. Para usar:
-  - [ ] Reiniciar a API para aplicar a migration 008 (confirmação de e-mail)
+  - [ ] Reiniciar a API para aplicar as migrations 008 (confirmação de e-mail) e 009 (comunidades e mensagens)
   - [~] Configurar o Resend para os e-mails de confirmação saírem de verdade
 
 ---

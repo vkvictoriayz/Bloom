@@ -1,4 +1,5 @@
 import { ImagemPerfil, imagensDe } from "../models/Imagem.js";
+import { ComunidadeCapa } from "../models/Grupos.js";
 import { IconePerfil, PublicacaoImagem } from "../models/RedeSocial.js";
 import { iconeValido } from "../services/icones.js";
 import { lerImagem, novaChave } from "../utils/imagem.js";
@@ -77,7 +78,8 @@ export const servir = comTratamento(async (req, res) => {
   if (!/^[0-9a-f]{32}$/.test(chave)) return erro(res, 404, "Imagem não encontrada.");
   const imagem =
     (await ImagemPerfil.findOne({ attributes: ["mime", "dados"], where: { chave } })) ??
-    (await PublicacaoImagem.findOne({ attributes: ["mime", "dados"], where: { chave } }));
+    (await PublicacaoImagem.findOne({ attributes: ["mime", "dados"], where: { chave } })) ??
+    (await ComunidadeCapa.findOne({ attributes: ["mime", "dados"], where: { chave } }));
   if (!imagem) return erro(res, 404, "Imagem não encontrada.");
   res.set({
     "Content-Type": imagem.mime,

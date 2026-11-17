@@ -19,6 +19,8 @@ export const Comunidade = sequelize.define(
     criadoraId: { type: DataTypes.INTEGER, allowNull: false, field: "id_criadora", references: refUsuaria },
     // Coluna da migration 003: ícone predefinido ("icone:<nome>:<cor>").
     icone: { type: DataTypes.STRING(40) },
+    // Migration 009: regras escritas por quem criou.
+    regras: { type: DataTypes.STRING(1000) },
     criadaEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "criada_em" },
   },
   opcoes("COMUNIDADE")
@@ -49,6 +51,20 @@ export const ComunidadePublicacao = sequelize.define(
     },
   },
   opcoes("COMUNIDADE_PUBLICACAO")
+);
+
+// Capa (imagem de topo) da comunidade — migration 009. Servida por
+// /api/imagens/<chave>, como as fotos de perfil.
+export const ComunidadeCapa = sequelize.define(
+  "ComunidadeCapa",
+  {
+    comunidadeId: { type: DataTypes.INTEGER, primaryKey: true, field: "id_comunidade", references: refComunidade },
+    chave: { type: DataTypes.CHAR(32), allowNull: false, unique: true },
+    mime: { type: DataTypes.STRING(20), allowNull: false },
+    dados: { type: DataTypes.BLOB("medium"), allowNull: false },
+    atualizadaEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "atualizada_em" },
+  },
+  opcoes("COMUNIDADE_CAPA")
 );
 
 export async function prepararGrupos() {

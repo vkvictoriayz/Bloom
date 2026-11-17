@@ -1,65 +1,56 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
-import TituloPagina from '../../components/candidata/TituloPagina'
-import { useRecurso } from '../../components/candidata/useRecurso'
 import Icone from '../../components/Icone'
-import MarcaEmpresa from '../../components/MarcaEmpresa'
 import Avatar from '../../components/comunidade/Avatar'
-import Botao from '../../components/ui/Botao'
+import Chat from '../../components/mensagens/Chat'
 import { Aviso, Entrada } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
-import { Vazio, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { lerPerfis, tempoRelativo } from '../../services/comunidade'
-import { abrirConversaCandidata, DISPONIVEL, listarConversas, listarConversasCandidatas } from '../../services/recursos'
+import { abrirConversaCandidata, listarConversas, listarConversasCandidatas } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
-// Lista de conversas (com busca). "empresa" mostra a marca da empresa no
-// lugar da foto; "vazio" é o texto quando não há conversa.
-function ListaConversas({ conversas, base, empresa = false, vazio }) {
-  const [busca, setBusca] = useState('')
-  const alvo = busca.trim().toLowerCase()
-  const filtradas = conversas.filter((c) => c.participante.nome.toLowerCase().includes(alvo))
+// Mensagens em duas colunas, como nos apps de conversa: a lista à esquerda e
+// a conversa aberta à direita (no celular, uma de cada vez). A candidata tem
+// as abas "Candidatas" (entre integrantes) e "Empresas" (processos
+// seletivos); a empresa vê só as conversas com candidatas.
 
+const INTERVALO_LISTA = 15000
+
+// Uma linha da lista: foto, nome, prévia, hora, "vistos" e não lidas.
+function ItemConversa({ c, para, ativa }) {
   return (
-    <div className="rounded-xl border border-linha bg-branco">
-      <div className="border-b border-linha p-4">
-        <Entrada type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar conversa" aria-label="Buscar conversa" />
-      </div>
-      {filtradas.length === 0 ? (
-        <Vazio className="border-0">
-          <VazioTitulo>{busca ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ainda'}</VazioTitulo>
-          <VazioDescricao>{busca ? 'Tente outro nome.' : vazio}</VazioDescricao>
-        </Vazio>
-      ) : (
-        <ul className="divide-y divide-linha">
-          {filtradas.map((c) => (
-            <li key={c.id}>
-              <Link to={`${base}/${c.id}`} className="flex items-center gap-3 p-4 hover:bg-papel">
-                {empresa ? (
-                  <MarcaEmpresa empresa={{ foto: c.participante.foto, sigla: c.participante.nome.slice(0, 2), cor: '#f4e4e9', corTexto: '#85243d' }} tamanho="md" />
-                ) : (
-                  <Avatar nome={c.participante.nome} foto={c.participante.foto} />
-                )}
-                <span className="min-w-0 flex-1">
-                  <span className={cn('block truncate', c.naoLidas ? 'font-bold text-tinta' : 'font-semibold text-tinta-2')}>{c.participante.nome}</span>
-                  {c.vaga && <span className="block truncate text-xs text-vinho">{c.vaga}</span>}
-                  <span className={cn('block truncate text-sm', c.naoLidas ? 'font-semibold text-tinta' : 'text-suave')}>{c.ultimaMensagem}</span>
+    <li>
+      <Link
+        to={para}
+        aria-current={ativa ? 'page' : undefined}
+        className={cn('flex items-center gap-3 px-4 py-3 transition-colors', ativa ? 'bg-blush' : 'hover:bg-papel')}
+      >
+        <Avatar nome={c.participante.nome} foto={c.participante.foto} tamanho="md" />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-baseline justify-between gap-2">
+            <span className={cn('truncate', c.naoLidas ? 'font-bold text-tinta' : 'font-semibold text-tinta')}>{c.participante.nome}</span>
+            <span className={cn('shrink-0 text-[11px] tabular-nums', c.naoLidas ? 'font-bold text-vinho' : 'text-suave')}>{tempoRelativo(c.ultimaEm ?? c.atualizadaEm)}</span>
+          </span>
+          {c.vaga && <span className="block truncate text-xs font-medium text-vinho">{c.vaga}</span>}
+          <span className="flex items-center gap-2">
+            <span className={cn('min-w-0 flex-1 truncate text-sm', c.naoLidas ? 'font-semibold text-tinta' : 'text-suave')}>
+              {c.ultimaMinha && (
+                <span className={cn('mr-1 text-xs', c.ultimaLida ? 'text-vinho' : 'text-suave')} aria-label={c.ultimaLida ? 'lida' : 'enviada'}>
+                  {c.ultimaLida ? '✓✓' : '✓'}
                 </span>
-                <span className="flex flex-col items-end gap-1">
-                  <span className="text-xs text-suave">{tempoRelativo(c.atualizadaEm)}</span>
-                  {c.naoLidas > 0 && (
-                    <span className="rounded-full bg-vinho px-2 text-xs font-bold text-white" aria-label={`${c.naoLidas} não lidas`}>
-                      {c.naoLidas}
-                    </span>
-                  )}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+              )}
+              {c.ultimaMensagem}
+            </span>
+            {c.naoLidas > 0 && (
+              <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-vinho px-1.5 text-[11px] font-bold text-white" aria-label={`${c.naoLidas} não lidas`}>
+                {c.naoLidas}
+              </span>
+            )}
+          </span>
+        </span>
+      </Link>
+    </li>
   )
 }
 
@@ -91,6 +82,7 @@ function NovaConversa({ aoFechar }) {
     setErro('')
     try {
       const r = await abrirConversaCandidata(pessoa.id)
+      aoFechar()
       navigate(`/candidata/mensagens/candidatas/${r.conversa.id}`)
     } catch (e) {
       setErro(e.message)
@@ -99,135 +91,217 @@ function NovaConversa({ aoFechar }) {
   }
 
   // Quem eu sigo aparece primeiro.
-  const lista = (pessoas ?? []).slice().sort((a, b) => Number(b.seguindo) - Number(a.seguindo)).slice(0, 12)
+  const lista = (pessoas ?? []).slice().sort((a, b) => Number(b.seguindo) - Number(a.seguindo)).slice(0, 20)
 
   return (
-    <section aria-labelledby="titulo-nova-conversa" className="mb-4 rounded-xl border border-linha bg-branco p-5">
-      <div className="flex items-center justify-between gap-3">
-        <h2 id="titulo-nova-conversa" className="font-display text-xl text-tinta">
-          Nova conversa
-        </h2>
-        <Botao variante="fantasma" tamanho="sm" onClick={aoFechar}>
-          Fechar
-        </Botao>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex items-center gap-2 border-b border-linha px-4 py-3">
+        <button type="button" onClick={aoFechar} className="grid size-9 place-items-center rounded-full text-tinta-2 hover:bg-papel-2" aria-label="Voltar para as conversas">
+          <Icone nome="voltar" tamanho={18} />
+        </button>
+        <h2 className="font-display text-lg text-tinta">Nova conversa</h2>
       </div>
-      <Entrada type="search" autoFocus value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar candidata por nome, área ou interesse" aria-label="Buscar candidata" className="mt-3" />
+      <div className="p-3">
+        <Entrada type="search" autoFocus value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, área ou interesse" aria-label="Buscar candidata" className="h-10 rounded-full" />
+      </div>
       {erro && (
-        <Aviso tipo="erro" className="mt-3">
+        <Aviso tipo="erro" className="mx-3 mb-2">
           {erro}
         </Aviso>
       )}
-      {pessoas === null && !erro ? (
-        <p className="mt-3 text-sm text-suave">Carregando…</p>
-      ) : lista.length === 0 ? (
-        <p className="mt-3 text-sm text-suave">{busca ? 'Nenhuma candidata encontrada.' : 'Ainda não há outras candidatas com perfil público.'}</p>
-      ) : (
-        <ul className="mt-2 divide-y divide-linha">
-          {lista.map((p) => (
-            <li key={p.id} className="flex items-center gap-3 py-3">
-              <Avatar nome={p.nome} foto={p.foto} tamanho="sm" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-tinta">{p.nome}</span>
-                <span className="block truncate text-xs text-suave">{[p.area, p.seguindo && 'você segue'].filter(Boolean).join(' · ') || 'Área não informada'}</span>
-              </span>
-              <Botao tamanho="sm" variante="secundario" disabled={abrindo !== null} onClick={() => abrir(p)}>
-                {abrindo === p.id ? 'Abrindo…' : 'Conversar'}
-              </Botao>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  )
-}
-
-// Mensagens da candidata: abas "Candidatas" (conversas entre integrantes) e
-// "Empresas" (contato profissional, ligado às candidaturas).
-function MensagensCandidata() {
-  const [parametros, setParametros] = useSearchParams()
-  const aba = parametros.get('aba') === 'empresas' ? 'empresas' : 'candidatas'
-  const [novaConversa, setNovaConversa] = useState(false)
-  const candidatas = useRecurso(true, listarConversasCandidatas)
-  const empresas = useRecurso(DISPONIVEL.mensagens, listarConversas)
-
-  const naoLidas = (r) => (r.estado === 'pronto' ? (r.dados.conversas ?? []).reduce((t, c) => t + c.naoLidas, 0) : 0)
-  const abas = [
-    { id: 'candidatas', rotulo: 'Candidatas', icone: 'grupo', total: naoLidas(candidatas) },
-    { id: 'empresas', rotulo: 'Empresas', icone: 'predio', total: naoLidas(empresas) },
-  ]
-  const atual = aba === 'candidatas' ? candidatas : empresas
-
-  return (
-    <>
-      <TituloPagina
-        titulo="Mensagens"
-        descricao="Converse com outras mulheres da tecnologia e com as empresas dos seus processos seletivos."
-        acoes={
-          aba === 'candidatas' &&
-          !novaConversa && (
-            <Botao onClick={() => setNovaConversa(true)}>
-              <Icone nome="mais" tamanho={16} /> Nova conversa
-            </Botao>
-          )
-        }
-      />
-
-      <div role="tablist" aria-label="Tipo de conversa" className="mb-5 grid grid-cols-2 rounded-xl border border-linha bg-branco p-1 sm:inline-grid sm:w-auto">
-        {abas.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            role="tab"
-            aria-selected={aba === a.id}
-            onClick={() => setParametros(a.id === 'candidatas' ? {} : { aba: a.id }, { replace: true })}
-            className={cn(
-              'inline-flex h-10 items-center justify-center gap-2 rounded-lg px-5 text-sm font-semibold transition-colors',
-              aba === a.id ? 'bg-vinho text-white' : 'text-tinta-2 hover:bg-papel-2 hover:text-tinta'
-            )}
-          >
-            <Icone nome={a.icone} tamanho={16} /> {a.rotulo}
-            {a.total > 0 && (
-              <span className={cn('rounded-full px-1.5 text-xs font-bold tabular-nums', aba === a.id ? 'bg-white text-vinho' : 'bg-vinho text-white')} aria-label={`${a.total} não lidas`}>
-                {a.total}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {aba === 'candidatas' && novaConversa && <NovaConversa aoFechar={() => setNovaConversa(false)} />}
-
-      {atual.estado === 'carregando' && !atual.anterior && <Esqueleto className="h-64 rounded-xl" />}
-      {atual.estado === 'erro' && <Aviso tipo="erro">{atual.erro}</Aviso>}
-      {atual.estado === 'pronto' &&
-        (aba === 'candidatas' ? (
-          <ListaConversas conversas={atual.dados.conversas ?? []} base="/candidata/mensagens/candidatas" vazio="Comece uma conversa pelo botão “Nova conversa” ou pelo perfil de outra integrante." />
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {pessoas === null && !erro ? (
+          <p className="px-4 py-3 text-sm text-suave">Carregando…</p>
+        ) : lista.length === 0 ? (
+          <p className="px-4 py-3 text-sm text-suave">{busca ? 'Nenhuma candidata encontrada.' : 'Ainda não há outras candidatas com perfil público.'}</p>
         ) : (
-          <ListaConversas conversas={atual.dados.conversas ?? []} base="/candidata/mensagens" empresa vazio="Uma conversa com empresa começa pela página de uma candidatura, com o botão de mensagem." />
-        ))}
-    </>
+          <ul>
+            {lista.map((p) => (
+              <li key={p.id}>
+                <button type="button" disabled={abrindo !== null} onClick={() => abrir(p)} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-papel disabled:opacity-60">
+                  <Avatar nome={p.nome} foto={p.foto} tamanho="md" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-tinta">{p.nome}</span>
+                    <span className="block truncate text-xs text-suave">{[p.area, p.seguindo && 'você segue'].filter(Boolean).join(' · ') || 'Área não informada'}</span>
+                  </span>
+                  <span className="text-xs font-semibold text-vinho">{abrindo === p.id ? 'Abrindo…' : 'Conversar'}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   )
 }
 
-// Lista de conversas com candidatas, vista pela empresa (só conversas de
-// processos seletivos).
-function MensagensEmpresa({ base, descricao }) {
-  const r = useRecurso(DISPONIVEL.mensagens, listarConversas)
+// Estado vazio da coluna da conversa (nenhuma aberta).
+function SemConversa({ podeIniciar, aoIniciar }) {
   return (
-    <>
-      <TituloPagina titulo="Mensagens" descricao={descricao} />
-      {r.estado === 'carregando' && <Esqueleto className="h-64 rounded-xl" />}
-      {r.estado === 'erro' && <Aviso tipo="erro">{r.erro}</Aviso>}
-      {r.estado === 'pronto' && <ListaConversas conversas={r.dados.conversas ?? []} base={base} vazio="Uma conversa começa pela página de uma candidatura, com o botão de mensagem." />}
-    </>
+    <div className="flex h-full flex-col items-center justify-center gap-3 bg-papel p-8 text-center">
+      <span className="grid size-16 place-items-center rounded-full bg-blush text-vinho">
+        <Icone nome="mensagem" tamanho={28} />
+      </span>
+      <h2 className="font-display text-xl text-tinta">Suas mensagens</h2>
+      <p className="max-w-sm text-sm text-tinta-2">
+        {podeIniciar
+          ? 'Escolha uma conversa ao lado ou comece uma nova com outra integrante da Bloom.'
+          : 'Escolha uma conversa ao lado. Uma conversa começa pela página de uma candidatura.'}
+      </p>
+      {podeIniciar && (
+        <button type="button" onClick={aoIniciar} className="mt-1 inline-flex items-center gap-2 rounded-full bg-vinho px-5 py-2.5 text-sm font-semibold text-white hover:bg-vinho-escuro">
+          <Icone nome="mais" tamanho={16} /> Nova conversa
+        </button>
+      )}
+    </div>
   )
 }
 
-// "base" é a rota da área: a candidata vê as duas abas; a empresa, só as
-// conversas dos processos seletivos (a API separa pelo tipo da conta).
-export function Mensagens({ base = '/candidata/mensagens', descricao }) {
-  if (base === '/candidata/mensagens') return <MensagensCandidata />
-  return <MensagensEmpresa base={base} descricao={descricao ?? 'Converse com as candidatas das suas vagas.'} />
+// base: rota da área ("/candidata/mensagens" ou "/empresa/mensagens").
+// selecionada: tipo da conversa aberta pela rota ("candidatas" | "empresas").
+export function Mensagens({ base = '/candidata/mensagens', selecionada = null }) {
+  const { id } = useParams()
+  const [parametros, setParametros] = useSearchParams()
+  const daCandidata = base === '/candidata/mensagens'
+  const aberta = selecionada && id ? { tipo: selecionada, id } : null
+  // A aba acompanha a conversa aberta; sem conversa, vem da URL.
+  const aba = !daCandidata ? 'empresas' : aberta ? aberta.tipo : parametros.get('aba') === 'empresas' ? 'empresas' : 'candidatas'
+  const [listas, setListas] = useState({ candidatas: null, empresas: null })
+  const [erro, setErro] = useState('')
+  const [busca, setBusca] = useState('')
+  const [novaConversa, setNovaConversa] = useState(false)
+
+  const recarregar = useCallback(async () => {
+    try {
+      const [candidatas, empresas] = await Promise.all([daCandidata ? listarConversasCandidatas() : Promise.resolve({ conversas: [] }), listarConversas()])
+      setListas({ candidatas: candidatas.conversas ?? [], empresas: empresas.conversas ?? [] })
+      setErro('')
+    } catch (e) {
+      setErro(e.message)
+    }
+  }, [daCandidata])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    recarregar()
+    const t = setInterval(() => document.visibilityState === 'visible' && recarregar(), INTERVALO_LISTA)
+    return () => clearInterval(t)
+  }, [recarregar])
+
+  // Abrir uma conversa zera as não lidas dela na lista.
+  useEffect(() => {
+    if (!aberta) return
+    const t = setTimeout(recarregar, 800)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberta?.tipo, aberta?.id])
+
+  useEffect(() => {
+    document.title = 'Mensagens · BLOOM'
+  }, [])
+
+  const conversas = listas[aba]
+  const alvo = busca.trim().toLowerCase()
+  const filtradas = (conversas ?? []).filter((c) => !alvo || c.participante.nome.toLowerCase().includes(alvo) || (c.vaga ?? '').toLowerCase().includes(alvo))
+  const naoLidas = (lista) => (lista ?? []).reduce((t, c) => t + c.naoLidas, 0)
+  const rota = (c) => (aba === 'candidatas' ? `${base}/candidatas/${c.id}` : `${base}/${c.id}`)
+
+  const abas = [
+    { id: 'candidatas', rotulo: 'Candidatas', icone: 'grupo', total: naoLidas(listas.candidatas) },
+    { id: 'empresas', rotulo: 'Empresas', icone: 'predio', total: naoLidas(listas.empresas) },
+  ]
+
+  return (
+    <div className="-mx-4 -my-8 flex h-[calc(100dvh-4rem)] min-h-[480px] overflow-hidden border-linha bg-branco sm:-mx-6 lg:mx-0 lg:my-0 lg:h-[calc(100dvh-9rem)] lg:rounded-2xl lg:border">
+      <h1 className="sr-only">Mensagens</h1>
+
+      {/* Coluna da lista */}
+      <section className={cn('flex min-h-0 w-full flex-col border-linha lg:w-[340px] lg:shrink-0 lg:border-r', aberta && 'max-lg:hidden')} aria-label="Conversas">
+        {novaConversa ? (
+          <NovaConversa aoFechar={() => setNovaConversa(false)} />
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-2 px-4 pt-4">
+              <h2 className="font-display text-2xl text-tinta">Mensagens</h2>
+              {daCandidata && (
+                <button
+                  type="button"
+                  onClick={() => setNovaConversa(true)}
+                  className="grid size-10 place-items-center rounded-full bg-blush text-vinho transition-colors hover:bg-vinho hover:text-white"
+                  aria-label="Nova conversa"
+                  title="Nova conversa"
+                >
+                  <Icone nome="editar" tamanho={18} />
+                </button>
+              )}
+            </div>
+            <div className="px-3 pt-3">
+              <Entrada type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar conversa" aria-label="Buscar conversa" className="h-10 rounded-full" />
+            </div>
+            {daCandidata && (
+              <div role="tablist" aria-label="Tipo de conversa" className="mt-3 flex border-b border-linha px-2">
+                {abas.map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={aba === a.id}
+                    onClick={() => setParametros(a.id === 'candidatas' ? {} : { aba: a.id }, { replace: true })}
+                    className={cn(
+                      'inline-flex h-11 flex-1 items-center justify-center gap-1.5 border-b-2 text-sm font-semibold transition-colors',
+                      aba === a.id ? 'border-vinho text-vinho' : 'border-transparent text-tinta-2 hover:text-tinta'
+                    )}
+                  >
+                    <Icone nome={a.icone} tamanho={15} /> {a.rotulo}
+                    {a.total > 0 && <span className="rounded-full bg-vinho px-1.5 text-[11px] font-bold text-white tabular-nums">{a.total}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+            {erro && (
+              <Aviso tipo="erro" className="m-3">
+                {erro}
+              </Aviso>
+            )}
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {conversas === null ? (
+                <div className="flex flex-col gap-2 p-3">
+                  {[0, 1, 2].map((i) => (
+                    <Esqueleto key={i} className="h-16 rounded-xl" />
+                  ))}
+                </div>
+              ) : filtradas.length === 0 ? (
+                <p className="px-5 py-6 text-center text-sm text-suave">
+                  {busca
+                    ? 'Nenhuma conversa com esse nome.'
+                    : aba === 'candidatas'
+                      ? 'Nenhuma conversa ainda. Toque no lápis para começar uma, ou use "Mensagem" no perfil de outra integrante.'
+                      : daCandidata
+                        ? 'Uma conversa com empresa começa pela página de uma candidatura, com o botão de mensagem.'
+                        : 'Uma conversa começa pela página de uma candidatura, com o botão de mensagem.'}
+                </p>
+              ) : (
+                <ul className="divide-y divide-linha">
+                  {filtradas.map((c) => (
+                    <ItemConversa key={`${aba}-${c.id}`} c={c} para={rota(c)} ativa={aberta?.tipo === aba && String(aberta.id) === String(c.id)} />
+                  ))}
+                </ul>
+              )}
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* Coluna da conversa */}
+      <section className={cn('min-h-0 min-w-0 flex-1', !aberta && 'max-lg:hidden')} aria-label="Conversa">
+        {aberta ? (
+          <Chat key={`${aberta.tipo}-${aberta.id}`} tipo={aberta.tipo} id={aberta.id} base={base} aoMudar={recarregar} className="h-full" />
+        ) : (
+          <SemConversa podeIniciar={daCandidata} aoIniciar={() => setNovaConversa(true)} />
+        )}
+      </section>
+    </div>
+  )
 }
 
 export default Mensagens

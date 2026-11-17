@@ -68,3 +68,12 @@ export function tempoRelativo(data, agora = Date.now()) {
   if (d < 7) return `há ${d} dias`;
   return new Date(data).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
 }
+
+// "12 publicações esta semana", "Ativa há 3 dias" ou "Sem publicações ainda".
+export function textoAtividade(c) {
+  if (c.publicacoesSemana > 0) return `${c.publicacoesSemana} ${c.publicacoesSemana === 1 ? 'publicação' : 'publicações'} esta semana`
+  if (c.ultimaAtividade) return `Última publicação: ${tempoRelativo(c.ultimaAtividade)}`
+  return 'Sem publicações ainda'
+}
+
+export const textoParticipantes = (n) => `${n} ${n === 1 ? 'participante' : 'participantes'}`

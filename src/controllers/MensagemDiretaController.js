@@ -1,5 +1,6 @@
 import { Op } from "sequelize";
 import { Usuaria } from "../models/index.js";
+import { PerfilComunidade } from "../models/Comunidade.js";
 import { imagensDe } from "../models/Imagem.js";
 import { Notificacao } from "../models/Interacao.js";
 import { ConversaDireta, MensagemDireta } from "../models/RedeSocial.js";
@@ -13,6 +14,7 @@ import { perfisOcultos } from "../services/privacidade.js";
 const erro = (res, status, mensagem, campo) => res.status(status).json({ erro: mensagem, campo });
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
 const LIMITE = 1000;
+const POR_PAGINA = 50;
 const eu = (req) => req.auth.sub;
 const outra = (c, meuId) => (c.usuariaA === meuId ? c.usuariaB : c.usuariaA);
 const minhas = (meuId) => ({ [Op.or]: [{ usuariaA: meuId }, { usuariaB: meuId }] });
@@ -26,13 +28,31 @@ const comTratamento = (fn) => async (req, res) => {
   }
 };
 
+// Nome, foto e área (do perfil da comunidade) de cada participante.
 async function participantes(ids) {
-  const [contas, fotos] = await Promise.all([Usuaria.findAll({ where: { id: { [Op.in]: ids.length ? ids : [0] } } }), imagensDe("usuaria", ids)]);
+  const lista = ids.length ? ids : [0];
+  const [contas, fotos, perfis] = await Promise.all([
+    Usuaria.findAll({ where: { id: { [Op.in]: lista } } }),
+    imagensDe("usuaria", ids),
+    PerfilComunidade.findAll({ attributes: ["usuariaId", "area"], where: { usuariaId: { [Op.in]: lista } } }),
+  ]);
   const nome = new Map(contas.map((c) => [c.id, c.nome]));
-  return new Map(ids.map((id) => [id, { id, nome: nome.get(id) ?? "Conta removida", foto: fotos.get(id)?.foto ?? null }]));
+  const area = new Map(perfis.map((p) => [p.usuariaId, p.area]));
+  return new Map(ids.map((id) => [id, { id, nome: nome.get(id) ?? "Conta removida", foto: fotos.get(id)?.foto ?? null, area: area.get(id) || null }]));
 }
 
-const mensagemJson = (m, meuId) => ({ id: m.id, texto: m.texto, minha: m.autoraId === meuId, enviadaEm: m.enviadaEm, lida: Boolean(m.lidaEm) });
+// Mensagem apagada: o texto não sai do servidor.
+const mensagemJson = (m, meuId) => ({
+  id: m.id,
+  texto: m.apagadaEm ? "" : m.texto,
+  apagada: Boolean(m.apagadaEm),
+  minha: m.autoraId === meuId,
+  enviadaEm: m.enviadaEm,
+  lida: Boolean(m.lidaEm),
+  lidaEm: m.lidaEm ?? null,
+});
+
+const previa = (m, meuId) => (m.apagadaEm ? "Mensagem apagada" : `${m.autoraId === meuId ? "Você: " : ""}${m.texto}`);
 
 // GET /api/mensagens/candidatas
 export const listar = comTratamento(async (req, res) => {
@@ -49,9 +69,13 @@ export const listar = comTratamento(async (req, res) => {
     return {
       id: c.id,
       participante: pessoas.get(outra(c, meuId)),
-      ultimaMensagem: ultima ? `${ultima.autoraId === meuId ? "Você: " : ""}${ultima.texto}` : "Conversa iniciada",
+      ultimaMensagem: ultima ? previa(ultima, meuId) : "Conversa iniciada",
+      ultimaEm: ultima?.enviadaEm ?? c.criadaEm,
+      // Para os "vistos" na lista: a última foi minha? Já foi lida?
+      ultimaMinha: Boolean(ultima && ultima.autoraId === meuId),
+      ultimaLida: Boolean(ultima?.lidaEm),
       atualizadaEm: c.atualizadaEm,
-      naoLidas: delas.filter((m) => m.autoraId !== meuId && !m.lidaEm).length,
+      naoLidas: delas.filter((m) => m.autoraId !== meuId && !m.lidaEm && !m.apagadaEm).length,
     };
   });
   return res.json({ conversas: lista, naoLidas: lista.reduce((t, c) => t + c.naoLidas, 0) });
@@ -85,7 +109,11 @@ async function minhaConversa(req) {
   return id ? ConversaDireta.findOne({ where: { id, ...minhas(eu(req)) } }) : null;
 }
 
-// GET /api/mensagens/candidatas/:id — também marca como lidas as recebidas.
+// GET /api/mensagens/candidatas/:id[?antes=<id>|?depois=<id>]
+// Sem parâmetro: as 50 mais recentes. "antes": 50 anteriores (rolar para
+// cima). "depois": só as novas (a tela consulta de tempos em tempos).
+// Também marca como lidas as recebidas. "lidasAte" diz até qual mensagem
+// minha a outra pessoa já leu (para o "Visto").
 export const ler = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const conversa = await minhaConversa(req);
@@ -95,13 +123,30 @@ export const ler = comTratamento(async (req, res) => {
     { lidaEm: new Date() },
     { where: { tipoConta: "usuaria", contaId: meuId, chave: `direta-${conversa.id}`, lidaEm: { [Op.is]: null } } }
   );
-  const [mensagens, pessoas] = await Promise.all([
-    MensagemDireta.findAll({ where: { conversaId: conversa.id }, order: [["enviadaEm", "ASC"], ["id", "ASC"]], limit: 500 }),
+
+  const antes = idParam(req.query.antes);
+  const depois = idParam(req.query.depois);
+  const where = { conversaId: conversa.id };
+  let mensagens;
+  let temMais = false;
+  if (depois) {
+    where.id = { [Op.gt]: depois };
+    mensagens = await MensagemDireta.findAll({ where, order: [["id", "ASC"]], limit: 200 });
+  } else {
+    if (antes) where.id = { [Op.lt]: antes };
+    const linhas = await MensagemDireta.findAll({ where, order: [["id", "DESC"]], limit: POR_PAGINA + 1 });
+    temMais = linhas.length > POR_PAGINA;
+    mensagens = linhas.slice(0, POR_PAGINA).reverse();
+  }
+  const [pessoas, ultimaLida] = await Promise.all([
     participantes([outra(conversa, meuId)]),
+    MensagemDireta.findOne({ where: { conversaId: conversa.id, autoraId: meuId, lidaEm: { [Op.ne]: null } }, order: [["id", "DESC"]] }),
   ]);
   return res.json({
     conversa: { id: conversa.id, participante: pessoas.get(outra(conversa, meuId)) },
     mensagens: mensagens.map((m) => mensagemJson(m, meuId)),
+    temMais,
+    lidasAte: ultimaLida?.id ?? null,
   });
 });
 
@@ -126,4 +171,18 @@ export const enviar = comTratamento(async (req, res) => {
     chave: `direta-${conversa.id}`,
   });
   return res.status(201).json({ mensagem: mensagemJson(mensagem, meuId) });
+});
+
+// DELETE /api/mensagens/candidatas/:id/mensagens/:mensagemId — quem enviou
+// apaga a própria mensagem. O texto sai do banco; fica "mensagem apagada".
+export const apagar = comTratamento(async (req, res) => {
+  const meuId = eu(req);
+  const conversa = await minhaConversa(req);
+  if (!conversa) return erro(res, 404, "Conversa não encontrada.");
+  const mensagemId = idParam(req.params.mensagemId);
+  const mensagem = mensagemId && (await MensagemDireta.findOne({ where: { id: mensagemId, conversaId: conversa.id } }));
+  if (!mensagem) return erro(res, 404, "Mensagem não encontrada.");
+  if (mensagem.autoraId !== meuId) return erro(res, 403, "Você só pode apagar as suas mensagens.");
+  if (!mensagem.apagadaEm) await mensagem.update({ texto: "", apagadaEm: new Date() });
+  return res.json({ mensagem: mensagemJson(mensagem, meuId) });
 });

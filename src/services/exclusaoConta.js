@@ -50,6 +50,7 @@ export async function excluirUsuaria(id) {
     // Comunidades criadas por ela deixam de existir; as que ela só participa ficam.
     await apagar("DELETE FROM COMUNIDADE_PUBLICACAO WHERE id_comunidade IN (:criadas) OR id_publicacao IN (:publicacoes)", r, t);
     await apagar("DELETE FROM COMUNIDADE_MEMBRO WHERE id_comunidade IN (:criadas) OR id_usuario = :id", r, t);
+    await apagar("DELETE FROM COMUNIDADE_CAPA WHERE id_comunidade IN (:criadas)", r, t);
     await apagar("DELETE FROM COMUNIDADE WHERE id_comunidade IN (:criadas)", r, t);
     await apagar("DELETE FROM CURTIDA WHERE id_usuario = :id OR id_publicacao IN (:publicacoes)", r, t);
     await apagar("DELETE FROM COMENTARIO WHERE id_usuario = :id OR id_publicacao IN (:publicacoes)", r, t);
