@@ -3,7 +3,9 @@ import { Usuaria } from "../models/index.js";
 import { PerfilComunidade } from "../models/Comunidade.js";
 import { imagensDe } from "../models/Imagem.js";
 import { Notificacao } from "../models/Interacao.js";
-import { ConversaDireta, MensagemDireta } from "../models/RedeSocial.js";
+import { Bloqueio, ConversaDireta, MensagemDireta } from "../models/RedeSocial.js";
+import { sequelize } from "../config/database.js";
+import * as Chat from "../services/chat.js";
 import { notificar } from "../services/notificacoes.js";
 import { perfisOcultos } from "../services/privacidade.js";
 
@@ -41,18 +43,18 @@ async function participantes(ids) {
   return new Map(ids.map((id) => [id, { id, nome: nome.get(id) ?? "Conta removida", foto: fotos.get(id)?.foto ?? null, area: area.get(id) || null }]));
 }
 
-// Mensagem apagada: o texto não sai do servidor.
-const mensagemJson = (m, meuId) => ({
+// Mensagem apagada: o texto e a imagem não saem do servidor.
+const mensagemJson = (m, meuId, imagem = null) => ({
   id: m.id,
   texto: m.apagadaEm ? "" : m.texto,
   apagada: Boolean(m.apagadaEm),
+  imagem: m.apagadaEm ? null : imagem,
   minha: m.autoraId === meuId,
   enviadaEm: m.enviadaEm,
   lida: Boolean(m.lidaEm),
   lidaEm: m.lidaEm ?? null,
 });
 
-const previa = (m, meuId) => (m.apagadaEm ? "Mensagem apagada" : `${m.autoraId === meuId ? "Você: " : ""}${m.texto}`);
 
 // GET /api/mensagens/candidatas
 export const listar = comTratamento(async (req, res) => {
@@ -63,13 +65,17 @@ export const listar = comTratamento(async (req, res) => {
     participantes(conversas.map((c) => outra(c, meuId))),
     ids.length ? MensagemDireta.findAll({ where: { conversaId: { [Op.in]: ids } }, order: [["enviadaEm", "DESC"], ["id", "DESC"]] }) : [],
   ]);
+  const ultimas = conversas.map((c) => mensagens.find((m) => m.conversaId === c.id)).filter(Boolean);
+  const [fotos, bloqueios] = await Promise.all([Chat.imagensDe("direta", ultimas.map((m) => m.id)), Chat.bloqueadasPor(meuId)]);
   const lista = conversas.map((c) => {
     const delas = mensagens.filter((m) => m.conversaId === c.id);
     const ultima = delas[0];
+    const outraId = outra(c, meuId);
     return {
       id: c.id,
-      participante: pessoas.get(outra(c, meuId)),
-      ultimaMensagem: ultima ? previa(ultima, meuId) : "Conversa iniciada",
+      participante: pessoas.get(outraId),
+      bloqueada: bloqueios.euBloqueei.has(outraId) || bloqueios.meBloquearam.has(outraId),
+      ultimaMensagem: ultima ? Chat.previa(ultima, ultima.autoraId === meuId, fotos.get(ultima.id)) : "Conversa iniciada",
       ultimaEm: ultima?.enviadaEm ?? c.criadaEm,
       // Para os "vistos" na lista: a última foi minha? Já foi lida?
       ultimaMinha: Boolean(ultima && ultima.autoraId === meuId),
@@ -91,8 +97,12 @@ export const abrir = comTratamento(async (req, res) => {
 
   const [usuariaA, usuariaB] = [Math.min(meuId, outraId), Math.max(meuId, outraId)];
   const existente = await ConversaDireta.findOne({ where: { usuariaA, usuariaB } });
+  // Conversa que já existe abre mesmo com bloqueio (o histórico continua visível).
   if (existente) return res.json({ conversa: { id: existente.id } });
   if ((await perfisOcultos()).has(outraId)) return erro(res, 404, "Integrante não encontrada.");
+  const bloqueio = await Chat.bloqueioEntre(meuId, outraId);
+  if (bloqueio.euBloqueei) return erro(res, 403, "Você bloqueou esta integrante. Desbloqueie para conversar.");
+  if (bloqueio.meBloqueou) return erro(res, 403, "Não é possível conversar com esta integrante.");
   try {
     const criada = await ConversaDireta.create({ usuariaA, usuariaB });
     return res.status(201).json({ conversa: { id: criada.id } });
@@ -138,13 +148,16 @@ export const ler = comTratamento(async (req, res) => {
     temMais = linhas.length > POR_PAGINA;
     mensagens = linhas.slice(0, POR_PAGINA).reverse();
   }
-  const [pessoas, ultimaLida] = await Promise.all([
+  const [pessoas, ultimaLida, fotos, bloqueio] = await Promise.all([
     participantes([outra(conversa, meuId)]),
     MensagemDireta.findOne({ where: { conversaId: conversa.id, autoraId: meuId, lidaEm: { [Op.ne]: null } }, order: [["id", "DESC"]] }),
+    Chat.imagensDe("direta", mensagens.map((m) => m.id)),
+    Chat.bloqueioEntre(meuId, outra(conversa, meuId)),
   ]);
   return res.json({
-    conversa: { id: conversa.id, participante: pessoas.get(outra(conversa, meuId)) },
-    mensagens: mensagens.map((m) => mensagemJson(m, meuId)),
+    // bloqueio: "eu" (eu bloqueei), "ela" (ela me bloqueou) ou null.
+    conversa: { id: conversa.id, participante: pessoas.get(outra(conversa, meuId)), bloqueio: bloqueio.euBloqueei ? "eu" : bloqueio.meBloqueou ? "ela" : null },
+    mensagens: mensagens.map((m) => mensagemJson(m, meuId, fotos.get(m.id))),
     temMais,
     lidasAte: ultimaLida?.id ?? null,
   });
@@ -155,11 +168,16 @@ export const enviar = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const conversa = await minhaConversa(req);
   if (!conversa) return erro(res, 404, "Conversa não encontrada.");
-  const texto = typeof req.body?.texto === "string" ? req.body.texto.trim() : "";
-  if (!texto) return erro(res, 400, "Escreva uma mensagem.", "texto");
-  if (texto.length > LIMITE) return erro(res, 400, `Use até ${LIMITE} caracteres.`, "texto");
+  const lida = Chat.lerMensagem(req.body, LIMITE);
+  if (lida.falha) return erro(res, 400, ...lida.falha);
+  const bloqueio = await Chat.bloqueioEntre(meuId, outra(conversa, meuId));
+  if (bloqueio.euBloqueei) return erro(res, 403, "Você bloqueou esta integrante. Desbloqueie para enviar mensagens.");
+  if (bloqueio.meBloqueou) return erro(res, 403, "Não é possível enviar mensagens para esta integrante.");
 
-  const mensagem = await MensagemDireta.create({ conversaId: conversa.id, autoraId: meuId, texto });
+  const [mensagem, imagem] = await sequelize.transaction(async (transaction) => {
+    const m = await MensagemDireta.create({ conversaId: conversa.id, autoraId: meuId, texto: lida.texto }, { transaction });
+    return [m, await Chat.gravarImagem("direta", m.id, lida.imagem, transaction)];
+  });
   await conversa.update({ atualizadaEm: new Date() });
   const remetente = await Usuaria.findByPk(meuId);
   await notificar({
@@ -170,7 +188,7 @@ export const enviar = comTratamento(async (req, res) => {
     link: `/candidata/mensagens/candidatas/${conversa.id}`,
     chave: `direta-${conversa.id}`,
   });
-  return res.status(201).json({ mensagem: mensagemJson(mensagem, meuId) });
+  return res.status(201).json({ mensagem: mensagemJson(mensagem, meuId, imagem) });
 });
 
 // DELETE /api/mensagens/candidatas/:id/mensagens/:mensagemId — quem enviou
@@ -183,6 +201,31 @@ export const apagar = comTratamento(async (req, res) => {
   const mensagem = mensagemId && (await MensagemDireta.findOne({ where: { id: mensagemId, conversaId: conversa.id } }));
   if (!mensagem) return erro(res, 404, "Mensagem não encontrada.");
   if (mensagem.autoraId !== meuId) return erro(res, 403, "Você só pode apagar as suas mensagens.");
-  if (!mensagem.apagadaEm) await mensagem.update({ texto: "", apagadaEm: new Date() });
+  if (!mensagem.apagadaEm) {
+    await sequelize.transaction(async (transaction) => {
+      await Chat.apagarImagens("direta", [mensagem.id], transaction);
+      await mensagem.update({ texto: "", apagadaEm: new Date() }, { transaction });
+    });
+  }
   return res.json({ mensagem: mensagemJson(mensagem, meuId) });
+});
+
+// PUT /api/mensagens/candidatas/:id/bloqueio — bloqueia a outra pessoa da
+// conversa: ela deixa de conseguir enviar mensagens e abrir conversa nova.
+// DELETE desfaz. A outra pessoa não é avisada.
+export const bloquear = comTratamento(async (req, res) => {
+  const meuId = eu(req);
+  const conversa = await minhaConversa(req);
+  if (!conversa) return erro(res, 404, "Conversa não encontrada.");
+  await Bloqueio.findOrCreate({ where: { usuariaId: meuId, bloqueadaId: outra(conversa, meuId) } });
+  return res.json({ bloqueio: "eu" });
+});
+
+export const desbloquear = comTratamento(async (req, res) => {
+  const meuId = eu(req);
+  const conversa = await minhaConversa(req);
+  if (!conversa) return erro(res, 404, "Conversa não encontrada.");
+  await Bloqueio.destroy({ where: { usuariaId: meuId, bloqueadaId: outra(conversa, meuId) } });
+  const bloqueio = await Chat.bloqueioEntre(meuId, outra(conversa, meuId));
+  return res.json({ bloqueio: bloqueio.meBloqueou ? "ela" : null });
 });

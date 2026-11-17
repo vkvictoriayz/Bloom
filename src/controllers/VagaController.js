@@ -5,6 +5,7 @@ import { Candidatura, CandidaturaEnvio, PerfilEmpresa, Vaga } from "../models/Em
 import { CandidaturaCurriculo, CurriculoCandidata } from "../models/Curriculo.js";
 import { imagensDe } from "../models/Imagem.js";
 import { Conversa, Mensagem } from "../models/Interacao.js";
+import { MensagemImagem } from "../models/RedeSocial.js";
 import { contasPremium } from "../models/Premium.js";
 import { Usuaria } from "../models/Usuaria.js";
 import { notificar } from "../services/notificacoes.js";
@@ -220,6 +221,8 @@ export const retirar = comTratamento(async (req, res) => {
   await sequelize.transaction(async (transaction) => {
     const conversa = await Conversa.findOne({ where: { candidaturaId: cand.id }, transaction });
     if (conversa) {
+      const ids = (await Mensagem.findAll({ attributes: ["id"], where: { conversaId: conversa.id }, transaction })).map((m) => m.id);
+      await MensagemImagem.destroy({ where: { origem: "empresa", mensagemId: ids }, transaction });
       await Mensagem.destroy({ where: { conversaId: conversa.id }, transaction });
       await conversa.destroy({ transaction });
     }

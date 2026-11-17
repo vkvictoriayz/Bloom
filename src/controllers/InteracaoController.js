@@ -3,6 +3,9 @@ import { Empresa, Usuaria } from "../models/index.js";
 import { Candidatura, PerfilEmpresa, Vaga } from "../models/Empresarial.js";
 import { imagensDe } from "../models/Imagem.js";
 import { Conversa, Mensagem, Notificacao } from "../models/Interacao.js";
+import { ConversaDireta, MensagemDireta } from "../models/RedeSocial.js";
+import { sequelize } from "../config/database.js";
+import * as Chat from "../services/chat.js";
 import { CATEGORIAS, notificar, preferenciasDe } from "../services/notificacoes.js";
 import { PreferenciaNotificacao } from "../models/Premium.js";
 
@@ -110,18 +113,20 @@ export const listarConversas = comTratamento(async (req, res) => {
   const detalhes = await detalhesConversas(conversas, tipo);
   const ids = conversas.map((c) => c.id);
   const mensagens = ids.length ? await Mensagem.findAll({ where: { conversaId: { [Op.in]: ids } }, order: [["enviadaEm", "DESC"], ["id", "DESC"]] }) : [];
+  const ultimas = conversas.map((c) => mensagens.find((m) => m.conversaId === c.id)).filter(Boolean);
+  const fotos = await Chat.imagensDe("empresa", ultimas.map((m) => m.id));
   return res.json({
     conversas: conversas.map((c) => {
       const delas = mensagens.filter((m) => m.conversaId === c.id);
       return {
         id: c.id,
         ...detalhes.get(c.id),
-        ultimaMensagem: delas[0] ? `${delas[0].autorTipo === tipo ? "Você: " : ""}${delas[0].texto}` : "Conversa iniciada",
+        ultimaMensagem: delas[0] ? Chat.previa(delas[0], delas[0].autorTipo === tipo, fotos.get(delas[0].id)) : "Conversa iniciada",
         ultimaEm: delas[0]?.enviadaEm ?? c.criadaEm,
         ultimaMinha: Boolean(delas[0] && delas[0].autorTipo === tipo),
         ultimaLida: Boolean(delas[0]?.lidaEm),
         atualizadaEm: c.atualizadaEm,
-        naoLidas: delas.filter((m) => m.autorTipo !== tipo && !m.lidaEm).length,
+        naoLidas: delas.filter((m) => m.autorTipo !== tipo && !m.lidaEm && !m.apagadaEm).length,
       };
     }),
   });
@@ -152,8 +157,18 @@ async function minhaConversa(req) {
   return id ? Conversa.findOne({ where: { id, ...doTipo(req) } }) : null;
 }
 
-function mensagemJson(m, tipo) {
-  return { id: m.id, texto: m.texto, minha: m.autorTipo === tipo, enviadaEm: m.enviadaEm, lida: Boolean(m.lidaEm) };
+// Mensagem apagada: o texto e a imagem não saem do servidor.
+function mensagemJson(m, tipo, imagem = null) {
+  return {
+    id: m.id,
+    texto: m.apagadaEm ? "" : m.texto,
+    apagada: Boolean(m.apagadaEm),
+    imagem: m.apagadaEm ? null : imagem,
+    minha: m.autorTipo === tipo,
+    enviadaEm: m.enviadaEm,
+    lida: Boolean(m.lidaEm),
+    lidaEm: m.lidaEm ?? null,
+  };
 }
 
 // GET /api/mensagens/:id — também marca como lidas as mensagens recebidas.
@@ -170,20 +185,27 @@ export const lerConversa = comTratamento(async (req, res) => {
   const onde = depois ? { conversaId: conversa.id, id: { [Op.gt]: depois } } : { conversaId: conversa.id };
   const mensagens = await Mensagem.findAll({ where: onde, order: [["enviadaEm", "ASC"], ["id", "ASC"]], limit: 500 });
   const ultimaLida = await Mensagem.findOne({ where: { conversaId: conversa.id, autorTipo: tipo, lidaEm: { [Op.ne]: null } }, order: [["id", "DESC"]] });
-  const detalhes = await detalhesConversas([conversa], tipo);
-  return res.json({ conversa: { id: conversa.id, ...detalhes.get(conversa.id) }, mensagens: mensagens.map((m) => mensagemJson(m, tipo)), temMais: false, lidasAte: ultimaLida?.id ?? null });
+  const [detalhes, fotos] = await Promise.all([detalhesConversas([conversa], tipo), Chat.imagensDe("empresa", mensagens.map((m) => m.id))]);
+  return res.json({
+    conversa: { id: conversa.id, ...detalhes.get(conversa.id) },
+    mensagens: mensagens.map((m) => mensagemJson(m, tipo, fotos.get(m.id))),
+    temMais: false,
+    lidasAte: ultimaLida?.id ?? null,
+  });
 });
 
 // POST /api/mensagens/:id { texto }
 export const enviarMensagem = comTratamento(async (req, res) => {
   const conversa = await minhaConversa(req);
   if (!conversa) return erro(res, 404, "Conversa não encontrada.");
-  const texto = typeof req.body?.texto === "string" ? req.body.texto.trim() : "";
-  if (!texto) return erro(res, 400, "Escreva uma mensagem.", "texto");
-  if (texto.length > LIMITE_MENSAGEM) return erro(res, 400, `Use até ${LIMITE_MENSAGEM} caracteres.`, "texto");
+  const lida = Chat.lerMensagem(req.body, LIMITE_MENSAGEM);
+  if (lida.falha) return erro(res, 400, ...lida.falha);
 
   const tipo = req.auth.tipo;
-  const mensagem = await Mensagem.create({ conversaId: conversa.id, autorTipo: tipo, texto });
+  const [mensagem, imagem] = await sequelize.transaction(async (transaction) => {
+    const m = await Mensagem.create({ conversaId: conversa.id, autorTipo: tipo, texto: lida.texto }, { transaction });
+    return [m, await Chat.gravarImagem("empresa", m.id, lida.imagem, transaction)];
+  });
   await conversa.update({ atualizadaEm: new Date() });
 
   const remetente = tipo === "empresa" ? await Empresa.findByPk(req.auth.sub) : await Usuaria.findByPk(req.auth.sub);
@@ -197,5 +219,43 @@ export const enviarMensagem = comTratamento(async (req, res) => {
     chave: `conversa-${conversa.id}`,
   });
 
-  return res.status(201).json({ mensagem: mensagemJson(mensagem, tipo) });
+  return res.status(201).json({ mensagem: mensagemJson(mensagem, tipo, imagem) });
+});
+
+// DELETE /api/mensagens/:id/mensagens/:mensagemId — quem enviou apaga a
+// própria mensagem (texto e imagem saem do banco; fica "mensagem apagada").
+export const apagarMensagem = comTratamento(async (req, res) => {
+  const conversa = await minhaConversa(req);
+  if (!conversa) return erro(res, 404, "Conversa não encontrada.");
+  const mensagemId = idParam(req.params.mensagemId);
+  const mensagem = mensagemId && (await Mensagem.findOne({ where: { id: mensagemId, conversaId: conversa.id } }));
+  if (!mensagem) return erro(res, 404, "Mensagem não encontrada.");
+  if (mensagem.autorTipo !== req.auth.tipo) return erro(res, 403, "Você só pode apagar as suas mensagens.");
+  if (!mensagem.apagadaEm) {
+    await sequelize.transaction(async (transaction) => {
+      await Chat.apagarImagens("empresa", [mensagem.id], transaction);
+      await mensagem.update({ texto: "", apagadaEm: new Date() }, { transaction });
+    });
+  }
+  return res.json({ mensagem: mensagemJson(mensagem, req.auth.tipo) });
+});
+
+// GET /api/mensagens/nao-lidas — total de mensagens não lidas (para o ícone
+// de mensagens no topo). A candidata soma as conversas com empresas e as
+// conversas com outras candidatas.
+export const naoLidasMensagens = comTratamento(async (req, res) => {
+  const tipo = req.auth.tipo;
+  const conversas = await Conversa.findAll({ attributes: ["id"], where: doTipo(req) });
+  const empresas = conversas.length
+    ? await Mensagem.count({ where: { conversaId: { [Op.in]: conversas.map((c) => c.id) }, autorTipo: outroTipo(tipo), lidaEm: { [Op.is]: null }, apagadaEm: { [Op.is]: null } } })
+    : 0;
+  let candidatas = 0;
+  if (tipo === "usuaria") {
+    const meuId = req.auth.sub;
+    const diretas = await ConversaDireta.findAll({ attributes: ["id"], where: { [Op.or]: [{ usuariaA: meuId }, { usuariaB: meuId }] } });
+    candidatas = diretas.length
+      ? await MensagemDireta.count({ where: { conversaId: { [Op.in]: diretas.map((c) => c.id) }, autoraId: { [Op.ne]: meuId }, lidaEm: { [Op.is]: null }, apagadaEm: { [Op.is]: null } } })
+      : 0;
+  }
+  return res.json({ total: empresas + candidatas, empresas, candidatas });
 });

@@ -11,7 +11,7 @@ export function CapaComunidade({ capa, className, children }) {
   return (
     <div className={cn('relative overflow-hidden bg-linear-to-br from-vinho via-vinho-escuro to-tinta', className)}>
       {capa ? (
-        <img src={urlImagem(capa)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={urlImagem(`/imagens/${capa}`)} alt="" className="absolute inset-0 h-full w-full object-cover" />
       ) : (
         <svg aria-hidden="true" className="absolute inset-0 h-full w-full opacity-[0.12]">
           <defs>

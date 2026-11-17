@@ -36,11 +36,14 @@ notificacaoRoutes.put("/preferencias", I.salvarPreferencias);
 notificacaoRoutes.post("/:id/lida", I.marcarLida);
 
 export const mensagemRoutes = Router();
+// Montado antes do limite geral (app.js): enviar aceita imagem de até 2 MB.
 mensagemRoutes.use(exigirLogin(["usuaria", "empresa"]));
 mensagemRoutes.get("/", I.listarConversas);
-mensagemRoutes.post("/", I.abrirConversa);
+mensagemRoutes.get("/nao-lidas", I.naoLidasMensagens);
+mensagemRoutes.post("/", express.json({ limit: "20kb" }), I.abrirConversa);
 mensagemRoutes.get("/:id", I.lerConversa);
-mensagemRoutes.post("/:id", I.enviarMensagem);
+mensagemRoutes.post("/:id", express.json({ limit: "3mb" }), I.enviarMensagem);
+mensagemRoutes.delete("/:id/mensagens/:mensagemId", I.apagarMensagem);
 
 // Comunidades temáticas: leitura para candidatas e empresas; o resto só candidatas.
 // Montado antes do limite geral (app.js): publicar aceita imagem de até 2 MB.
@@ -61,9 +64,11 @@ grupoRoutes.delete("/:id/capa", soCandidata, G.removerCapa);
 
 // Conversas entre candidatas (separadas das conversas com empresas).
 export const mensagemDiretaRoutes = Router();
-mensagemDiretaRoutes.use(exigirLogin(["usuaria"]), express.json({ limit: "20kb" }));
+mensagemDiretaRoutes.use(exigirLogin(["usuaria"]));
 mensagemDiretaRoutes.get("/", D.listar);
-mensagemDiretaRoutes.post("/", D.abrir);
+mensagemDiretaRoutes.post("/", express.json({ limit: "20kb" }), D.abrir);
 mensagemDiretaRoutes.get("/:id", D.ler);
-mensagemDiretaRoutes.post("/:id", D.enviar);
+mensagemDiretaRoutes.post("/:id", express.json({ limit: "3mb" }), D.enviar);
+mensagemDiretaRoutes.put("/:id/bloqueio", D.bloquear);
+mensagemDiretaRoutes.delete("/:id/bloqueio", D.desbloquear);
 mensagemDiretaRoutes.delete("/:id/mensagens/:mensagemId", D.apagar);

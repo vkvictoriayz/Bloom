@@ -21,6 +21,8 @@ app.use("/api/candidata", candidataRoutes);
 app.use("/api/comunidade", comunidadeRoutes);
 app.use("/api/comunidades", grupoRoutes);
 app.use("/api/mensagens/candidatas", mensagemDiretaRoutes);
+// Mensagens com empresas (enviar aceita imagem): limite próprio por rota.
+app.use("/api/mensagens", mensagemRoutes);
 // Administração: limite próprio de corpo (ver adminRoutes.js).
 app.use("/api/admin", adminRoutes);
 app.use(express.json({ limit: "20kb" }));
@@ -31,7 +33,6 @@ app.use("/api/empresa", empresaRoutes);
 app.use("/api/vagas", vagaRoutes);
 app.use("/api/candidaturas", candidaturaRoutes);
 app.use("/api/notificacoes", notificacaoRoutes);
-app.use("/api/mensagens", mensagemRoutes);
 app.use("/api/premium", premiumRoutes);
 app.use("/api/pagamentos", pagamentoRoutes);
 app.use("/api/denuncias", denunciaRoutes);

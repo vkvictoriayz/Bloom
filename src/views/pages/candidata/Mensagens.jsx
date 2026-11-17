@@ -7,7 +7,7 @@ import Chat from '../../components/mensagens/Chat'
 import { Aviso, Entrada } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { lerPerfis, tempoRelativo } from '../../services/comunidade'
-import { abrirConversaCandidata, listarConversas, listarConversasCandidatas } from '../../services/recursos'
+import { abrirConversaCandidata, EVENTO_MENSAGENS, listarConversas, listarConversasCandidatas } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
 // Mensagens em duas colunas, como nos apps de conversa: a lista à esquerda e
@@ -42,6 +42,7 @@ function ItemConversa({ c, para, ativa }) {
               )}
               {c.ultimaMensagem}
             </span>
+            {c.bloqueada && <span className="shrink-0 rounded-full bg-papel-2 px-2 text-[10px] font-bold text-suave uppercase">Bloqueada</span>}
             {c.naoLidas > 0 && (
               <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-vinho px-1.5 text-[11px] font-bold text-white" aria-label={`${c.naoLidas} não lidas`}>
                 {c.naoLidas}
@@ -176,6 +177,7 @@ export function Mensagens({ base = '/candidata/mensagens', selecionada = null })
       const [candidatas, empresas] = await Promise.all([daCandidata ? listarConversasCandidatas() : Promise.resolve({ conversas: [] }), listarConversas()])
       setListas({ candidatas: candidatas.conversas ?? [], empresas: empresas.conversas ?? [] })
       setErro('')
+      window.dispatchEvent(new Event(EVENTO_MENSAGENS))
     } catch (e) {
       setErro(e.message)
     }

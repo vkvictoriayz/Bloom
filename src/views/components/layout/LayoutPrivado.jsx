@@ -5,7 +5,7 @@ import Icone from '../Icone'
 import Logo, { Borboleta } from '../Logo'
 import Avatar from '../comunidade/Avatar'
 import { sair } from '../../services/auth'
-import { contarNaoLidas, EVENTO_NOTIFICACOES } from '../../services/recursos'
+import { contarMensagensNaoLidas, contarNaoLidas, EVENTO_MENSAGENS, EVENTO_NOTIFICACOES } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
 // Moldura das áreas logadas (candidata e empresa): menu lateral que expande
@@ -265,9 +265,9 @@ function BuscaGeral({ busca }) {
   )
 }
 
-// Quantas notificações não lidas: consulta ao trocar de página, a cada
-// minuto (com a aba visível) e quando algo é marcado como lido.
-function useNaoLidas(ativo = true) {
+// Quantas notificações (ou mensagens) não lidas: consulta ao trocar de
+// página, a cada minuto (com a aba visível) e quando algo é marcado como lido.
+function useNaoLidas(ativo = true, contar = contarNaoLidas, evento = EVENTO_NOTIFICACOES) {
   const { pathname } = useLocation()
   const [total, setTotal] = useState(0)
   const [versao, setVersao] = useState(0)
@@ -275,23 +275,23 @@ function useNaoLidas(ativo = true) {
   useEffect(() => {
     const atualizar = () => setVersao((v) => v + 1)
     const relogio = setInterval(() => document.visibilityState === 'visible' && atualizar(), 60000)
-    window.addEventListener(EVENTO_NOTIFICACOES, atualizar)
+    window.addEventListener(evento, atualizar)
     return () => {
       clearInterval(relogio)
-      window.removeEventListener(EVENTO_NOTIFICACOES, atualizar)
+      window.removeEventListener(evento, atualizar)
     }
-  }, [])
+  }, [evento])
 
   useEffect(() => {
     if (!ativo) return
     let vivo = true
-    contarNaoLidas()
+    contar()
       .then((n) => vivo && setTotal(n))
       .catch(() => {})
     return () => {
       vivo = false
     }
-  }, [pathname, versao, ativo])
+  }, [pathname, versao, ativo, contar])
 
   return total
 }
@@ -299,6 +299,7 @@ function useNaoLidas(ativo = true) {
 function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
   // A administração não tem mensagens nem notificações (config sem esses atalhos).
   const naoLidas = useNaoLidas(Boolean(config.notificacoes))
+  const mensagensNaoLidas = useNaoLidas(Boolean(config.mensagens), contarMensagensNaoLidas, EVENTO_MENSAGENS)
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [recolhido, setRecolhido] = useState(() => lerRecolhido(config.chavePreferencia))
@@ -407,8 +408,18 @@ function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
 
           <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
             {config.mensagens && (
-              <NavLink to={config.mensagens} className={atalho} aria-label="Mensagens" title="Mensagens">
+              <NavLink
+                to={config.mensagens}
+                className={cn(atalho, 'relative')}
+                aria-label={mensagensNaoLidas ? `Mensagens: ${mensagensNaoLidas} não lidas` : 'Mensagens'}
+                title="Mensagens"
+              >
                 <Icone nome="mensagem" tamanho={20} />
+                {mensagensNaoLidas > 0 && (
+                  <span aria-hidden="true" className="absolute top-1 right-1 grid h-4 min-w-4 place-items-center rounded-full bg-vinho px-1 text-[10px] leading-none font-bold text-white">
+                    {mensagensNaoLidas > 9 ? '9+' : mensagensNaoLidas}
+                  </span>
+                )}
               </NavLink>
             )}
             {config.notificacoes && (

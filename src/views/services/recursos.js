@@ -22,7 +22,14 @@ const chamar = (caminho, opcoes = {}) => {
 export const listarConversas = () => chamar('/mensagens')
 // depois: id da última mensagem que a tela já tem (traz só as novas).
 export const lerConversa = (id, { depois } = {}) => chamar(`/mensagens/${encodeURIComponent(id)}${depois ? `?depois=${depois}` : ""}`)
-export const enviarMensagem = (id, texto) => chamar(`/mensagens/${encodeURIComponent(id)}`, { method: 'POST', corpo: { texto } })
+// corpo: texto (string) ou { texto, imagem, largura, altura }.
+const corpoMensagem = (corpo) => (typeof corpo === 'string' ? { texto: corpo } : corpo)
+export const enviarMensagem = (id, corpo) => chamar(`/mensagens/${encodeURIComponent(id)}`, { method: 'POST', corpo: corpoMensagem(corpo) })
+export const apagarMensagemEmpresa = (id, mensagemId) => chamar(`/mensagens/${encodeURIComponent(id)}/mensagens/${encodeURIComponent(mensagemId)}`, { method: 'DELETE' })
+// Total de mensagens não lidas (ícone de mensagens no topo).
+export const contarMensagensNaoLidas = () => chamar('/mensagens/nao-lidas').then((r) => r.total)
+// Disparado quando a tela de mensagens lê ou envia algo, para o ícone atualizar.
+export const EVENTO_MENSAGENS = 'bloom-mensagens-lidas'
 // Abre (ou retoma) a conversa de uma candidatura (id numérico do servidor).
 export const abrirConversa = (candidaturaId) => chamar('/mensagens', { method: 'POST', corpo: { candidaturaId } })
 
@@ -62,7 +69,9 @@ export const lerConversaCandidata = (id, { antes, depois } = {}) => {
   return chamar(`/mensagens/candidatas/${encodeURIComponent(id)}${q}`)
 }
 export const apagarMensagemCandidata = (id, mensagemId) => chamar(`/mensagens/candidatas/${encodeURIComponent(id)}/mensagens/${encodeURIComponent(mensagemId)}`, { method: 'DELETE' })
-export const enviarMensagemCandidata = (id, texto) => chamar(`/mensagens/candidatas/${encodeURIComponent(id)}`, { method: 'POST', corpo: { texto } })
+export const enviarMensagemCandidata = (id, corpo) => chamar(`/mensagens/candidatas/${encodeURIComponent(id)}`, { method: 'POST', corpo: corpoMensagem(corpo) })
+export const bloquearConversa = (id) => chamar(`/mensagens/candidatas/${encodeURIComponent(id)}/bloqueio`, { method: 'PUT' })
+export const desbloquearConversa = (id) => chamar(`/mensagens/candidatas/${encodeURIComponent(id)}/bloqueio`, { method: 'DELETE' })
 
 // Privacidade da candidata
 export const lerPrivacidade = () => chamar('/candidata/privacidade').then((r) => r.privacidade)

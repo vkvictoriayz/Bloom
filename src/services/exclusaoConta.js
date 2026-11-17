@@ -31,6 +31,7 @@ export async function excluirUsuaria(id) {
     const criadas = lista(await ids("SELECT id_comunidade FROM COMUNIDADE WHERE id_criadora = :id", { id }, t));
     const r = { id, conversas, candidaturas, publicacoes, criadas };
 
+    await apagar("DELETE FROM MENSAGEM_IMAGEM WHERE origem = 'empresa' AND id_mensagem IN (SELECT id_mensagem FROM MENSAGEM WHERE id_conversa IN (:conversas))", r, t);
     await apagar("DELETE FROM MENSAGEM WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM CONVERSA WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM NOTIFICACAO WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
@@ -57,11 +58,17 @@ export async function excluirUsuaria(id) {
     await apagar("DELETE FROM PUBLICACAO_IMAGEM WHERE id_publicacao IN (:publicacoes)", r, t);
     await apagar("DELETE FROM PUBLICACAO WHERE id_publicacao IN (:publicacoes)", r, t);
     await apagar(
+      "DELETE FROM MENSAGEM_IMAGEM WHERE origem = 'direta' AND id_mensagem IN (SELECT id_mensagem_direta FROM MENSAGEM_DIRETA WHERE id_conversa_direta IN (SELECT id_conversa_direta FROM CONVERSA_DIRETA WHERE id_usuaria_a = :id OR id_usuaria_b = :id))",
+      r,
+      t
+    );
+    await apagar(
       "DELETE FROM MENSAGEM_DIRETA WHERE id_conversa_direta IN (SELECT id_conversa_direta FROM CONVERSA_DIRETA WHERE id_usuaria_a = :id OR id_usuaria_b = :id)",
       r,
       t
     );
     await apagar("DELETE FROM CONVERSA_DIRETA WHERE id_usuaria_a = :id OR id_usuaria_b = :id", r, t);
+    await apagar("DELETE FROM BLOQUEIO WHERE id_usuaria = :id OR id_bloqueada = :id", r, t);
     await apagar("DELETE FROM ICONE_PERFIL WHERE dono_tipo = 'usuaria' AND dono_id = :id", r, t);
     await apagar("DELETE FROM CONEXAO WHERE id_seguidora = :id OR id_seguida = :id", r, t);
     await apagar("DELETE FROM PERFIL_COMUNIDADE WHERE id_usuario = :id", r, t);
@@ -90,6 +97,7 @@ export async function excluirEmpresa(id) {
     const conversas = lista(await ids("SELECT id_conversa FROM CONVERSA WHERE id_empresa = :id", { id }, t));
     const r = { id, vagas, candidaturas, conversas };
 
+    await apagar("DELETE FROM MENSAGEM_IMAGEM WHERE origem = 'empresa' AND id_mensagem IN (SELECT id_mensagem FROM MENSAGEM WHERE id_conversa IN (:conversas))", r, t);
     await apagar("DELETE FROM MENSAGEM WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM CONVERSA WHERE id_conversa IN (:conversas)", r, t);
     await apagar("DELETE FROM NOTIFICACAO WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);

@@ -3,9 +3,21 @@ import { Link } from 'react-router-dom'
 
 import Icone from '../Icone'
 import Avatar from '../comunidade/Avatar'
+import { FormularioDenuncia } from '../conta/Denunciar'
 import Esqueleto from '../ui/Esqueleto'
 import { Aviso } from '../ui/Campo'
-import { apagarMensagemCandidata, enviarMensagem, enviarMensagemCandidata, lerConversa, lerConversaCandidata } from '../../services/recursos'
+import { urlImagem } from '../../services/api'
+import { ACEITAR_IMAGEM, prepararImagem } from '../../services/imagemPublicacao'
+import {
+  apagarMensagemCandidata,
+  apagarMensagemEmpresa,
+  bloquearConversa,
+  desbloquearConversa,
+  enviarMensagem,
+  enviarMensagemCandidata,
+  lerConversa,
+  lerConversaCandidata,
+} from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
 // Painel de uma conversa, no estilo dos apps de mensagem: balões agrupados
@@ -54,7 +66,21 @@ function Balao({ m, primeira, ultima, visto, podeApagar, aoApagar }) {
               <Icone nome="fechar" tamanho={13} /> {m.minha ? 'Você apagou esta mensagem' : 'Mensagem apagada'}
             </span>
           ) : (
-            <p className="break-words whitespace-pre-line">{m.texto}</p>
+            <>
+              {m.imagem && (
+                <a href={urlImagem(`/imagens/${m.imagem.chave}`)} target="_blank" rel="noreferrer" className="-mx-1.5 -mt-0.5 mb-1 block overflow-hidden rounded-xl" aria-label="Abrir a imagem em tamanho real">
+                  <img
+                    src={urlImagem(`/imagens/${m.imagem.chave}`)}
+                    alt="Imagem enviada na conversa"
+                    width={m.imagem.largura ?? undefined}
+                    height={m.imagem.altura ?? undefined}
+                    className="max-h-72 w-full max-w-xs object-cover"
+                    loading="lazy"
+                  />
+                </a>
+              )}
+              {m.texto && <p className="break-words whitespace-pre-line">{m.texto}</p>}
+            </>
           )}
           <span className={cn('mt-0.5 block text-right text-[10px] tabular-nums', m.minha && !m.apagada ? 'text-white/70' : 'text-suave')}>
             <time dateTime={new Date(m.enviadaEm).toISOString()}>{hora(m.enviadaEm)}</time>
@@ -109,8 +135,12 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const [carregandoAntigas, setCarregandoAntigas] = useState(false)
+  const [anexo, setAnexo] = useState(null) // imagem escolhida para enviar
+  const [menu, setMenu] = useState(false)
+  const [denunciando, setDenunciando] = useState(false)
   const rolagem = useRef(null)
   const campo = useRef(null)
+  const arquivo = useRef(null)
   const colado = useRef(true) // a tela está no fim? (para rolar quando chega mensagem)
   const alturaAntes = useRef(null)
 
@@ -143,8 +173,9 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
           const lidasAte = r.lidasAte ?? e.lidasAte
           // "Visto": marca como lidas as minhas até onde a outra pessoa leu.
           const mensagens = [...e.mensagens, ...novas].map((m) => (m.minha && lidasAte && m.id <= lidasAte ? { ...m, lida: true } : m))
-          if (!novas.length && lidasAte === e.lidasAte) return e
-          return { ...e, mensagens, lidasAte }
+          const bloqueio = r.conversa?.bloqueio ?? e.conversa.bloqueio ?? null
+          if (!novas.length && lidasAte === e.lidasAte && bloqueio === (e.conversa.bloqueio ?? null)) return e
+          return { ...e, mensagens, lidasAte, conversa: { ...e.conversa, bloqueio } }
         })
         if (r.mensagens?.length) aoMudar?.()
       } catch {
@@ -190,15 +221,17 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
   async function enviar(e) {
     e?.preventDefault()
     const limpo = texto.trim()
-    if (!limpo || enviando) return
+    if ((!limpo && !anexo) || enviando) return
     if (limpo.length > LIMITE) return setErro(`Use até ${LIMITE} caracteres.`)
     setEnviando(true)
     setErro('')
     try {
-      const r = entreCandidatas ? await enviarMensagemCandidata(id, limpo) : await enviarMensagem(id, limpo)
+      const corpo = { texto: limpo, ...(anexo ? { imagem: anexo.dataUrl, largura: anexo.largura, altura: anexo.altura } : {}) }
+      const r = entreCandidatas ? await enviarMensagemCandidata(id, corpo) : await enviarMensagem(id, corpo)
       colado.current = true
       setEstado((s) => ({ ...s, mensagens: [...s.mensagens.filter((m) => m.id !== r.mensagem.id), r.mensagem] }))
       setTexto('')
+      setAnexo(null)
       aoMudar?.()
       campo.current?.focus()
     } catch (falha) {
@@ -208,10 +241,36 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
     }
   }
 
+  // Foto escolhida: reduzida no navegador (lado maior até 1600 px) antes de enviar.
+  async function escolherImagem(evento) {
+    const escolhido = evento.target.files?.[0]
+    evento.target.value = ''
+    if (!escolhido) return
+    setErro('')
+    try {
+      setAnexo(await prepararImagem(escolhido))
+      campo.current?.focus()
+    } catch (falha) {
+      setErro(falha.message)
+    }
+  }
+
+  async function alternarBloqueio() {
+    setMenu(false)
+    setErro('')
+    try {
+      const r = estado.conversa.bloqueio === 'eu' ? await desbloquearConversa(id) : await bloquearConversa(id)
+      setEstado((s) => ({ ...s, conversa: { ...s.conversa, bloqueio: r.bloqueio } }))
+      aoMudar?.()
+    } catch (falha) {
+      setErro(falha.message)
+    }
+  }
+
   async function apagar(m) {
     setErro('')
     try {
-      const r = await apagarMensagemCandidata(id, m.id)
+      const r = entreCandidatas ? await apagarMensagemCandidata(id, m.id) : await apagarMensagemEmpresa(id, m.id)
       setEstado((s) => ({ ...s, mensagens: s.mensagens.map((x) => (x.id === m.id ? r.mensagem : x)) }))
       aoMudar?.()
     } catch (falha) {
@@ -284,7 +343,50 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
             {entreCandidatas ? 'Ver perfil' : naEmpresa ? 'Ver candidatura' : 'Ver empresa'}
           </Link>
         )}
+        {/* Mais opções: denunciar e (entre candidatas) bloquear */}
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setMenu((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={menu}
+            aria-label="Mais opções da conversa"
+            className="grid size-9 place-items-center rounded-full text-tinta-2 hover:bg-papel-2"
+          >
+            <Icone nome="mais_opcoes" tamanho={20} />
+          </button>
+          {menu && (
+            <div role="menu" className="absolute right-0 z-20 mt-1 w-56 overflow-hidden rounded-xl border border-linha bg-branco py-1 shadow-menu">
+              {linkPerfil && (
+                <Link role="menuitem" to={linkPerfil} className="flex items-center gap-2 px-4 py-2.5 text-sm text-tinta-2 hover:bg-papel">
+                  <Icone nome="perfil" tamanho={16} /> {entreCandidatas ? 'Ver perfil' : naEmpresa ? 'Ver candidatura' : 'Ver empresa'}
+                </Link>
+              )}
+              <button
+                role="menuitem"
+                type="button"
+                onClick={() => {
+                  setMenu(false)
+                  setDenunciando(true)
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-tinta-2 hover:bg-papel"
+              >
+                <Icone nome="info" tamanho={16} /> {entreCandidatas || naEmpresa ? 'Denunciar perfil' : 'Denunciar empresa'}
+              </button>
+              {entreCandidatas && conversa.bloqueio !== 'ela' && (
+                <button role="menuitem" type="button" onClick={alternarBloqueio} className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-erro hover:bg-erro-claro">
+                  <Icone nome="cadeado" tamanho={16} /> {conversa.bloqueio === 'eu' ? `Desbloquear ${pessoa.nome.split(' ')[0]}` : `Bloquear ${pessoa.nome.split(' ')[0]}`}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </header>
+      {denunciando && (
+        <div className="border-b border-linha bg-branco p-3">
+          <FormularioDenuncia alvoTipo={entreCandidatas || naEmpresa ? 'perfil' : 'empresa'} alvoId={pessoa.id} aoFechar={() => setDenunciando(false)} />
+        </div>
+      )}
 
       {/* Mensagens */}
       <div ref={rolagem} onScroll={aoRolar} className="min-h-0 flex-1 overflow-y-auto bg-papel px-4 py-4 sm:px-6" aria-live="polite">
@@ -316,7 +418,7 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
                     primeira={primeira}
                     ultima={ultima}
                     visto={m.id === ultimaMinha?.id && m.lida}
-                    podeApagar={entreCandidatas && m.minha}
+                    podeApagar={m.minha}
                     aoApagar={apagar}
                   />
                 </FragmentoDia>
@@ -326,50 +428,90 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
         )}
       </div>
 
-      {/* Escrever */}
-      <form onSubmit={enviar} className="border-t border-linha bg-branco p-3">
-        {erro && (
-          <Aviso tipo="erro" className="mb-2">
-            {erro}
-          </Aviso>
-        )}
-        <div className="flex items-end gap-2">
-          <label htmlFor={`mensagem-${tipo}-${id}`} className="sr-only">
-            Escreva uma mensagem para {pessoa.nome}
-          </label>
-          <textarea
-            ref={campo}
-            id={`mensagem-${tipo}-${id}`}
-            rows={1}
-            maxLength={LIMITE}
-            value={texto}
-            onChange={(e) => {
-              setTexto(e.target.value)
-              e.target.style.height = 'auto'
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`
-            }}
-            onKeyDown={teclas}
-            placeholder="Escreva uma mensagem…"
-            className="max-h-40 min-h-11 flex-1 resize-none rounded-2xl border border-transparent bg-papel-2 px-4 py-2.5 text-[15px] text-tinta placeholder:text-suave focus:border-vinho focus:bg-branco focus:ring-[3px] focus:ring-vinho/20 focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={enviando || !texto.trim()}
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-vinho text-white transition-colors hover:bg-vinho-escuro disabled:opacity-40"
-            aria-label="Enviar mensagem"
-          >
-            <Icone nome="seta" tamanho={18} className="-rotate-45" />
-          </button>
-        </div>
-        <p className="mt-1 flex justify-between px-2 text-[11px] text-suave">
-          <span className="max-sm:hidden">Enter envia · Shift+Enter quebra a linha</span>
-          {texto.length > LIMITE * 0.8 && (
-            <span className="tabular-nums">
-              {texto.length}/{LIMITE}
-            </span>
+      {/* Escrever (ou o aviso de bloqueio) */}
+      {conversa.bloqueio ? (
+        <div className="border-t border-linha bg-branco p-4 text-center text-sm text-tinta-2">
+          {erro && (
+            <Aviso tipo="erro" className="mb-2 text-left">
+              {erro}
+            </Aviso>
           )}
-        </p>
-      </form>
+          {conversa.bloqueio === 'eu' ? (
+            <>
+              Você bloqueou {pessoa.nome.split(' ')[0]}. Ela não consegue te enviar mensagens.{' '}
+              <button type="button" onClick={alternarBloqueio} className="font-semibold text-vinho hover:underline">
+                Desbloquear
+              </button>
+            </>
+          ) : (
+            'Não é possível enviar mensagens nesta conversa.'
+          )}
+        </div>
+      ) : (
+        <form onSubmit={enviar} className="border-t border-linha bg-branco p-3">
+          {erro && (
+            <Aviso tipo="erro" className="mb-2">
+              {erro}
+            </Aviso>
+          )}
+          {anexo && (
+            <div className="mb-2 flex items-center gap-3 rounded-xl bg-papel-2 p-2">
+              <img src={anexo.dataUrl} alt="Prévia da imagem escolhida" className="size-14 rounded-lg object-cover" />
+              <span className="flex-1 text-xs text-tinta-2">Imagem pronta para enviar{texto.trim() ? ' com a mensagem' : ''}.</span>
+              <button type="button" onClick={() => setAnexo(null)} className="grid size-8 place-items-center rounded-full text-suave hover:bg-branco hover:text-erro" aria-label="Tirar a imagem">
+                <Icone nome="fechar" tamanho={16} />
+              </button>
+            </div>
+          )}
+          <div className="flex items-end gap-2">
+            <input ref={arquivo} type="file" accept={ACEITAR_IMAGEM} hidden onChange={escolherImagem} />
+            <button
+              type="button"
+              onClick={() => arquivo.current?.click()}
+              disabled={enviando}
+              className="grid size-11 shrink-0 place-items-center rounded-full text-tinta-2 transition-colors hover:bg-papel-2 hover:text-vinho disabled:opacity-40"
+              aria-label="Enviar uma imagem"
+              title="Enviar uma imagem"
+            >
+              <Icone nome="imagem" tamanho={20} />
+            </button>
+            <label htmlFor={`mensagem-${tipo}-${id}`} className="sr-only">
+              Escreva uma mensagem para {pessoa.nome}
+            </label>
+            <textarea
+              ref={campo}
+              id={`mensagem-${tipo}-${id}`}
+              rows={1}
+              maxLength={LIMITE}
+              value={texto}
+              onChange={(e) => {
+                setTexto(e.target.value)
+                e.target.style.height = 'auto'
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`
+              }}
+              onKeyDown={teclas}
+              placeholder="Escreva uma mensagem…"
+              className="max-h-40 min-h-11 flex-1 resize-none rounded-2xl border border-transparent bg-papel-2 px-4 py-2.5 text-[15px] text-tinta placeholder:text-suave focus:border-vinho focus:bg-branco focus:ring-[3px] focus:ring-vinho/20 focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={enviando || (!texto.trim() && !anexo)}
+              className="grid size-11 shrink-0 place-items-center rounded-full bg-vinho text-white transition-colors hover:bg-vinho-escuro disabled:opacity-40"
+              aria-label="Enviar mensagem"
+            >
+              <Icone nome="seta" tamanho={18} className="-rotate-45" />
+            </button>
+          </div>
+          <p className="mt-1 flex justify-between px-2 text-[11px] text-suave">
+            <span className="max-sm:hidden">Enter envia · Shift+Enter quebra a linha</span>
+            {texto.length > LIMITE * 0.8 && (
+              <span className="tabular-nums">
+                {texto.length}/{LIMITE}
+              </span>
+            )}
+          </p>
+        </form>
+      )}
     </div>
   )
 }

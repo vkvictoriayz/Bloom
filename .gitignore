@@ -25,3 +25,6 @@ dist-ssr
 
 # Ambiente
 .env
+
+# Logins das contas de demonstração (npm run demo:criar)
+contas-demonstracao.md

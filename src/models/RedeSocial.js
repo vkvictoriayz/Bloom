@@ -61,3 +61,33 @@ export const MensagemDireta = sequelize.define(
   },
   opcoes("MENSAGEM_DIRETA")
 );
+
+// Imagem anexada a uma mensagem (migration 011). "origem": conversa com
+// empresa (MENSAGEM) ou entre candidatas (MENSAGEM_DIRETA).
+export const MensagemImagem = sequelize.define(
+  "MensagemImagem",
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, field: "id_imagem" },
+    origem: { type: DataTypes.ENUM("empresa", "direta"), allowNull: false },
+    mensagemId: { type: DataTypes.INTEGER, allowNull: false, field: "id_mensagem" },
+    chave: { type: DataTypes.CHAR(32), allowNull: false, unique: true },
+    mime: { type: DataTypes.STRING(20), allowNull: false },
+    dados: { type: DataTypes.BLOB("medium"), allowNull: false },
+    largura: { type: DataTypes.INTEGER },
+    altura: { type: DataTypes.INTEGER },
+    criadaEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "criada_em" },
+  },
+  opcoes("MENSAGEM_IMAGEM")
+);
+
+// Bloqueio entre candidatas (migration 011): "usuariaId" bloqueou "bloqueadaId".
+export const Bloqueio = sequelize.define(
+  "Bloqueio",
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, field: "id_bloqueio" },
+    usuariaId: { type: DataTypes.INTEGER, allowNull: false, field: "id_usuaria" },
+    bloqueadaId: { type: DataTypes.INTEGER, allowNull: false, field: "id_bloqueada" },
+    criadoEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "criado_em" },
+  },
+  opcoes("BLOQUEIO")
+);

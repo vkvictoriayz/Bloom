@@ -11,7 +11,9 @@
     "admin:senha": "node --env-file=.env scripts/senha-admin.mjs",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "demo:criar": "node --env-file=.env scripts/demo.mjs criar",
+    "demo:remover": "node --env-file=.env scripts/demo.mjs remover"
   },
   "dependencies": {
     "axios": "^1.20.0",

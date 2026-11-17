@@ -55,6 +55,8 @@ export const Mensagem = sequelize.define(
     texto: { type: DataTypes.STRING(1000), allowNull: false },
     enviadaEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "enviada_em" },
     lidaEm: { type: DataTypes.DATE, field: "lida_em" },
+    // Migration 011: quando quem enviou apagou a mensagem (o texto sai do banco).
+    apagadaEm: { type: DataTypes.DATE, field: "apagada_em" },
   },
   opcoes("MENSAGEM", { indexes: [{ fields: ["id_conversa", "enviada_em"] }] })
 );
