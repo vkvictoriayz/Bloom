@@ -32,7 +32,6 @@ import { cn } from '../../lib/cn'
 
 const dataLonga = (d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
-// Caixa para publicar dentro da comunidade (só para participantes).
 function NovaPublicacao({ comunidade, aoPublicar }) {
   const sessao = useSessao()
   const perfil = useDadosLocais(() => lerPerfil(sessao?.usuario), [EVENTO_PERFIL])
@@ -120,7 +119,6 @@ function NovaPublicacao({ comunidade, aoPublicar }) {
   )
 }
 
-// Aba "Publicações": caixa de publicar, lista e "ver mais".
 function AbaPublicacoes({ comunidade, iniciais, temMaisInicial, souParticipante, aoParticipar }) {
   const [lista, setLista] = useState(iniciais)
   const [pagina, setPagina] = useState(1)
@@ -193,7 +191,6 @@ function AbaPublicacoes({ comunidade, iniciais, temMaisInicial, souParticipante,
   )
 }
 
-// Aba "Participantes": busca e grade com quem participa.
 function AbaParticipantes({ participantes }) {
   const [busca, setBusca] = useState('')
   const alvo = busca.trim().toLowerCase()
@@ -226,7 +223,6 @@ function AbaParticipantes({ participantes }) {
   )
 }
 
-// Aba "Sobre": descrição, regras, quem criou. Quem criou edita e exclui aqui.
 function AbaSobre({ comunidade, criadora, aoAtualizar, aoExcluir }) {
   const [editando, setEditando] = useState(false)
   const [dados, setDados] = useState({ tema: comunidade.tema, descricao: comunidade.descricao, regras: comunidade.regras })
@@ -442,7 +438,6 @@ function DetalheComunidade() {
     setOcupado(true)
     try {
       const r = await participarComunidade(comunidade.id)
-      // Recarrega para a lista de participantes refletir a mudança.
       const dados = await lerComunidadeTematica(comunidade.id)
       setEstado({ tipo: 'pronto', ...dados, comunidade: { ...dados.comunidade, participando: r.participando } })
     } catch (e) {
@@ -497,7 +492,6 @@ function DetalheComunidade() {
         <Icone nome="voltar" tamanho={16} /> Comunidades
       </Link>
 
-      {/* Topo: capa, ícone, nome e ações */}
       <header className="overflow-hidden rounded-2xl border border-linha bg-branco">
         <CapaComunidade capa={comunidade.capa} className="h-36 sm:h-52">
           {comunidade.minha && (
@@ -585,7 +579,6 @@ function DetalheComunidade() {
           {aba === 'sobre' && <AbaSobre comunidade={comunidade} criadora={criadora} aoAtualizar={atualizar} aoExcluir={excluir} />}
         </div>
 
-        {/* Lateral: resumo, regras e algumas participantes */}
         <aside className="flex flex-col gap-5 lg:sticky lg:top-24" aria-label="Resumo da comunidade">
           <section className="rounded-2xl border border-linha bg-branco p-5">
             <h2 className="font-display text-lg text-tinta">Sobre o grupo</h2>

@@ -64,7 +64,6 @@ function DetalhesVaga() {
   }
 
   const empresa = vaga.dadosEmpresa
-  // Relacionadas: abertas, da mesma empresa ou da mesma área.
   const relacionadas = todas
     .filter((v) => v.id !== vaga.id && (v.empresa === vaga.empresa || v.area === vaga.area))
     .slice(0, 2)

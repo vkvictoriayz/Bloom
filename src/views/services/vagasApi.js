@@ -2,13 +2,6 @@ import { api } from './api.js'
 import { obterSessao } from './auth.js'
 import { iniciais } from '../hooks/useSessao'
 
-// Vagas publicadas pelas empresas na Bloom (tabela VAGAS) e candidaturas
-// enviadas ao backend, vistas pela candidata.
-//
-// No front, as vagas reais ganham o id "b<id>" para não colidir com as
-// vagas de exemplo (ids numéricos de src/data/vagas.js), e as candidaturas
-// reais ganham o id "s<id>".
-
 export const EVENTO_CANDIDATURAS_SERVIDOR = 'bloom-candidaturas-servidor'
 
 const chamar = (caminho, opcoes = {}) => {
@@ -34,17 +27,14 @@ function dataBR(data) {
 
 const linhas = (s) => (s ? s.split('\n').map((l) => l.trim()).filter(Boolean) : null)
 
-// "R$ 5.000,00 a R$ 7.000,00" (ou um valor só).
 function faixa(min, max) {
   if (min === null || min === undefined) return null
   const brl = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
   return max !== null && max !== undefined && Number(max) !== Number(min) ? `${brl(min)} a ${brl(max)}` : brl(min)
 }
 
-// Perfil público de uma empresa (para candidatas) e as vagas abertas dela.
 export const lerEmpresaPublica = (id) => chamar(`/vagas/empresas/${encodeURIComponent(id)}`).then((r) => ({ ...r, vagas: r.vagas.map(converterVaga) }))
 
-// Converte a vaga da API para o mesmo formato das vagas do front.
 export function converterVaga(v) {
   const empresa = v.empresa ?? { id: 0, nome: 'Empresa' }
   return {
@@ -52,7 +42,6 @@ export function converterVaga(v) {
     real: true,
     titulo: v.titulo,
     empresa: `empresa-${empresa.id}`,
-    // Vaga de empresa Premium: aparece primeiro e com selo de destaque.
     destaque: Boolean(empresa.premium),
     dadosEmpresa: {
       slug: null,
@@ -111,7 +100,6 @@ export const listarVagasServidor = () => chamar('/vagas').then((r) => r.vagas.ma
 export const lerVagaServidor = (id) => chamar(`/vagas/${idServidor(id)}`).then((r) => converterVaga(r.vaga))
 export const listarCandidaturasServidor = () => chamar('/candidaturas/minhas').then((r) => r.candidaturas.map(converterCandidatura))
 
-// Retira a candidatura (apaga o envio, a cópia do currículo e a conversa).
 export async function retirarCandidaturaServidor(idCandidatura) {
   const r = await chamar(`/candidaturas/${encodeURIComponent(idCandidatura)}`, { method: 'DELETE' })
   window.dispatchEvent(new Event(EVENTO_CANDIDATURAS_SERVIDOR))

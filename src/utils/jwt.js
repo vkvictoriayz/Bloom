@@ -1,7 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-// JWT HS256 mínimo (header.payload.assinatura em base64url).
-
 const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString("base64url");
 
 function assinar(conteudo, segredo) {
@@ -15,7 +13,6 @@ export function criarToken(payload, segredo, expiraEmSegundos) {
   return `${conteudo}.${assinar(conteudo, segredo)}`;
 }
 
-// Retorna o payload se o token for válido e não expirou; senão retorna null.
 export function verificarToken(token, segredo) {
   if (typeof token !== "string") return null;
 

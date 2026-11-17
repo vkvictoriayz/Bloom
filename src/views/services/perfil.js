@@ -1,12 +1,5 @@
 import { gravarJSON, lerJSON } from './armazenamento'
 
-// Perfil profissional da usuária.
-//
-// O banco tem PERFIL_USUARIA, EXPERIENCIA, FORMACAO e HABILIDADE, mas o
-// backend ainda não tem rotas para eles. O perfil fica neste navegador,
-// marcado com o e-mail da dona — assim outra conta no mesmo navegador não
-// vê dados que não são dela. Nome e e-mail iniciais vêm da sessão real.
-
 export const CHAVE_PERFIL = 'bloom-perfil'
 export const EVENTO_PERFIL = 'bloom-perfil-atualizado'
 
@@ -38,7 +31,6 @@ export function lerPerfil(usuario) {
   const salvo = lerJSON(CHAVE_PERFIL, null)
   if (!salvo || typeof salvo !== 'object') return base
 
-  // Perfis antigos não tinham "dono": só aproveitamos se o e-mail bater.
   const dono = salvo.dono ?? salvo.email
   if (!usuario?.email || dono?.toLowerCase() !== usuario.email.toLowerCase()) return base
 
@@ -65,7 +57,6 @@ export function salvarPerfil(perfil) {
   return gravarJSON(CHAVE_PERFIL, perfil, EVENTO_PERFIL)
 }
 
-// Itens que contam para a completude, calculada só com dados preenchidos.
 export function itensCompletude(perfil) {
   const temLink = Object.values(perfil.links ?? {}).some((valor) => valor?.trim())
   return [

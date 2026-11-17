@@ -5,8 +5,6 @@ import Cabecalho from './Cabecalho'
 import Rodape from './Rodape'
 import { cn } from '../../lib/cn'
 
-// Moldura comum: link de pular, cabeçalho, conteúdo e rodapé.
-// Também cuida da rolagem: topo ao trocar de página e âncoras (/#secao).
 function Pagina({ titulo, className, children }) {
   const { pathname, hash } = useLocation()
 

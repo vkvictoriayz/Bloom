@@ -1,8 +1,5 @@
 import { areasTI } from './areas'
 
-// Ajudantes das vagas (as vagas em si vêm da API: services/vagasApi.js).
-
-// Níveis considerados porta de entrada na carreira.
 const NIVEIS_INICIANTES = ['Estágio', 'Assistente', 'Júnior', 'Trainee']
 
 export const ehIniciante = (vaga) => NIVEIS_INICIANTES.includes(vaga.nivel)
@@ -15,15 +12,11 @@ export function formatarPublicacao(dias) {
   return semanas === 1 ? 'Há 1 semana' : `Há ${semanas} semanas`
 }
 
-// Opções dos formulários (vaga da empresa e preferências da candidata): o
-// catálogo de áreas da Bloom (data/areas.js) e as modalidades de trabalho.
-// Os filtros da lista de vagas usam só os valores das vagas publicadas.
 export const opcoesFiltro = {
   areas: areasTI.map((a) => a.nome),
   modalidades: ['Presencial', 'Híbrido', 'Remoto'],
 }
 
-// Busca textual em cargo, empresa, área, local e tecnologias.
 export function correspondeBusca(vaga, termo) {
   const alvo = termo.trim().toLowerCase()
   if (!alvo) return true
@@ -42,10 +35,6 @@ export function correspondeBusca(vaga, termo) {
     .includes(alvo)
 }
 
-// Recomendação pela sobreposição real entre as competências técnicas do
-// perfil e as tecnologias da vaga. Sem competências no perfil, devolve null.
-// Vagas de "lista" que citam competências técnicas da candidata no título,
-// na área, nos requisitos ou nas competências da vaga.
 export function recomendarVagas(lista, tecnicas = [], limite = 3) {
   const minhas = tecnicas.map((t) => t.toLowerCase()).filter(Boolean)
   if (!minhas.length) return null

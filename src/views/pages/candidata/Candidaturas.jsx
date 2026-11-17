@@ -14,7 +14,6 @@ import { situacao } from '../../services/candidaturas'
 import { cn } from '../../lib/cn'
 import { useCandidaturasEstado } from '../../hooks/useVagasReais'
 
-// Filtros pelos status reais do sistema (ENUM do banco + vaga encerrada).
 const FILTROS = [
   { id: 'todas', rotulo: 'Todas' },
   { id: 'andamento', rotulo: 'Em andamento' },

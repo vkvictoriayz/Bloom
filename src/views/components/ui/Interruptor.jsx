@@ -1,6 +1,5 @@
 import { cn } from '../../lib/cn'
 
-// Interruptor acessível (role="switch") no padrão Bloom.
 function Interruptor({ ligado, aoMudar, rotulo, desativado }) {
   return (
     <button

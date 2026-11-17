@@ -1,7 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-// Tabelas da migration 004 (src/database/migrations/004_curriculo.sql).
 const opcoes = (tableName) => ({ tableName, freezeTableName: true, timestamps: false });
 const arquivo = {
   nomeArquivo: { type: DataTypes.STRING(150), allowNull: false, field: "nome_arquivo" },
@@ -11,7 +10,6 @@ const arquivo = {
   enviadoEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "enviado_em" },
 };
 
-// Currículo atual do perfil (um por candidata).
 export const CurriculoCandidata = sequelize.define(
   "CurriculoCandidata",
   {
@@ -22,7 +20,6 @@ export const CurriculoCandidata = sequelize.define(
   opcoes("CURRICULO_CANDIDATA")
 );
 
-// Cópia enviada com uma candidatura (a empresa vê a versão daquele momento).
 export const CandidaturaCurriculo = sequelize.define(
   "CandidaturaCurriculo",
   {
@@ -33,10 +30,8 @@ export const CandidaturaCurriculo = sequelize.define(
   opcoes("CANDIDATURA_CURRICULO")
 );
 
-// O que a tela precisa saber do arquivo (sem os bytes).
 export const resumoArquivo = (c) => (c ? { nome: c.nomeArquivo, tamanho: c.tamanho, enviadoEm: c.enviadoEm } : null);
 
-// Envia o arquivo como download, sem o navegador tentar interpretá-lo.
 export function enviarArquivo(res, c) {
   const nome = c.nomeArquivo.replace(/["\\\r\n]/g, "");
   res.set({

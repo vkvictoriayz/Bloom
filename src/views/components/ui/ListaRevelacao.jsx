@@ -1,9 +1,6 @@
 import { Link } from 'react-router-dom'
 import { cn } from '../../lib/cn'
 
-// Lista editorial numerada (ImageRevealList do VengeanceUI): ao passar o
-// mouse, a "mídia" do item aparece ao lado do número. Aqui a mídia é a
-// marca da empresa — nada de fotos genéricas.
 function ListaRevelacao({ itens, className }) {
   return (
     <ul className={cn('border-t border-linha', className)}>

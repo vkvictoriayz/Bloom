@@ -13,7 +13,6 @@ import { buscarProjeto, excluirProjeto, LIMITE_IMAGEM_PROJETO, salvarProjeto } f
 
 const VAZIO = { nome: '', descricao: '', imagem: '', tecnologias: [], repositorio: '', demo: '', inicio: '', fim: '' }
 
-// Criar (/candidata/projetos/criar) e editar (/candidata/projetos/:id/editar).
 function FormularioProjeto() {
   const { id } = useParams()
   const navigate = useNavigate()

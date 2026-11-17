@@ -6,8 +6,6 @@ import MarcaEmpresa from './MarcaEmpresa'
 import Selo from './ui/Selo'
 import { formatarPublicacao } from '../data/vagas'
 
-// Vaga em destaque: bloco maior que abre a lista de resultados, com a faixa
-// na cor da empresa, cargo em Fraunces e uma ficha de metadados.
 function VagaDestaque({ vaga, candidatura }) {
   const empresa = vaga.dadosEmpresa
   const ficha = [

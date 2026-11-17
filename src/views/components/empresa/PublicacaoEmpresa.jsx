@@ -11,10 +11,6 @@ import { LIMITE_PUBLICACAO, TIPOS, tempoRelativo } from '../../services/comunida
 
 const rotuloTipo = (id) => TIPOS.find((t) => t.id === id)?.rotulo ?? id
 
-// Publicação no feed da empresa. Mesma estrutura do cartão do feed da
-// candidata (autor, tipo, tempo, texto, contagens). Publicações das
-// integrantes são só leitura para empresas; as da própria empresa podem ser
-// editadas e excluídas (o backend confere a autoria).
 function PublicacaoEmpresa({ publicacao, gerenciavel = false, aoMudar, aoExcluir }) {
   const [dados, setDados] = useState(publicacao)
   const [editando, setEditando] = useState(false)
@@ -23,7 +19,6 @@ function PublicacaoEmpresa({ publicacao, gerenciavel = false, aoMudar, aoExcluir
   const [ocupado, setOcupado] = useState(false)
   const [erro, setErro] = useState('')
 
-  // Publicações da própria empresa não trazem autor: usa o perfil carregado.
   const contexto = useOutletContext()
   const autor = dados.autor ?? { nome: dados.empresa?.nome, foto: fotoEmpresa(contexto?.perfil), detalhe: 'Empresa' }
   const daEmpresa = (dados.origem ?? 'empresa') === 'empresa'

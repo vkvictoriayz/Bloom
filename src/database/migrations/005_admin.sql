@@ -1,11 +1,3 @@
--- 005: área de administração
---  * as tabelas ADMINS, LOGS_ADMIN e DASHBOARD_ADMIN são as do "banco bloom.sql"
---    (criadas aqui só se não existirem);
---  * contas de candidata e empresa podem ser suspensas por um administrador;
---  * administradores podem ser desativados; o registro de ações ganha detalhes.
--- Aplicada automaticamente pelo servidor (src/database/migracoes.js), uma vez.
--- Só acrescenta tabelas e colunas; nenhum dado existente é alterado.
-
 CREATE TABLE IF NOT EXISTS ADMINS (
   id_admin INT AUTO_INCREMENT PRIMARY KEY,
   nome VARCHAR(100) NOT NULL,

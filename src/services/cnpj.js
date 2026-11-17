@@ -1,18 +1,7 @@
-// Consulta de CNPJ pela BrasilAPI (https://brasilapi.com.br/docs#tag/CNPJ).
-// Serviço gratuito e sem chave, que repassa dados públicos do cadastro da
-// Receita Federal. Confirma os dados cadastrais da empresa, mas NÃO prova que
-// quem está criando a conta pode representá-la.
-//
-// Variáveis de ambiente (opcionais):
-//   CNPJ_API_URL — base da API (padrão: https://brasilapi.com.br/api/cnpj/v1)
-
 const URL_PADRAO = "https://brasilapi.com.br/api/cnpj/v1";
 const TEMPO_LIMITE = 8000;
-const VALIDADE_CACHE = 10 * 60 * 1000; // evita consultar o mesmo CNPJ seguidas vezes
+const VALIDADE_CACHE = 10 * 60 * 1000;
 
-// Situação cadastral (código da Receita) -> regra da Bloom.
-// Só empresas ATIVAS podem criar conta; as demais precisam regularizar a
-// situação ou falar com o suporte (ver docs/autenticacao.md).
 export const SITUACOES = {
   1: "NULA",
   2: "ATIVA",
@@ -24,17 +13,16 @@ export const SITUACOES = {
 export class ErroConsultaCnpj extends Error {
   constructor(tipo, mensagem) {
     super(mensagem);
-    this.tipo = tipo; // "invalido" | "nao_encontrado" | "indisponivel" | "incompleto"
+    this.tipo = tipo;
   }
 }
 
-const cache = new Map(); // cnpj -> { quando, dados }
+const cache = new Map();
 
 function texto(v) {
   return typeof v === "string" ? v.trim() : "";
 }
 
-// Só os campos que a Bloom usa: nada de sócios (QSA), capital social etc.
 function resumir(d) {
   const codigo = Number(d.situacao_cadastral);
   return {
@@ -59,8 +47,6 @@ export async function consultarCnpj(cnpj) {
   let resposta;
   try {
     resposta = await fetch(`${base}/${cnpj}`, {
-      // A BrasilAPI recusa (403) o User-Agent padrão do Node: a requisição
-      // precisa se identificar.
       headers: { accept: "application/json", "User-Agent": "Bloom/1.0 (cadastro de empresas)" },
       signal: AbortSignal.timeout(TEMPO_LIMITE),
     });

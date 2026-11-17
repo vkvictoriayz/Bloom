@@ -5,16 +5,11 @@ import { Comunidade } from "../models/Grupos.js";
 import { Empresa, Usuaria } from "../models/index.js";
 import { criarLimitador } from "../utils/limitador.js";
 
-// Denúncias feitas por candidatas e empresas (/api/denuncias). A equipe
-// analisa no painel (/api/admin/denuncias).
-
 const erro = (res, status, mensagem, campo) => res.status(status).json({ erro: mensagem, campo });
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
 const porConta = criarLimitador({ janela: 60 * 60 * 1000, maximo: 20 });
 
-// Dono de cada alvo: ninguém denuncia o próprio conteúdo. Devolve
-// { tipo, id } do dono, ou null se o alvo não existe.
 async function donoDoAlvo(alvoTipo, alvoId) {
   switch (alvoTipo) {
     case "publicacao": {
@@ -47,7 +42,6 @@ async function donoDoAlvo(alvoTipo, alvoId) {
   }
 }
 
-// POST /api/denuncias { alvoTipo, alvoId, motivo, descricao? }
 export async function denunciar(req, res) {
   try {
     const alvoTipo = texto(req.body?.alvoTipo);
@@ -71,7 +65,6 @@ export async function denunciar(req, res) {
     if (existente?.status === "aberta") return res.json({ mensagem: "Você já denunciou isto. A equipe da Bloom está analisando." });
     porConta.registrar(chave);
     if (existente) {
-      // Já analisada antes: volta para a fila com o motivo novo.
       await existente.update({ motivo, descricao: descricao || null, status: "aberta", criadaEm: new Date(), adminId: null, resolucao: null, resolvidaEm: null });
     } else {
       await Denuncia.create({ ...onde, motivo, descricao: descricao || null });
@@ -83,7 +76,6 @@ export async function denunciar(req, res) {
   }
 }
 
-// GET /api/denuncias/motivos — lista para o formulário.
 export function motivos(req, res) {
   return res.json({ motivos: Object.entries(MOTIVOS_DENUNCIA).map(([id, rotulo]) => ({ id, rotulo })) });
 }

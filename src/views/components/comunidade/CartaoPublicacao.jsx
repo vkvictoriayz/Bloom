@@ -27,7 +27,6 @@ import { cn } from '../../lib/cn'
 const rotuloTipo = (id) => TIPOS.find((t) => t.id === id)?.rotulo ?? id
 const perfilDa = (id) => `/candidata/pessoas/${id}`
 
-// Fecha um menu ao clicar fora ou apertar Esc.
 function useMenu() {
   const [aberto, setAberto] = useState(false)
   const caixa = useRef(null)
@@ -47,7 +46,6 @@ function useMenu() {
 
 const itemMenu = 'flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-tinta-2 hover:bg-papel-2 hover:text-tinta'
 
-// Menu discreto "⋯" de um comentário (só para quem pode excluir).
 function MenuComentario({ aoExcluir, aoDenunciar }) {
   const { aberto, setAberto, caixa } = useMenu()
   return (
@@ -96,8 +94,6 @@ function MenuComentario({ aoExcluir, aoDenunciar }) {
   )
 }
 
-// Menu "⋯" da publicação: copiar o texto (todas); editar e excluir (só a autora).
-// "extras": ações a mais de quem mostra o cartão ({ rotulo, icone, aoClicar }).
 function MenuPublicacao({ minha, aoCopiar, aoEditar, aoExcluir, aoDenunciar, extras = [] }) {
   const { aberto, setAberto, caixa } = useMenu()
   const item = itemMenu
@@ -186,7 +182,6 @@ function MenuPublicacao({ minha, aoCopiar, aoEditar, aoExcluir, aoDenunciar, ext
   )
 }
 
-// Edição da publicação pela autora: texto, tipo e imagem (manter, trocar ou remover).
 function EdicaoPublicacao({ publicacao, aoSalvar, aoCancelar }) {
   const [texto, setTexto] = useState(publicacao.texto)
   const [tipo, setTipo] = useState(publicacao.tipo)
@@ -201,7 +196,6 @@ function EdicaoPublicacao({ publicacao, aoSalvar, aoCancelar }) {
     setErro('')
     try {
       const corpo = { texto, tipo }
-      // Só envia a imagem quando mudou: nova (dataUrl) ou removida (null).
       if (imagem?.dataUrl) Object.assign(corpo, { imagem: imagem.dataUrl, largura: imagem.largura, altura: imagem.altura })
       else if (!imagem && publicacao.imagem) corpo.imagem = null
       aoSalvar((await editarPublicacao(publicacao.id, corpo)).publicacao)
@@ -241,8 +235,6 @@ function EdicaoPublicacao({ publicacao, aoSalvar, aoCancelar }) {
   )
 }
 
-// Texto com as #hashtags viradas em links para a busca de publicações.
-// Mesma regra do servidor (ver ComunidadeController.emAlta).
 const HASHTAG = /(^|[^\p{L}\p{N}_&/])#([\p{L}\p{N}_]{2,40})/gu
 function TextoComAssuntos({ texto }) {
   const partes = []
@@ -261,9 +253,6 @@ function TextoComAssuntos({ texto }) {
   return partes
 }
 
-// Uma publicação do feed: autora, texto, imagem, curtir, comentar,
-// compartilhar e (para a autora) editar e excluir. Tudo ligado à API.
-// "aoAtualizar" avisa a lista quando a publicação muda (edição).
 function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar, acoesExtras }) {
   const [dados, setDados] = useState(publicacao)
   const [editando, setEditando] = useState(false)
@@ -276,7 +265,6 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar, acoesExtras }) {
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
   const [confirmando, setConfirmando] = useState(false)
-  // Denúncia aberta: "publicacao" ou o id do comentário.
   const [denunciando, setDenunciando] = useState(null)
 
   async function aoCurtir() {
@@ -365,8 +353,6 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar, acoesExtras }) {
     aoAtualizar?.(nova)
   }
 
-  // Compartilhar: usa o compartilhamento do aparelho quando existe;
-  // senão, copia o texto da publicação.
   async function compartilhar() {
     const texto = `${dados.autora.nome} na Bloom:\n\n${dados.texto}`
     try {

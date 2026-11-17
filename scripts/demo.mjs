@@ -1,33 +1,18 @@
-// Dados de demonstração da Bloom: candidatas, empresas, vagas, comunidades,
-// publicações, curtidas, comentários, conexões e conversas — todos fictícios.
-//
-//   npm run demo:criar     cria tudo e grava os logins em contas-demonstracao.md
-//   npm run demo:remover   apaga todas as contas de demonstração e o que é delas
-//
-// Tudo passa pelas rotas da própria API (mesmas validações do site). Os
-// e-mails terminam em "demo.bloom.test" (domínio reservado para testes, nenhum
-// e-mail sai) e os CPFs/CNPJs são gerados com dígitos válidos, sem ser de
-// ninguém: a consulta de CNPJ é respondida por um servidor local deste script
-// e o cadastro fica marcado com a fonte "Demonstração (dados fictícios)".
 import { randomBytes, randomInt } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import http from "node:http";
 
 const DOMINIO = "demo.bloom.test";
-// Ilustrações da demonstração (avatares, capas, logos e imagens das
-// publicações), desenhadas para a Bloom: nenhuma foto de pessoa real.
 const imagem = (nome) => `data:image/webp;base64,${readFileSync(new URL(`./demo-imagens/${nome}.webp`, import.meta.url)).toString("base64")}`;
 const POST_LARGURA = 1200;
 const POST_ALTURA = 675;
 const ARQUIVO = new URL("../contas-demonstracao.md", import.meta.url);
 
-// Nada sai do computador: sem e-mail, sem pagamento, sem consulta de CPF.
 Object.assign(process.env, { RESEND_API_KEY: "", EMAIL_REMETENTE: "", MP_ACCESS_TOKEN: "", SERPRO_CPF_CONSUMER_KEY: "", NODE_ENV: "development" });
 
 const { sequelize } = await import("../src/config/database.js");
 const comando = process.argv[2];
 
-// ------------------------------------------------------------ remover
 async function remover() {
   const { excluirEmpresa, excluirUsuaria } = await import("../src/services/exclusaoConta.js");
   const [usuarias] = await sequelize.query("SELECT id_usuario AS id, email FROM CADASTRO_USUARIA WHERE email LIKE ?", { replacements: [`%${DOMINIO}`] });
@@ -39,6 +24,38 @@ async function remover() {
 
 if (comando === "remover") {
   await remover();
+  await sequelize.close();
+  process.exit(0);
+}
+
+if (comando === "senhas") {
+  const senha = process.argv[3] ?? "";
+  if (senha.length < 8) {
+    console.log("Uso: npm run demo:senhas -- <senha com 8 ou mais caracteres>");
+    process.exit(1);
+  }
+  const { createRequire } = await import("node:module");
+  const bcrypt = createRequire(import.meta.url)("bcrypt");
+  const hash = await bcrypt.hash(senha, 10);
+  const [u] = await sequelize.query("UPDATE CADASTRO_USUARIA SET senha_hash = ? WHERE email LIKE ?", { replacements: [hash, `%${DOMINIO}`] });
+  const [e] = await sequelize.query("UPDATE CADASTRO_EMPRESA SET senha_hash = ? WHERE email LIKE ?", { replacements: [hash, `%${DOMINIO}`] });
+  const [usuarias] = await sequelize.query("SELECT nome, email FROM CADASTRO_USUARIA WHERE email LIKE ? ORDER BY id_usuario", { replacements: [`%${DOMINIO}`] });
+  const [empresas] = await sequelize.query("SELECT nome, email FROM CADASTRO_EMPRESA WHERE email LIKE ? ORDER BY id_empresa", { replacements: [`%${DOMINIO}`] });
+  writeFileSync(
+    ARQUIVO,
+    [
+      "# Contas de demonstração da Bloom",
+      "",
+      `Todas as contas abaixo usam a mesma senha: \`${senha}\``,
+      "",
+      "| Tipo | Nome | E-mail (login) | Onde entrar |",
+      "| --- | --- | --- | --- |",
+      ...usuarias.map((c) => `| Candidata | ${c.nome} | ${c.email} | http://localhost:3006/login |`),
+      ...empresas.map((c) => `| Empresa | ${c.nome} | ${c.email} | http://localhost:3006/empresa/login |`),
+      "",
+    ].join("\n")
+  );
+  console.log(`Senha trocada em ${u.affectedRows} candidatas e ${e.affectedRows} empresas. Logins em contas-demonstracao.md`);
   await sequelize.close();
   process.exit(0);
 }
@@ -57,7 +74,6 @@ if (Number(total) > 0) {
   process.exit(1);
 }
 
-// ------------------------------------------------------------ documentos fictícios
 function digitosCpf(base) {
   const dv = (nums) => {
     const soma = nums.reduce((s, n, i) => s + n * (nums.length + 1 - i), 0);
@@ -78,10 +94,8 @@ function novoCnpj() {
   const d2 = dv([...base, d1], [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
   return [...base, d1, d2].join("");
 }
-// Senha forte e legível, diferente para cada conta.
 const novaSenha = () => `Bloom-${randomBytes(6).toString("base64url")}-${randomInt(10, 99)}`;
 
-// ------------------------------------------------------------ conteúdo
 const CANDIDATAS = [
   {
     chave: "ana", nome: "Ana Luíza Moreira", nascimento: "1999-04-12", icone: "icone:codigo:vinho",
@@ -249,7 +263,6 @@ const COMUNIDADES = [
     posts: [["dani", "dica", "Comecem pelos testes dos fluxos que dão dinheiro (cadastro, login, pagamento). Cobertura alta em código que ninguém usa não ajuda. #qa #testes"]] },
 ];
 
-// [autora, tipo, texto, imagem?] — na ordem em que foram publicadas.
 const POSTS_FEED = [
   ["ana", "projeto", "Publiquei a nova versão do meu portfólio. O que mudou:\n\n• modo escuro com contraste AA nas duas versões\n• navegação completa pelo teclado, com foco sempre visível\n• páginas de projeto com o problema, o processo e o resultado\n\nFeedbacks são muito bem-vindos, principalmente de quem usa leitor de tela. #react #acessibilidade", "post-ana-portfolio"],
   ["bia", "conquista", "Hoje assumi como Analista de Dados Pleno. 🎉\n\nHá quatro anos eu montava relatórios no Excel e não sabia o que era um JOIN. O que mais me ajudou nesse caminho: estudar SQL todos os dias, pedir revisão das minhas consultas e documentar cada painel como se outra pessoa fosse mantê-lo amanhã.\n\nObrigada a quem revisou meu código e me indicou para essa vaga. #dados #conquista", "post-bia-promocao"],
@@ -269,7 +282,6 @@ const COMENTARIOS = [
 ];
 const SEGUIR = [["ana", "bia"], ["ana", "fe"], ["bia", "fe"], ["camila", "fe"], ["camila", "ana"], ["duda", "fe"], ["duda", "ana"], ["dani", "ana"], ["fe", "bia"]];
 
-// ------------------------------------------------------------ servidor e mock de CNPJ
 const empresasCnpj = new Map();
 const mock = http.createServer((req, res) => {
   const cnpj = req.url.split("/").pop();
@@ -280,7 +292,6 @@ const mock = http.createServer((req, res) => {
 await new Promise((ok) => mock.listen(0, "127.0.0.1", ok));
 process.env.CNPJ_API_URL = `http://127.0.0.1:${mock.address().port}/cnpj`;
 
-// As tabelas e migrations já existem quando a API rodou uma vez; confere mesmo assim.
 const { aplicarMigracoes } = await import("../src/database/migracoes.js");
 await aplicarMigracoes();
 const { default: app } = await import("../src/app.js");
@@ -304,7 +315,6 @@ const contas = [];
 const tokens = {};
 const ids = {};
 try {
-  // ---------------- candidatas
   for (const c of CANDIDATAS) {
     const email = `${c.chave}@${DOMINIO}`;
     const senha = novaSenha();
@@ -320,7 +330,6 @@ try {
     contas.push({ tipo: "Candidata", nome: c.nome, email, senha, documento: `CPF ${cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}`, entrar: "http://localhost:3006/login" });
   }
 
-  // ---------------- empresas
   for (const e of EMPRESAS) {
     const cnpj = novoCnpj();
     empresasCnpj.set(cnpj, {
@@ -341,18 +350,14 @@ try {
     contas.push({ tipo: "Empresa", nome: e.nome, email, senha, documento: `CNPJ ${cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5")}`, entrar: "http://localhost:3006/empresa/login" });
   }
 
-  // E-mails de demonstração já confirmados (não existe caixa de entrada) e a
-  // fonte do cadastro deixa claro que os dados da "Receita" são fictícios.
   await sequelize.query("UPDATE CADASTRO_USUARIA SET email_verificado_em = NOW() WHERE email LIKE ?", { replacements: [`%${DOMINIO}`] });
   await sequelize.query("UPDATE CADASTRO_EMPRESA SET email_verificado_em = NOW() WHERE email LIKE ?", { replacements: [`%${DOMINIO}`] });
   await sequelize.query(
     "UPDATE EMPRESA_DADOS_CADASTRAIS SET fonte = 'Demonstração (dados fictícios)' WHERE id_empresa IN (SELECT id_empresa FROM CADASTRO_EMPRESA WHERE email LIKE ?)",
     { replacements: [`%${DOMINIO}`] }
   );
-  // Uma empresa verificada pelo próprio fluxo (e-mail no domínio do site), para mostrar o selo.
   for (const e of EMPRESAS.filter((x) => x.verificar)) await req("POST", "/empresa/verificacao", undefined, tokens[e.chave]);
 
-  // ---------------- rede: seguir, publicações, curtidas, comentários
   for (const [quem, quemSegue] of SEGUIR) await req("PUT", `/comunidade/perfis/${ids[quemSegue]}/seguir`, undefined, tokens[quem]);
   const publicadas = [];
   const comImagem = (nome) => (nome ? { imagem: imagem(nome), largura: POST_LARGURA, altura: POST_ALTURA } : {});
@@ -366,7 +371,6 @@ try {
   }
   for (const [quem, indice, texto] of COMENTARIOS) await req("POST", `/comunidade/publicacoes/${publicadas[indice].id}/comentarios`, { texto }, tokens[quem]);
 
-  // ---------------- comunidades
   for (const c of COMUNIDADES) {
     const criada = (await req("POST", "/comunidades", { nome: c.nome, tema: c.tema, descricao: c.descricao, icone: c.icone }, tokens[c.criadora])).comunidade;
     await req("PUT", `/comunidades/${criada.id}`, { regras: c.regras }, tokens[c.criadora]);
@@ -374,7 +378,6 @@ try {
     for (const [autora, tipo, texto, img] of c.posts) await req("POST", `/comunidades/${criada.id}/publicacoes`, { texto, tipo, ...comImagem(img) }, tokens[autora]);
   }
 
-  // ---------------- candidaturas e conversas
   const nuvem = EMPRESAS.find((e) => e.chave === "nuvem");
   const candAna = (await req("POST", "/candidaturas", { vagaId: nuvem.vagasCriadas[0].id, titulo: "Desenvolvedora Front-end Júnior", apresentacao: "Olá! Trabalho com React e TypeScript há dois anos e me identifico muito com o foco de vocês em acessibilidade.", links: [{ rotulo: "Portfólio", url: "https://exemplo.com/portfolio-ana" }] }, tokens.ana)).candidatura;
   await req("PATCH", `/empresa/candidaturas/${candAna.id}/status`, { status: "Em análise" }, tokens.nuvem);
@@ -391,9 +394,6 @@ try {
   await req("POST", `/mensagens/candidatas/${direta.id}`, { texto: "Oi, Camila! Tem sim. Traz o currículo que a gente revisa juntas 😊" }, tokens.fe);
   await req("POST", `/mensagens/candidatas/${direta.id}`, { texto: "Esse é o roteiro dos encontros:", imagem: imagem("post-fe-mentoria"), largura: POST_LARGURA, altura: POST_ALTURA }, tokens.fe);
 
-  // Datas espalhadas, como numa rede de verdade: publicações nos últimos dias
-  // (as mais novas foram criadas por último), vagas nas últimas semanas e
-  // mensagens com alguns minutos entre si.
   const filtro = `%${DOMINIO}`;
   await sequelize.query(
     `UPDATE PUBLICACAO p JOIN (
@@ -440,7 +440,6 @@ try {
   process.exit(1);
 }
 
-// ---------------- arquivo com os logins (fica fora do git)
 const linhas = [
   "# Contas de demonstração da Bloom",
   "",

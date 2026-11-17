@@ -8,8 +8,6 @@ import { cn } from '../../lib/cn'
 const botaoAcao =
   'inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-tinta-2 transition-colors hover:bg-papel-2 hover:text-tinta disabled:opacity-60'
 
-// Imagem já mostrada numa publicação (feed, comunidade, perfil). Respeita a
-// proporção enviada, com limites para fotos muito altas ou muito largas.
 export function ImagemPublicacao({ imagem, descricao, className }) {
   if (!imagem) return null
   const proporcao = imagem.largura && imagem.altura ? Math.min(2, Math.max(0.8, imagem.largura / imagem.altura)) : 4 / 3
@@ -28,8 +26,6 @@ export function ImagemPublicacao({ imagem, descricao, className }) {
   )
 }
 
-// Botão "Imagem" + prévia com trocar/remover, antes de publicar ou salvar.
-// valor: null ou { url | dataUrl, largura, altura }; aoMudar recebe o novo valor.
 export function AnexoImagem({ valor, aoMudar, desabilitado = false, id = 'anexo-imagem' }) {
   const entrada = useRef(null)
   const [preparando, setPreparando] = useState(false)
@@ -37,7 +33,7 @@ export function AnexoImagem({ valor, aoMudar, desabilitado = false, id = 'anexo-
 
   async function escolher(evento) {
     const arquivo = evento.target.files?.[0]
-    evento.target.value = '' // permite escolher o mesmo arquivo de novo
+    evento.target.value = ''
     if (!arquivo) return
     setErro('')
     setPreparando(true)

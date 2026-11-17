@@ -2,11 +2,6 @@ import { Op } from "sequelize";
 import { Habilidade, PerfilDetalhes, PerfilHabilidade, PerfilUsuaria } from "../models/Candidata.js";
 import { notificar } from "./notificacoes.js";
 
-// Quando uma vaga é publicada, avisa as candidatas cujo perfil combina com ela:
-// alguma competência técnica citada no título, área, requisitos ou descrição,
-// ou a área da vaga entre as áreas de interesse das preferências.
-// Quem desligou "vagas compatíveis" não recebe (ver notificar()).
-
 const normal = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export async function avisarVagaCompativel(vaga, nomeEmpresa) {
@@ -26,7 +21,6 @@ export async function avisarVagaCompativel(vaga, nomeEmpresa) {
     const alvo = new Set();
     for (const l of ligacoes) {
       const nome = nomeHab.get(l.habilidadeId);
-      // Competências curtas (ex.: "C", "R") só contam como palavra inteira.
       const casa = nome && (nome.length > 2 ? textoVaga.includes(nome) : new RegExp(`\\b${nome}\\b`).test(textoVaga));
       if (casa) alvo.add(usuariaDoPerfil.get(l.perfilId));
     }

@@ -37,7 +37,6 @@ function Observacao({ children }) {
   )
 }
 
-// Configurações da conta empresarial: só ações que o backend suporta hoje.
 function Configuracoes() {
   const { perfil: dados } = useOutletContext()
   const navigate = useNavigate()

@@ -12,21 +12,17 @@ import { Vazio, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { listarTalentos } from '../../services/empresa'
 import { cn } from '../../lib/cn'
 
-// Explorar talentos: busca por nome, área ou interesse e filtro por área.
-// Só aparecem dados que a integrante publicou na comunidade.
 function ExplorarTalentos() {
   const [parametros, setParametros] = useSearchParams()
   const busca = parametros.get('q') ?? ''
   const area = parametros.get('area') ?? ''
   const [termo, setTermo] = useState(busca)
-  // A busca da barra superior muda ?q=; o campo acompanha.
   const [buscaAnterior, setBuscaAnterior] = useState(busca)
   if (buscaAnterior !== busca) {
     setBuscaAnterior(busca)
     setTermo(busca)
   }
   const r = useCarregar(() => listarTalentos({ busca, area }), [busca, area])
-  // Áreas do filtro: as informadas pelas próprias integrantes.
   const todas = useCarregar(() => listarTalentos())
   const areas = todas.tipo === 'pronto' ? [...new Set(todas.dados.talentos.map((t) => t.area).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR')) : []
 

@@ -6,14 +6,11 @@ import Botao from '../components/ui/Botao'
 import { Aviso } from '../components/ui/Campo'
 import { atualizarUsuarioSessao, confirmarEmail, obterSessao } from '../services/auth'
 
-// Destino do link de confirmação enviado por e-mail (/confirmar-email?token=...).
-// O token vale por 24 horas e uma única vez; quem confere é o servidor.
 function ConfirmarEmail() {
   const [parametros] = useSearchParams()
   const token = parametros.get('token') ?? ''
   const valido = /^[0-9a-f]{64}$/.test(token)
   const [estado, setEstado] = useState(valido ? { tipo: 'enviando' } : { tipo: 'erro', texto: 'Este link de confirmação é inválido. Use o link completo enviado por e-mail.' })
-  // O link só pode ser usado uma vez: não manda de novo se a tela montar duas vezes.
   const enviado = useRef(false)
 
   useEffect(() => {

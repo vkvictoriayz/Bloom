@@ -1,6 +1,5 @@
 import { cn } from '../../lib/cn'
 
-// Barra de progresso (Progress do VengeanceUI, sem a dependência do Radix).
 function Progresso({ valor = 0, rotulo, className }) {
   const limitado = Math.max(0, Math.min(100, valor))
 

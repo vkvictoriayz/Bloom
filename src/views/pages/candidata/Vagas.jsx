@@ -20,7 +20,6 @@ const ORDENACOES = {
   empresa: { rotulo: 'Empresa (A–Z)', comparar: (a, b) => a.dadosEmpresa.nome.localeCompare(b.dadosEmpresa.nome, 'pt-BR') },
 }
 
-// Filtros de múltipla escolha. As opções vêm dos dados (nunca inventadas).
 const GRUPOS = [
   { chave: 'modalidade', rotulo: 'Modalidade', campo: (v) => v.modalidade },
   { chave: 'nivel', rotulo: 'Nível de experiência', campo: (v) => v.nivel },
@@ -61,7 +60,6 @@ function Vagas() {
 
   const busca = parametros.get('busca') ?? ''
   const local = parametros.get('local') ?? ''
-  // ?empresa=<id> (vem do perfil público da empresa).
   const empresaId = parametros.get('empresa') ?? ''
   const iniciante = parametros.get('iniciante') === '1'
   const ordem = ORDENACOES[parametros.get('ordem')] ? parametros.get('ordem') : 'recentes'
@@ -92,9 +90,7 @@ function Vagas() {
     setParametros(ordem !== 'recentes' ? { ordem } : {}, { replace: true })
   }
 
-  // Vagas publicadas pelas empresas na Bloom.
   const { vagas: todas, erro: erroVagasReais } = useVagas()
-  // Opções dos filtros a partir das vagas carregadas (nunca inventadas).
   const grupos = GRUPOS.map((g) => ({ ...g, opcoes: unicos(todas.map(g.campo)) }))
   const locais = unicos(todas.map((v) => v.local))
   const empresaFiltro = empresaId ? (todas.find((v) => String(v.dadosEmpresa?.id) === empresaId)?.dadosEmpresa ?? { nome: 'Empresa' }) : null
@@ -107,8 +103,6 @@ function Vagas() {
         .filter((vaga) => !iniciante || ehIniciante(vaga))
         .filter((vaga) => grupos.every((g) => !selecionados[g.chave].length || selecionados[g.chave].includes(g.campo(vaga))))
         .sort(ORDENACOES[ordem].comparar),
-    // selecionados é derivado de "parametros"
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [todas.length, parametros]
   )
 

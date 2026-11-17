@@ -7,8 +7,6 @@ import { atualizarUsuarioSessao, buscarSessaoAtual, reenviarConfirmacaoEmail } f
 
 const CHAVE_DISPENSADO = 'bloom-aviso-email-dispensado'
 
-// Confere no servidor se o e-mail já foi confirmado (a sessão salva pode ser
-// de antes da confirmação, ou de outro navegador) e guarda na sessão.
 function useEmailConfirmado() {
   const sessao = useSessao()
   const token = sessao?.token
@@ -22,11 +20,9 @@ function useEmailConfirmado() {
       })
       .catch(() => {})
   }, [token])
-  // undefined enquanto não se sabe (sessão antiga, sem o campo).
   return { sessao, confirmado: sessao?.usuario?.emailVerificado }
 }
 
-// Botão "reenviar link" com o resultado logo abaixo.
 function Reenviar({ token, className }) {
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
   async function reenviar() {
@@ -50,8 +46,6 @@ function Reenviar({ token, className }) {
   )
 }
 
-// Faixa no topo da área logada enquanto o e-mail não foi confirmado. Pode ser
-// dispensada até fechar o navegador.
 export function AvisoConfirmarEmail() {
   const { sessao, confirmado } = useEmailConfirmado()
   const [dispensado, setDispensado] = useState(() => {
@@ -67,7 +61,6 @@ export function AvisoConfirmarEmail() {
     try {
       sessionStorage.setItem(CHAVE_DISPENSADO, '1')
     } catch {
-      // armazenamento indisponível: some só até recarregar
     }
     setDispensado(true)
   }
@@ -86,7 +79,6 @@ export function AvisoConfirmarEmail() {
   )
 }
 
-// Situação do e-mail em Configurações.
 export function SituacaoEmail() {
   const { sessao, confirmado } = useEmailConfirmado()
   if (confirmado === undefined) return null

@@ -7,8 +7,6 @@ function lerToken(req) {
   return esquema === "Bearer" ? verificarToken(token, process.env.JWT_SECRET) : null;
 }
 
-// Exige "Authorization: Bearer <token>" de candidata ou empresa (por padrão,
-// as duas). Conta suspensa pela administração perde o acesso na hora.
 export function exigirLogin(tiposPermitidos = ["usuaria", "empresa"]) {
   return async (req, res, next) => {
     const payload = lerToken(req);
@@ -30,10 +28,6 @@ export function exigirLogin(tiposPermitidos = ["usuaria", "empresa"]) {
   };
 }
 
-// Área de administração: token de administrador ativo (conferido no banco a
-// cada requisição). "niveis" restringe a ação (ex.: só "super").
-// Quem precisa trocar a senha (criado no painel com senha inicial) só acessa
-// as rotas marcadas com { durantetroca: true } até trocar.
 export function exigirAdmin(niveis, { durantetroca = false } = {}) {
   return async (req, res, next) => {
     const payload = lerToken(req);

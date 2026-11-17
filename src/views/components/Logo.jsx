@@ -1,8 +1,5 @@
 import { cn } from '../lib/cn'
 
-// Logomarca da Bloom: a borboleta + o nome em Bodoni Moda (ver identidade de marca).
-// variante="clara" é para fundos escuros.
-
 export function Borboleta({ tamanho = 28, className = '' }) {
   return (
     <svg

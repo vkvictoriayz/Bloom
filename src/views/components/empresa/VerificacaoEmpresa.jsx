@@ -11,7 +11,6 @@ import { cn } from '../../lib/cn'
 
 const dataBR = (d) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
-// Atalho de cada requisito para onde se resolve.
 const ATALHOS = {
   site: { para: '/empresa/perfil/editar', rotulo: 'Informar o site' },
   email: { para: '#dados-da-conta', rotulo: 'Confirmar o e-mail' },
@@ -19,8 +18,6 @@ const ATALHOS = {
   dominio: { para: '#dados-da-conta', rotulo: 'Trocar o e-mail' },
 }
 
-// Verificação de quem representa a empresa: automática pelo domínio do
-// e-mail (quando todos os requisitos batem) ou pela equipe da Bloom.
 function VerificacaoEmpresa() {
   const [estado, setEstado] = useState({ tipo: 'carregando' })
   const [enviando, setEnviando] = useState(false)

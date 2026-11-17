@@ -2,13 +2,8 @@ import { lerPerfil, salvarPerfil } from './perfil'
 
 import { criarProjetoServidor, editarProjetoServidor, excluirProjetoServidor } from './candidataApi'
 
-// Projetos da candidata, salvos no servidor (/api/candidata/projetos). A
-// cópia dentro do perfil local serve para as telas lerem na hora.
+export const LIMITE_IMAGEM_PROJETO = 400 * 1024
 
-export const LIMITE_IMAGEM_PROJETO = 400 * 1024 // 400 KB, o mesmo limite do servidor
-
-// Projetos antigos (do editor de perfil) tinham só nome, link e descrição
-// e nenhum id: completamos os campos sem perder o que foi salvo.
 function normalizar(projeto, i) {
   return {
     id: projeto.id ?? `antigo-${i}`,
@@ -31,8 +26,6 @@ export function buscarProjeto(usuario, id) {
   return lerProjetos(usuario).find((p) => p.id === id) ?? null
 }
 
-// Cria (sem id) ou atualiza (com id) no servidor e atualiza a cópia local.
-// Devolve o projeto salvo; em caso de erro, lança com a mensagem da API.
 export async function salvarProjeto(usuario, dados) {
   const { id, ...campos } = dados
   const projeto = id ? await editarProjetoServidor(id, campos) : await criarProjetoServidor(campos)

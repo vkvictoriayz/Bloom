@@ -1,10 +1,3 @@
--- 004: currículo da candidata
---  * CURRICULO_CANDIDATA: o arquivo atual do perfil (um por candidata);
---  * CANDIDATURA_CURRICULO: cópia enviada junto com uma candidatura, para a
---    empresa ver o currículo daquele momento mesmo que o do perfil mude.
--- Aplicada automaticamente pelo servidor (src/database/migracoes.js), uma vez.
--- Só cria tabelas novas; nenhum dado existente é alterado.
-
 CREATE TABLE IF NOT EXISTS CURRICULO_CANDIDATA (
   id_curriculo INT AUTO_INCREMENT PRIMARY KEY,
   id_usuario INT NOT NULL,

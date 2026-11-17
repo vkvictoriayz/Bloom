@@ -11,8 +11,6 @@ import Selo from '../../components/ui/Selo'
 import { dataCurta, fotoEmpresa, listarPublicacoesEmpresa, listarVagasEmpresa, VISUAL_VAGA } from '../../services/empresa'
 import { tempoRelativo } from '../../services/comunidade'
 
-// Perfil da empresa (visão profissional). Dados de CADASTRO_EMPRESA e
-// PERFIL_EMPRESA; vagas e publicações da própria empresa.
 function Perfil() {
   const { perfil: dados, erroPerfil, recarregarPerfil } = useOutletContext()
   const vagas = useCarregar(() => listarVagasEmpresa())

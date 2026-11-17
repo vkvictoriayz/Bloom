@@ -1,7 +1,5 @@
 import { cn } from '../../lib/cn'
 
-// Abertura de seção no estilo editorial da Bloom: índice numerado + rótulo
-// em caixa alta, título em Bodoni e, opcionalmente, uma ação à direita.
 function CabecalhoSecao({ indice, rotulo, titulo, descricao, acao, claro = false, className, id }) {
   return (
     <div className={cn('flex flex-col gap-6 md:flex-row md:items-end md:justify-between', className)}>

@@ -4,8 +4,6 @@ import { iniciais } from '../../hooks/useSessao'
 import { cn } from '../../lib/cn'
 import { urlImagem } from '../../services/api'
 
-// Foto da integrante: a foto enviada, o ícone escolhido ("icone:...") ou,
-// sem nenhum dos dois, as iniciais sobre um fundo de marca.
 const TAMANHOS = { sm: 'size-9 text-xs', md: 'size-11 text-sm', lg: 'size-16 text-xl', xl: 'size-28 text-4xl sm:size-36' }
 
 function Avatar({ nome, foto, tamanho = 'md', className }) {

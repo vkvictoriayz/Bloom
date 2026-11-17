@@ -23,8 +23,6 @@ const OPCOES = [
   },
 ]
 
-// Controles de privacidade da candidata (API /api/candidata/privacidade).
-// Cada interruptor salva na hora; se o servidor recusar, volta como estava.
 function Privacidade() {
   const [estado, setEstado] = useState({ tipo: 'carregando' })
   const [salvando, setSalvando] = useState('')

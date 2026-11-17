@@ -29,8 +29,6 @@ function Numero({ rotulo, valor, icone, para }) {
   )
 }
 
-// Painel de recrutamento: números calculados no servidor a partir das vagas,
-// candidaturas, vagas salvas e convites da empresa.
 function Dashboard() {
   const r = useCarregar(lerDashboard)
 

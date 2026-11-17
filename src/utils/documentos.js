@@ -1,7 +1,3 @@
-// Validação de CPF e CNPJ (dígitos verificadores).
-// Observação: isso confirma que o número é *matematicamente válido*,
-// não que ele exista na Receita Federal.
-
 export function somenteDigitos(valor) {
   return String(valor ?? "").replace(/\D/g, "");
 }
@@ -11,7 +7,6 @@ export function validarCPF(valor) {
 
   if (cpf.length !== 11) return false;
 
-  // 000.000.000-00, 111.111.111-11 etc. passam na conta, mas são inválidos
   if (/^(\d)\1{10}$/.test(cpf)) return false;
 
   const digitos = cpf.split("").map(Number);

@@ -18,7 +18,6 @@ function CampoCodigo({ valor, aoMudar, rotulo = 'Código do app (ou de recupera�
   )
 }
 
-// Códigos de recuperação: mostrados uma vez só.
 function CodigosRecuperacao({ codigos, aoFechar }) {
   const [copiado, setCopiado] = useState(false)
   async function copiar() {
@@ -53,7 +52,7 @@ function CodigosRecuperacao({ codigos, aoFechar }) {
 }
 
 function DuasEtapas({ admin, aoMudar }) {
-  const [etapa, setEtapa] = useState(null) // null | 'senha' | 'app' | 'desligar' | 'novos'
+  const [etapa, setEtapa] = useState(null)
   const [senha, setSenha] = useState('')
   const [codigo, setCodigo] = useState('')
   const [config, setConfig] = useState(null)

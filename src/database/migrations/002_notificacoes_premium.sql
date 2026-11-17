@@ -1,7 +1,3 @@
--- 002 — Preferências de notificação, convites e Bloom Premium.
--- Só cria tabelas novas e insere os planos da tabela de preços.
-
--- Preferências de notificação (candidatas e empresas). Sem linha: tudo ligado.
 CREATE TABLE IF NOT EXISTS PREFERENCIA_NOTIFICACAO (
   id_preferencia INT AUTO_INCREMENT PRIMARY KEY,
   tipo_conta ENUM('usuaria','empresa') NOT NULL,
@@ -16,7 +12,6 @@ CREATE TABLE IF NOT EXISTS PREFERENCIA_NOTIFICACAO (
   UNIQUE KEY UK_PREFERENCIA_CONTA (tipo_conta, id_conta)
 );
 
--- Convite de uma empresa para uma candidata participar do processo de uma vaga.
 CREATE TABLE IF NOT EXISTS CONVITE (
   id_convite INT AUTO_INCREMENT PRIMARY KEY,
   id_empresa INT NOT NULL,
@@ -30,7 +25,6 @@ CREATE TABLE IF NOT EXISTS CONVITE (
   CONSTRAINT FK_CONVITE_VAGA FOREIGN KEY (id_vaga) REFERENCES VAGAS(id_vaga)
 );
 
--- Planos à venda. Os valores e benefícios vêm da tabela de preços da Bloom.
 CREATE TABLE IF NOT EXISTS PLANO (
   id_plano INT AUTO_INCREMENT PRIMARY KEY,
   codigo VARCHAR(40) NOT NULL UNIQUE,
@@ -43,7 +37,6 @@ CREATE TABLE IF NOT EXISTS PLANO (
   ativo BOOLEAN NOT NULL DEFAULT TRUE
 );
 
--- Assinatura de um plano. Só fica "ativa" quando o Mercado Pago confirma.
 CREATE TABLE IF NOT EXISTS ASSINATURA (
   id_assinatura INT AUTO_INCREMENT PRIMARY KEY,
   tipo_conta ENUM('usuaria','empresa') NOT NULL,
@@ -60,7 +53,6 @@ CREATE TABLE IF NOT EXISTS ASSINATURA (
   CONSTRAINT FK_ASSINATURA_PLANO FOREIGN KEY (id_plano) REFERENCES PLANO(id_plano)
 );
 
--- Campanha de publicidade de uma empresa (paga por campanha).
 CREATE TABLE IF NOT EXISTS CAMPANHA (
   id_campanha INT AUTO_INCREMENT PRIMARY KEY,
   id_empresa INT NOT NULL,
@@ -76,7 +68,6 @@ CREATE TABLE IF NOT EXISTS CAMPANHA (
   CONSTRAINT FK_CAMPANHA_PLANO FOREIGN KEY (id_plano) REFERENCES PLANO(id_plano)
 );
 
--- Pagamentos confirmados pelo provedor (histórico). Nunca criado pelo navegador.
 CREATE TABLE IF NOT EXISTS PAGAMENTO (
   id_pagamento INT AUTO_INCREMENT PRIMARY KEY,
   tipo_conta ENUM('usuaria','empresa') NOT NULL,
@@ -97,8 +88,6 @@ CREATE TABLE IF NOT EXISTS PAGAMENTO (
   CONSTRAINT FK_PAGAMENTO_CAMPANHA FOREIGN KEY (id_campanha) REFERENCES CAMPANHA(id_campanha)
 );
 
--- Planos (tabela de preços da Bloom). Candidatas: o mesmo Plano Premium,
--- sem o benefício "Perfil ampliado para sua empresa", que é só de empresa.
 INSERT IGNORE INTO PLANO (codigo, nome, publico, tipo, preco, rotulo_preco, beneficios, ativo) VALUES
 ('premium_empresa', 'Plano Premium', 'empresa', 'assinatura', 99.90, '/mês',
  JSON_ARRAY('Maior destaque na plataforma', 'Mais visibilidade para oportunidades', 'Perfil ampliado para sua empresa', 'Suporte prioritário'), TRUE),

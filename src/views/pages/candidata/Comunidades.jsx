@@ -13,7 +13,6 @@ import { textoAtividade, textoParticipantes } from '../../services/comunidade'
 import { criarComunidade, listarComunidades, participarComunidade } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
-// Formulário para criar uma comunidade (quem cria entra como participante).
 function NovaComunidade({ aoCancelar }) {
   const navigate = useNavigate()
   const [dados, setDados] = useState({ nome: '', tema: '', descricao: '' })
@@ -95,8 +94,6 @@ function NovaComunidade({ aoCancelar }) {
   )
 }
 
-
-// Cartão de uma comunidade: capa, ícone, tema, quem participa e atividade.
 function CartaoComunidade({ c, aoParticipar, ocupada }) {
   return (
     <li className="group flex flex-col overflow-hidden rounded-2xl border border-linha bg-branco transition-shadow hover:shadow-md">
@@ -142,7 +139,6 @@ const ABAS = [
   { id: 'minhas', rotulo: 'Minhas comunidades', icone: 'grupo' },
 ]
 
-// Comunidades temáticas (grupos por tema), criadas pelas integrantes.
 function Comunidades() {
   const [parametros, setParametros] = useSearchParams()
   const aba = parametros.get('aba') === 'minhas' ? 'minhas' : 'descobrir'

@@ -5,9 +5,6 @@ import { useDadosLocais } from '../hooks/useDadosLocais'
 import { alternarSalva, EVENTO_SALVAS, lerSalvas } from '../services/salvas'
 import { cn } from '../lib/cn'
 
-// Coração que salva/remove a vaga na conta. A cópia local muda na hora,
-// então todas as telas abertas ficam em sincronia; se o servidor recusar,
-// o coração volta e o motivo aparece no título do botão.
 function BotaoSalvar({ vaga, comTexto = false, className }) {
   const salvas = useDadosLocais(lerSalvas, [EVENTO_SALVAS])
   const salva = salvas.includes(String(vaga.id))

@@ -29,7 +29,6 @@ function Secao({ icone, titulo, descricao, children }) {
   )
 }
 
-// Configurações da conta: tudo aqui é salvo no servidor.
 function Configuracoes() {
   const sessao = useSessao()
   const navigate = useNavigate()

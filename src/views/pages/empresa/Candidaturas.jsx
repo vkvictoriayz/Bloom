@@ -13,7 +13,6 @@ import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components
 import { dataCurta, listarCandidaturasEmpresa, listarVagasEmpresa, STATUS_CANDIDATURA, VISUAL_CANDIDATURA } from '../../services/empresa'
 import { cn } from '../../lib/cn'
 
-// Quadro por etapa: uma coluna para cada status do processo seletivo.
 function QuadroEtapas({ candidaturas }) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -46,7 +45,6 @@ function QuadroEtapas({ candidaturas }) {
   )
 }
 
-// Candidaturas às vagas da empresa (registros reais de CANDIDATURAS).
 function Candidaturas() {
   const [parametros, setParametros] = useSearchParams()
   const vaga = parametros.get('vaga') ?? ''

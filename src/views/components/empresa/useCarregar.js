@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 
-// Carrega dados de uma API com estados de carregamento, erro e recarga.
-// "dependencias" decide quando buscar de novo.
 export function useCarregar(carregar, dependencias = []) {
   const [estado, setEstado] = useState({ tipo: 'carregando' })
   const [versao, setVersao] = useState(0)
@@ -9,7 +7,6 @@ export function useCarregar(carregar, dependencias = []) {
 
   useEffect(() => {
     let ativo = true
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEstado((e) => (e.tipo === 'pronto' ? e : { tipo: 'carregando' }))
     carregar()
       .then((dados) => ativo && setEstado({ tipo: 'pronto', dados }))
@@ -17,8 +14,6 @@ export function useCarregar(carregar, dependencias = []) {
     return () => {
       ativo = false
     }
-    // "carregar" muda a cada render; as dependências reais vêm de fora.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [versao, ...dependencias])
 
   return { ...estado, recarregar }

@@ -1,7 +1,4 @@
-// Validação do currículo enviado (base64 + nome do arquivo). O tipo vem da
-// extensão e precisa bater com os primeiros bytes do arquivo.
-
-export const LIMITE_CURRICULO = 5 * 1024 * 1024; // 5 MB
+export const LIMITE_CURRICULO = 5 * 1024 * 1024;
 
 const TIPOS = {
   pdf: { mime: "application/pdf", confere: (b) => b.toString("ascii", 0, 5) === "%PDF-" },
@@ -15,13 +12,11 @@ const TIPOS = {
   },
 };
 
-// Devolve { nomeArquivo, mime, dados } ou { erro }.
 export function lerCurriculo(nome, base64) {
   const limpo = String(nome ?? "")
     .split(/[\\/]/)
     .pop()
     .split("")
-    // sem caracteres de controle nem os proibidos em nomes de arquivo
     .filter((c) => c.charCodeAt(0) >= 32 && !'<>:"|?*'.includes(c))
     .join("")
     .trim();

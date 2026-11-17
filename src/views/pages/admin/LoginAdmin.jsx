@@ -8,9 +8,6 @@ import { Aviso, Campo, Entrada } from '../../components/ui/Campo'
 import { useSessao } from '../../hooks/useSessao'
 import { confirmarCodigo, entrarAdmin } from '../../services/admin'
 
-// Entrada da equipe da Bloom. Não há cadastro: contas de administração são
-// criadas pelo terminal (npm run admin:criar) ou por quem tem acesso total.
-// Com a verificação em duas etapas ligada, depois da senha vem o código do app.
 function LoginAdmin() {
   const navigate = useNavigate()
   const sessao = useSessao()
@@ -40,7 +37,6 @@ function LoginAdmin() {
     } catch (e) {
       setErro(e.message)
       setEnviando(false)
-      // Desafio vencido (5 min): volta para a senha.
       if (/Entre de novo|acabou/.test(e.message)) setDesafio(null)
     }
   }

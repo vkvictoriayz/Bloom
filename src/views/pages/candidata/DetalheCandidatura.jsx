@@ -15,7 +15,6 @@ import { abrirConversa } from '../../services/recursos'
 import { retirarCandidaturaServidor } from '../../services/vagasApi'
 import { useCandidaturasEstado } from '../../hooks/useVagasReais'
 
-// Só a própria candidata acessa: as candidaturas lidas são as dela.
 function NaoEncontrada() {
   return (
     <Vazio className="bg-branco">
@@ -34,13 +33,11 @@ function useCandidatura() {
   const { id } = useParams()
   const { lista, carregando, erro } = useCandidaturasEstado()
   const candidatura = buscarCandidatura(id, lista)
-  // A vaga é real ("b<id>") e abre em /vagas/:id.
   const vaga = candidatura ? { id: candidatura.vagaId } : null
   const empresa = candidatura?.dadosEmpresa ?? null
   return { candidatura, vaga, empresa, carregando, erro }
 }
 
-// Abre (ou retoma) a conversa com a empresa sobre esta candidatura.
 function BotaoMensagem({ candidatura }) {
   const navigate = useNavigate()
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
@@ -63,10 +60,8 @@ function BotaoMensagem({ candidatura }) {
   )
 }
 
-// Etapas em que ainda dá para desistir (igual à API).
 const PODE_RETIRAR = ['Recebida', 'Em análise', 'Em entrevista']
 
-// Retirar a candidatura: pede confirmação, apaga no servidor e volta à lista.
 function RetirarCandidatura({ candidatura }) {
   const navigate = useNavigate()
   const [aberto, setAberto] = useState(false)

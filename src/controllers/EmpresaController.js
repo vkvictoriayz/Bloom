@@ -21,14 +21,10 @@ import {
 import { TIPOS } from "./ComunidadeController.js";
 import { CandidaturaCurriculo, enviarArquivo, resumoArquivo } from "../models/Curriculo.js";
 
-// Área privada da empresa. Todas as rotas exigem login de empresa
-// (exigirLogin(["empresa"])) e só mexem em registros da própria empresa:
-// vaga, candidatura ou publicação de outra empresa responde 404.
-
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
 const erro = (res, status, mensagem, campo) => res.status(status).json({ erro: mensagem, campo });
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
-const hoje = () => new Date().toLocaleDateString("sv-SE"); // AAAA-MM-DD
+const hoje = () => new Date().toLocaleDateString("sv-SE");
 const lista = (s) => (s ? s.split(",").map((i) => i.trim()).filter(Boolean) : []);
 const eu = (req) => req.auth.sub;
 
@@ -59,7 +55,6 @@ async function meuPerfil(empresaId, criar = false) {
   return PerfilEmpresa.create({ empresaId });
 }
 
-// Vaga da empresa logada, ou null (inexistente ou de outra empresa).
 async function minhaVaga(req) {
   const id = idParam(req.params.id);
   const perfil = await meuPerfil(eu(req));
@@ -99,7 +94,6 @@ function valorEmReais(bruto, campo, rotulo) {
   return [valor];
 }
 
-// Valida os campos de VAGAS (tamanhos do banco). Devolve [dados] ou [null, erro].
 function lerVaga(body) {
   const dados = {
     titulo: texto(body.titulo),
@@ -135,7 +129,6 @@ function lerVaga(body) {
   return [{ ...dados, salario, salarioMax }];
 }
 
-// Contagens por vaga: candidaturas (por status) e quantas a salvaram.
 async function numerosDasVagas(vagas) {
   const ids = vagas.map((v) => v.id);
   if (!ids.length) return { candidaturas: [], salvas: [] };
@@ -145,8 +138,6 @@ async function numerosDasVagas(vagas) {
   ]);
   return { candidaturas, salvas };
 }
-
-// ---------------------------------------------------------------- Perfil
 
 function perfilJson(p) {
   return {
@@ -186,8 +177,6 @@ export const perfil = comTratamento(async (req, res) => {
   });
 });
 
-// PUT /api/empresa/perfil — dados públicos do perfil e, opcionalmente,
-// o nome de exibição e o telefone da conta.
 export const atualizarPerfil = comTratamento(async (req, res) => {
   const b = req.body ?? {};
   const dados = {
@@ -231,8 +220,6 @@ export const atualizarPerfil = comTratamento(async (req, res) => {
   return res.json({ perfil: perfilJson(p) });
 });
 
-// ----------------------------------------------------------------- Vagas
-
 export const listarVagas = comTratamento(async (req, res) => {
   const p = await meuPerfil(eu(req));
   if (!p) return res.json({ vagas: [] });
@@ -255,7 +242,6 @@ async function publicada(vaga, req) {
   await avisarVagaCompativel(vaga, empresa?.nome);
 }
 
-// POST /api/empresa/vagas { ...campos, rascunho? } — publica na hora ou salva como rascunho.
 export const criarVaga = comTratamento(async (req, res) => {
   const [dados, falha] = lerVaga(req.body);
   if (!dados) return erro(res, 400, ...falha);
@@ -288,8 +274,6 @@ export const editarVaga = comTratamento(async (req, res) => {
   return res.json({ vaga: vagaJson(vaga) });
 });
 
-// PATCH /api/empresa/vagas/:id/status { status } — publicar (Aberta),
-// desativar (Pausada), encerrar ou voltar a rascunho (só sem candidaturas).
 export const mudarStatusVaga = comTratamento(async (req, res) => {
   const vaga = await minhaVaga(req);
   if (!vaga) return erro(res, 404, "Vaga não encontrada.");
@@ -304,8 +288,6 @@ export const mudarStatusVaga = comTratamento(async (req, res) => {
   return res.json({ vaga: vagaJson(vaga) });
 });
 
-// DELETE /api/empresa/vagas/:id — só sem candidaturas (as candidatas não
-// perdem o histórico): com candidaturas, a vaga deve ser encerrada.
 export const excluirVaga = comTratamento(async (req, res) => {
   const vaga = await minhaVaga(req);
   if (!vaga) return erro(res, 404, "Vaga não encontrada.");
@@ -318,7 +300,6 @@ export const excluirVaga = comTratamento(async (req, res) => {
   return res.status(204).end();
 });
 
-// GET /api/empresa/dashboard — números do recrutamento, direto do banco.
 export const dashboard = comTratamento(async (req, res) => {
   const p = await meuPerfil(eu(req));
   const vagas = p ? await Vaga.findAll({ where: { perfilEmpresaId: p.id }, order: [["id", "DESC"]] }) : [];
@@ -343,7 +324,6 @@ export const dashboard = comTratamento(async (req, res) => {
       convites,
       publicacoes,
     },
-    // Desempenho de cada vaga publicada.
     vagas: vagas
       .filter((v) => v.status !== "Rascunho")
       .map((v) => ({
@@ -357,8 +337,6 @@ export const dashboard = comTratamento(async (req, res) => {
       })),
   });
 });
-
-// ---------------------------------------------------------- Candidaturas
 
 async function perfisPublicos(ids) {
   const unicos = [...new Set(ids)];
@@ -427,7 +405,6 @@ export const verCandidatura = comTratamento(async (req, res) => {
     Usuaria.findByPk(cand.usuariaId),
     perfisPublicos([cand.usuariaId]),
     CandidaturaEnvio.findOne({ where: { candidaturaId: cand.id } }),
-    // Perfil profissional completo, sem telefone: só para quem recebeu a candidatura.
     perfilCompleto(cand.usuariaId, { comContato: false }),
     CandidaturaCurriculo.findOne({ attributes: ["nomeArquivo", "tamanho", "enviadoEm"], where: { candidaturaId: cand.id } }),
   ]);
@@ -440,7 +417,6 @@ export const verCandidatura = comTratamento(async (req, res) => {
   return res.json({
     candidatura: { id: cand.id, data: cand.data, status: cand.status },
     vaga: vagaJson(vaga),
-    // O e-mail foi informado pela candidata ao se candidatar a esta vaga.
     candidata: { ...pessoas.get(cand.usuariaId), email: conta?.email ?? "" },
     perfil: profissional,
     envio: {
@@ -453,8 +429,6 @@ export const verCandidatura = comTratamento(async (req, res) => {
   });
 });
 
-// GET /api/empresa/candidaturas/:id/curriculo — o currículo enviado com a
-// candidatura (só para a empresa dona da vaga).
 export const baixarCurriculoCandidatura = comTratamento(async (req, res) => {
   const [cand] = await minhaCandidatura(req);
   if (!cand) return erro(res, 404, "Candidatura não encontrada.");
@@ -489,8 +463,6 @@ export const mudarStatusCandidatura = comTratamento(async (req, res) => {
   }
   return res.json({ candidatura: { id: cand.id, data: cand.data, status: cand.status } });
 });
-
-// ----------------------------------------------------------- Publicações
 
 const publicacaoJson = (p, nomeEmpresa, minha) => ({
   id: p.id,
@@ -548,15 +520,10 @@ export const excluirPublicacao = comTratamento(async (req, res) => {
   return res.json({ ok: true });
 });
 
-// ------------------------------------------------------------------ Feed
-
-// Feed da empresa: publicações das integrantes (somente leitura) e das
-// empresas, da mais recente para a mais antiga.
 export const feed = comTratamento(async (req, res) => {
   const pagina = Math.max(1, Number(req.query.pagina) || 1);
   const porPagina = 20;
   const limite = porPagina * pagina + 1;
-  // Contas suspensas pela administração ficam de fora (a própria empresa ainda vê as dela).
   const [suspU, suspE] = await Promise.all([contasSuspensas("usuaria"), contasSuspensas("empresa")]);
   const semU = [...suspU].concat(0);
   const semE = [...suspE].filter((i) => i !== eu(req)).concat(0);
@@ -609,15 +576,10 @@ export const feed = comTratamento(async (req, res) => {
   return res.json({ publicacoes: itens.slice(inicio, inicio + porPagina), temMais: itens.length > inicio + porPagina });
 });
 
-// --------------------------------------------------------------- Talentos
-
-// Só dados que a integrante tornou públicos na comunidade (nome, área,
-// interesses e apresentação). Nunca CPF, e-mail ou telefone.
 export const talentos = comTratamento(async (req, res) => {
   const busca = texto(req.query.busca).toLowerCase();
   const area = texto(req.query.area).toLowerCase();
   const [todas, ocultos] = await Promise.all([Usuaria.findAll({ order: [["nome", "ASC"]], limit: 300 }), perfisOcultos()]);
-  // Só quem deixou o perfil público aparece para as empresas.
   const contas = todas.filter((c) => !ocultos.has(c.id));
   const mapa = await perfisPublicos(contas.map((c) => c.id));
   const contagem = await Publicacao.findAll({ attributes: ["usuariaId"] });
@@ -627,14 +589,11 @@ export const talentos = comTratamento(async (req, res) => {
   }));
   if (busca) pessoas = pessoas.filter((p) => `${p.nome} ${p.area} ${p.interesses.join(" ")} ${p.bio}`.toLowerCase().includes(busca));
   if (area) pessoas = pessoas.filter((p) => p.area.toLowerCase() === area);
-  // Premium: mais destaque (aparece primeiro, com selo).
   const premium = await contasPremium("usuaria", pessoas.map((p) => p.id));
   pessoas = pessoas.map((p) => ({ ...p, premium: premium.has(p.id) })).sort((a, b) => Number(b.premium) - Number(a.premium));
   return res.json({ talentos: pessoas });
 });
 
-// POST /api/empresa/talentos/:id/convites { vagaId, mensagem? } — convida
-// uma profissional (com perfil visível) para o processo de uma vaga aberta.
 export const convidar = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const conta = id && (await Usuaria.findByPk(id));
@@ -669,10 +628,8 @@ export const talento = comTratamento(async (req, res) => {
   const mapa = await perfisPublicos([id]);
   const pubs = await Publicacao.findAll({ where: { usuariaId: id }, order: [["criadaEm", "DESC"]], limit: 20 });
   return res.json({
-    // E-mail e perfil profissional só quando a candidata permitiu.
     talento: { ...mapa.get(id), ...(privacidade.mostrarContato ? { email: conta.email } : {}) },
     profissional: privacidade.mostrarExperiencia ? await perfilCompleto(id, { comContato: false }) : null,
-    // Vagas desta empresa para as quais ela já foi convidada.
     convidadaPara: (await Convite.findAll({ attributes: ["vagaId"], where: { empresaId: eu(req), usuariaId: id } })).map((c) => c.vagaId),
     publicacoes: pubs.map((p) => ({ id: p.id, tipo: p.tipo, texto: p.texto, criadaEm: p.criadaEm })),
   });

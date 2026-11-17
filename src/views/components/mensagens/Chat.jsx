@@ -20,17 +20,11 @@ import {
 } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
-// Painel de uma conversa, no estilo dos apps de mensagem: balões agrupados
-// por dia, "Visto", apagar a própria mensagem (entre candidatas), carregar as
-// anteriores e novas mensagens chegando sozinhas (consulta a cada 5 s, só o
-// que é novo). Serve para conversas entre candidatas e com empresas.
-
 const LIMITE = 1000
 const INTERVALO = 5000
 
 const hora = (d) => new Date(d).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
-// "Hoje", "Ontem", "segunda-feira" (última semana) ou "12 de março de 2026".
 function rotuloDia(d) {
   const data = new Date(d)
   const hoje = new Date()
@@ -44,7 +38,6 @@ function rotuloDia(d) {
 
 const mesmoDia = (a, b) => new Date(a).toDateString() === new Date(b).toDateString()
 
-// Uma mensagem (balão). As da mesma pessoa em sequência ficam "coladas".
 function Balao({ m, primeira, ultima, visto, podeApagar, aoApagar }) {
   const [confirmando, setConfirmando] = useState(false)
   return (
@@ -126,8 +119,6 @@ function Balao({ m, primeira, ultima, visto, podeApagar, aoApagar }) {
   )
 }
 
-// tipo: "candidatas" | "empresas". base: rota da lista (para o "voltar" no
-// celular e para links). aoMudar: avisa a lista (prévia da última mensagem).
 export function Chat({ tipo, id, base, aoMudar, className }) {
   const entreCandidatas = tipo === 'candidatas'
   const [estado, setEstado] = useState({ tipo: 'carregando' })
@@ -135,18 +126,17 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const [carregandoAntigas, setCarregandoAntigas] = useState(false)
-  const [anexo, setAnexo] = useState(null) // imagem escolhida para enviar
+  const [anexo, setAnexo] = useState(null)
   const [menu, setMenu] = useState(false)
   const [denunciando, setDenunciando] = useState(false)
   const rolagem = useRef(null)
   const campo = useRef(null)
   const arquivo = useRef(null)
-  const colado = useRef(true) // a tela está no fim? (para rolar quando chega mensagem)
+  const colado = useRef(true)
   const alturaAntes = useRef(null)
 
   const ler = useCallback((opcoes) => (entreCandidatas ? lerConversaCandidata(id, opcoes) : lerConversa(id, opcoes)), [entreCandidatas, id])
 
-  // Carga inicial (cada conversa monta um Chat novo, pela "key" de quem usa).
   useEffect(() => {
     let ativo = true
     colado.current = true
@@ -158,7 +148,6 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
     }
   }, [ler])
 
-  // Novas mensagens: só o que veio depois da última que a tela tem.
   const ultimaId = estado.mensagens?.at(-1)?.id
   useEffect(() => {
     if (estado.tipo !== 'pronto') return
@@ -171,7 +160,6 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
           const conhecidas = new Set(e.mensagens.map((m) => m.id))
           const novas = (r.mensagens ?? []).filter((m) => !conhecidas.has(m.id))
           const lidasAte = r.lidasAte ?? e.lidasAte
-          // "Visto": marca como lidas as minhas até onde a outra pessoa leu.
           const mensagens = [...e.mensagens, ...novas].map((m) => (m.minha && lidasAte && m.id <= lidasAte ? { ...m, lida: true } : m))
           const bloqueio = r.conversa?.bloqueio ?? e.conversa.bloqueio ?? null
           if (!novas.length && lidasAte === e.lidasAte && bloqueio === (e.conversa.bloqueio ?? null)) return e
@@ -179,14 +167,11 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
         })
         if (r.mensagens?.length) aoMudar?.()
       } catch {
-        // sem conexão agora: tenta de novo no próximo intervalo
       }
     }, INTERVALO)
     return () => clearInterval(t)
   }, [estado.tipo, ultimaId, ler, aoMudar])
 
-  // Rola para o fim quando chega mensagem (se a pessoa já estava no fim) e
-  // mantém a posição quando as anteriores entram em cima.
   const total = estado.mensagens?.length ?? 0
   useLayoutEffect(() => {
     const caixa = rolagem.current
@@ -241,7 +226,6 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
     }
   }
 
-  // Foto escolhida: reduzida no navegador (lado maior até 1600 px) antes de enviar.
   async function escolherImagem(evento) {
     const escolhido = evento.target.files?.[0]
     evento.target.value = ''
@@ -278,7 +262,6 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
     }
   }
 
-  // Enter envia; Shift+Enter quebra a linha.
   function teclas(e) {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
@@ -316,7 +299,6 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
 
   return (
     <div className={cn('flex min-h-0 flex-col', className)}>
-      {/* Cabeçalho */}
       <header className="flex items-center gap-3 border-b border-linha bg-branco px-4 py-3">
         <Link to={!entreCandidatas && !naEmpresa ? `${base}?aba=empresas` : base} className="grid size-9 shrink-0 place-items-center rounded-full text-tinta-2 hover:bg-papel-2 lg:hidden" aria-label="Voltar para as conversas">
           <Icone nome="voltar" tamanho={18} />
@@ -343,7 +325,6 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
             {entreCandidatas ? 'Ver perfil' : naEmpresa ? 'Ver candidatura' : 'Ver empresa'}
           </Link>
         )}
-        {/* Mais opções: denunciar e (entre candidatas) bloquear */}
         <div className="relative shrink-0">
           <button
             type="button"
@@ -388,7 +369,6 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
         </div>
       )}
 
-      {/* Mensagens */}
       <div ref={rolagem} onScroll={aoRolar} className="min-h-0 flex-1 overflow-y-auto bg-papel px-4 py-4 sm:px-6" aria-live="polite">
         {estado.temMais && (
           <div className="mb-3 flex justify-center">
@@ -428,7 +408,6 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
         )}
       </div>
 
-      {/* Escrever (ou o aviso de bloqueio) */}
       {conversa.bloqueio ? (
         <div className="border-t border-linha bg-branco p-4 text-center text-sm text-tinta-2">
           {erro && (
@@ -516,7 +495,6 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
   )
 }
 
-// Separador "Hoje", "Ontem"… antes da primeira mensagem de cada dia.
 function FragmentoDia({ dia, children }) {
   return (
     <>

@@ -21,7 +21,6 @@ import ConfirmarEmail from './pages/ConfirmarEmail'
 import Empresas from './pages/Empresas'
 import EmpresaDetalhe from './pages/EmpresaDetalhe'
 
-// Área privada da candidata
 import Feed from './pages/candidata/Feed'
 import Explorar from './pages/candidata/Explorar'
 import Perfil from './pages/candidata/Perfil'
@@ -50,7 +49,6 @@ import DashboardEmpresa from './pages/empresa/Dashboard'
 
 import LoginEmpresa from './pages/LoginEmpresa'
 import CadastroEmpresa from './pages/CadastroEmpresa'
-// Área privada da empresa
 import LayoutEmpresa from './components/empresa/LayoutEmpresa'
 import FeedEmpresa from './pages/empresa/Feed'
 import ExplorarTalentos from './pages/empresa/ExplorarTalentos'
@@ -74,21 +72,15 @@ import {
 import NotificacoesEmpresa from './pages/empresa/Notificacoes'
 import ConfiguracoesEmpresa from './pages/empresa/Configuracoes'
 
-// Páginas internas: só abrem para quem fez login ou cadastro.
-// Sem sessão, a pessoa é direcionada para a tela de login.
 function Protegida({ children }) {
   return <RotaPrivada tipo="usuaria">{children}</RotaPrivada>
 }
 
-// Endereços antigos da candidata continuam funcionando: redirecionam para
-// /candidata/*, mantendo a busca (?busca=...).
 function Redirecionar({ para }) {
   const { search, hash } = useLocation()
   return <Navigate to={`${para}${search}${hash}`} replace />
 }
 
-// Login e cadastro de empresa: quem já entrou como empresa vai direto para
-// o feed da área dela.
 function AcessoEmpresa({ children }) {
   const sessao = obterSessao()
   if (sessao?.usuario?.tipo === 'empresa') return <Navigate to="/empresa/feed" replace />
@@ -99,22 +91,18 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Home: apresentação para visitantes; a candidata logada vai para o feed */}
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
 
-        {/* Autenticação e Acesso da Candidata */}
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/redefinir-senha" element={<RedefinirSenha />} />
         <Route path="/confirmar-email" element={<ConfirmarEmail />} />
 
-        {/* Empresas: abertas para todos conhecerem */}
         <Route path="/empresas" element={<Empresas />} />
         <Route path="/empresas/:slug" element={<EmpresaDetalhe />} />
 
-        {/* Área privada da candidata: um único layout, protegido por login */}
         <Route
           element={
             <Protegida>
@@ -150,24 +138,19 @@ function App() {
           <Route path="/comunidades/:id" element={<DetalheComunidade />} />
         </Route>
 
-        {/* Endereços antigos da candidata */}
         <Route path="/vagas" element={<Redirecionar para="/candidata/vagas" />} />
         <Route path="/perfil" element={<Redirecionar para="/candidata/perfil" />} />
         <Route path="/editar-perfil" element={<Redirecionar para="/candidata/perfil/editar" />} />
         <Route path="/minhas-candidaturas" element={<Redirecionar para="/candidata/candidaturas" />} />
         <Route path="/vagas-salvas" element={<Redirecionar para="/candidata/vagas-salvas" />} />
         <Route path="/comunidade" element={<Redirecionar para="/candidata/feed" />} />
-        {/* Antiga tela de contatos: a conversa com empresas acontece em Mensagens. */}
         <Route path="/contatos" element={<Redirecionar para="/candidata/mensagens" />} />
 
-        {/* Acesso das empresas */}
         <Route path="/empresa" element={<AcessoEmpresa><LoginEmpresa /></AcessoEmpresa>} />
         <Route path="/empresa/login" element={<AcessoEmpresa><LoginEmpresa /></AcessoEmpresa>} />
         <Route path="/empresa/cadastro" element={<AcessoEmpresa><CadastroEmpresa /></AcessoEmpresa>} />
-        {/* Endereço antigo do painel */}
         <Route path="/empresa/painel" element={<Navigate to="/empresa/feed" replace />} />
 
-        {/* Área privada da empresa: um único layout, protegido por login de empresa */}
         <Route
           element={
             <RotaPrivada tipo="empresa">
@@ -199,8 +182,6 @@ function App() {
           <Route path="/empresa/dashboard" element={<DashboardEmpresa />} />
         </Route>
 
-        {/* Qualquer outro endereço volta para a Home */}
-        {/* Administração: login próprio e área só para contas "admin" */}
         <Route path="/admin/login" element={<LoginAdmin />} />
         <Route
           element={

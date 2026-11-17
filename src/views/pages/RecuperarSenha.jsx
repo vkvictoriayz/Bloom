@@ -11,8 +11,6 @@ const TIPOS = [
   { id: 'empresa', rotulo: 'Sou empresa' },
 ]
 
-// Pede o link de redefinição. A resposta é sempre a mesma, exista ou não
-// a conta, para não revelar quais e-mails estão cadastrados.
 function RecuperarSenha() {
   const [parametros] = useSearchParams()
   const [tipo, setTipo] = useState(parametros.get('tipo') === 'empresa' ? 'empresa' : 'usuaria')

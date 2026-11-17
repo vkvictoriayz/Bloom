@@ -7,11 +7,6 @@ import { EmpresaCadastro } from "../models/Verificacao.js";
 import { empresasVerificadas } from "../services/representante.js";
 import { vagaPublica } from "./VagaController.js";
 
-// Páginas públicas (sem login): diretório de empresas, perfil público de cada
-// empresa com as vagas abertas e os números da plataforma. Só dados que a
-// própria empresa publicou no perfil e os dados públicos do CNPJ (cidade/UF);
-// nada de CPF, e-mail de login ou dados de candidatas.
-
 const erro = (res, status, mensagem) => res.status(status).json({ erro: mensagem });
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
@@ -24,12 +19,10 @@ const comTratamento = (fn) => async (req, res) => {
   }
 };
 
-// Empresas que aparecem em público: contas não suspensas.
 async function empresasVisiveis(where = {}) {
   return Empresa.findAll({ where: { ...where, suspensaEm: { [Op.is]: null } }, order: [["nome", "ASC"]], limit: 500 });
 }
 
-// Cartão público de cada empresa (perfil, cidade, imagens, selos e vagas abertas).
 async function cartoes(contas) {
   const ids = contas.map((c) => c.id);
   if (!ids.length) return [];
@@ -68,7 +61,6 @@ async function cartoes(contas) {
   });
 }
 
-// GET /api/publico/empresas?busca=&area=&comVagas=1
 export const empresas = comTratamento(async (req, res) => {
   const busca = texto(req.query.busca).toLowerCase().slice(0, 80);
   const area = texto(req.query.area).slice(0, 100);
@@ -78,12 +70,10 @@ export const empresas = comTratamento(async (req, res) => {
     .filter((e) => !busca || [e.nome, e.areaAtuacao, e.localizacao, e.descricao].some((v) => v.toLowerCase().includes(busca)))
     .filter((e) => !area || e.areaAtuacao === area)
     .filter((e) => req.query.comVagas !== "1" || e.vagasAbertas > 0)
-    // Mais vagas primeiro; Premium e verificadas desempatam.
     .sort((a, b) => b.vagasAbertas - a.vagasAbertas || Number(b.premium) - Number(a.premium) || Number(b.verificada) - Number(a.verificada) || a.nome.localeCompare(b.nome, "pt-BR"));
   return res.json({ empresas: lista, areas, total: todas.length });
 });
 
-// GET /api/publico/empresas/:id — perfil público e vagas abertas.
 export const empresa = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const conta = id && (await Empresa.findByPk(id));
@@ -98,7 +88,6 @@ export const empresa = comTratamento(async (req, res) => {
   });
 });
 
-// GET /api/publico/resumo — números reais da plataforma (para as páginas públicas).
 export const resumo = comTratamento(async (req, res) => {
   const visiveis = await empresasVisiveis();
   const perfis = visiveis.length ? await PerfilEmpresa.findAll({ attributes: ["id"], where: { empresaId: { [Op.in]: visiveis.map((e) => e.id) } } }) : [];

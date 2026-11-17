@@ -34,13 +34,11 @@ const STATUS_CAMPANHA = {
   cancelada: { variante: 'neutro', rotulo: 'Cancelada' },
 }
 
-// O que toda conta tem, de graça (funcionalidades que já existem na Bloom).
 const GRATUITO = {
   usuaria: ['Perfil profissional, projetos, foto e capa', 'Busca de vagas e candidaturas ilimitadas', 'Mensagens com empresas e notificações', 'Comunidade, comunidades temáticas e publicações'],
   empresa: ['Perfil da empresa, foto e capa', 'Publicação e gestão de vagas', 'Candidaturas, convites e mensagens', 'Painel de recrutamento e banco de talentos'],
 }
 
-// Cartão de plano no visual da tabela de preços da Bloom.
 function CartaoPlano({ plano, icone, escuro, acao }) {
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-linha bg-branco">
@@ -110,8 +108,6 @@ function NovaCampanha({ aoCriar, desativado }) {
   )
 }
 
-// Bloom Premium para candidatas e empresas: planos, plano atual, histórico de
-// pagamentos e (empresas) campanhas de publicidade.
 function AreaPremium({ tipoConta }) {
   const [parametros, setParametros] = useSearchParams()
   const [estado, setEstado] = useState({ tipo: 'carregando' })
@@ -120,7 +116,6 @@ function AreaPremium({ tipoConta }) {
   const [confirmandoCancelamento, setConfirmandoCancelamento] = useState(false)
   const retornoTratado = useRef(false)
 
-  // Na volta do Mercado Pago (?retorno=...), confere o status no servidor.
   useEffect(() => {
     let ativo = true
     const retorno = parametros.get('retorno')
@@ -177,7 +172,6 @@ function AreaPremium({ tipoConta }) {
       {acao.tipo === 'erro' && <Aviso tipo="erro" className="mb-6">{acao.texto}</Aviso>}
       {acao.tipo === 'sucesso' && <Aviso tipo="sucesso" className="mb-6">{acao.texto}</Aviso>}
 
-      {/* Plano atual */}
       <section className="mb-8 flex flex-col gap-3 rounded-2xl border border-linha bg-branco p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-bold tracking-[0.12em] text-suave uppercase">Seu plano</p>
@@ -227,7 +221,6 @@ function AreaPremium({ tipoConta }) {
         )}
       </section>
 
-      {/* Planos */}
       <div className={cn('grid grid-cols-1 gap-6', publicidade && 'lg:grid-cols-2')}>
         {premium && (
           <CartaoPlano
@@ -265,7 +258,6 @@ function AreaPremium({ tipoConta }) {
         </div>
       )}
 
-      {/* Gratuito x Premium */}
       {premium && (
         <section className="mt-10" aria-labelledby="titulo-comparacao">
           <h2 id="titulo-comparacao" className="mb-4 font-display text-2xl text-tinta">
@@ -298,7 +290,6 @@ function AreaPremium({ tipoConta }) {
         </section>
       )}
 
-      {/* Campanhas */}
       {tipoConta === 'empresa' && d.campanhas.length > 0 && (
         <section className="mt-10" aria-labelledby="titulo-campanhas">
           <h2 id="titulo-campanhas" className="mb-4 font-display text-2xl text-tinta">
@@ -328,7 +319,6 @@ function AreaPremium({ tipoConta }) {
         </section>
       )}
 
-      {/* Histórico */}
       <section className="mt-10" aria-labelledby="titulo-historico">
         <h2 id="titulo-historico" className="mb-4 font-display text-2xl text-tinta">
           Histórico de pagamentos

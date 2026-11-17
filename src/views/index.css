@@ -1,13 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Manrope:wght@400..800&display=swap');
 @import "tailwindcss";
 
-/* ──────────────────────────────────────────────────────────────
-   Tokens da Bloom. Toda cor, fonte e raio do site vem daqui.
-   ────────────────────────────────────────────────────────────── */
 @theme {
-  /* Fraunces (títulos): serifa contemporânea, de contraste moderado e boa
-     leitura em tamanhos grandes. Manrope (texto e interface): sem serifa
-     geométrica, clara em formulários e números. */
   --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Fraunces", Georgia, "Times New Roman", serif;
 
@@ -18,11 +12,11 @@
   --color-tinta-2: #4a4044;
   --color-suave: #6b5f63;
   --color-linha: #ddced3;
-  --color-linha-forte: #928086; /* bordas de campos e botões: 3,7:1 sobre o branco (WCAG 1.4.11) */
+  --color-linha-forte: #928086;
 
   --color-vinho: #85243d;
   --color-vinho-escuro: #4e1226;
-  --color-rosa: #9c4a63; /* usável como texto: 5,9:1 sobre o branco */
+  --color-rosa: #9c4a63;
   --color-blush: #f4e4e9;
 
   --color-sucesso: #2b6a4c;
@@ -32,13 +26,10 @@
   --color-erro: #a3262a;
   --color-erro-claro: #f7e2e2;
 
-  /* Sombras: só para o que flutua sobre a página (menus, dicas, gaveta).
-     Cartões usam borda, não sombra. */
   --shadow-menu: 0 8px 24px rgba(31, 26, 28, 0.08);
   --shadow-dica: 0 4px 12px rgba(31, 26, 28, 0.18);
   --shadow-gaveta: 4px 0 24px rgba(31, 26, 28, 0.12);
 
-  /* Movimento: uma curva única para toda a interface. */
   --ease-bloom: cubic-bezier(0.22, 1, 0.36, 1);
 
   --animate-subir: subir 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -73,8 +64,6 @@
     text-wrap: pretty;
   }
 
-  /* Títulos em Fraunces: tamanho óptico automático e leve aperto
-     entre letras, que fica melhor em corpos grandes. */
   .font-display {
     font-optical-sizing: auto;
     letter-spacing: -0.018em;
@@ -105,15 +94,12 @@
   }
 }
 
-/* Contêiner padrão da Bloom: fundo branco, borda fina e cantos de 16px.
-   Use "cartao" em vez de repetir as três classes. */
 @utility cartao {
   border-radius: var(--radius-2xl);
   border: 1px solid var(--color-linha);
   background-color: var(--color-branco);
 }
 
-/* Link com sublinhado que desliza (VengeanceUI · LineHoverLink, variante "slide"). */
 @layer components {
   .link-linha {
     position: relative;

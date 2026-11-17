@@ -1,10 +1,7 @@
-// Roda antes do "npm run dev" (predev): confere se a porta do front está
-// livre e, se não estiver, explica o motivo em vez de mostrar o erro do Vite.
 import { connect } from "node:net";
 
 const PORTA = 3006;
 
-// Alguém já atende nessa porta? (o Vite escuta em localhost: ::1 ou 127.0.0.1)
 const atende = (host) =>
   new Promise((ok) => {
     const s = connect({ host, port: PORTA });
@@ -15,7 +12,6 @@ const atende = (host) =>
   });
 
 if ((await atende("::1")) || (await atende("127.0.0.1"))) {
-  // Já é o front da Bloom? Então basta usar o que está aberto.
   const bloom = await fetch(`http://localhost:${PORTA}/`, { signal: AbortSignal.timeout(1500) })
     .then(async (r) => (await r.text()).includes("/src/views/main.jsx"))
     .catch(() => false);

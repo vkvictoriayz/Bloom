@@ -30,24 +30,17 @@ function Coluna({ titulo, children }) {
   )
 }
 
-// Rodapé único das páginas públicas. Cartão claro com cantos arredondados,
-// na mesma largura e no mesmo estilo dos cartões da Home, com a borboleta da
-// marca em marca-d'água rosada e só links
-// e informações que existem: nada de redes sociais ou endereços inventados.
 function Rodape() {
   const sessao = useSessao()
   const empresa = sessao?.usuario?.tipo === 'empresa'
-  // A empresa logada vê os atalhos da área dela, não os da candidata.
   const autenticada = Boolean(sessao?.usuario) && !empresa
 
   return (
     <footer className="mx-auto w-full max-w-7xl px-4 pb-6 sm:px-6 lg:px-8 lg:pb-8">
       <div className="relative isolate overflow-hidden rounded-2xl border border-linha bg-branco text-tinta">
-        {/* Marca-d'água: a borboleta grande, recortada no canto */}
         <Borboleta tamanho={480} className="pointer-events-none absolute -right-24 -bottom-28 -z-10 rotate-[-12deg] text-blush/70 max-sm:hidden" />
 
         <div className="grid gap-10 px-6 pt-10 pb-10 sm:gap-12 sm:px-10 sm:pt-14 sm:pb-12 lg:grid-cols-[1.4fr_2fr] lg:gap-16 lg:px-14 lg:pt-16">
-          {/* Marca */}
           <div className="max-w-md">
             <Logo />
             <p className="mt-6 font-display text-[1.7rem] leading-snug text-tinta sm:text-3xl">
@@ -64,7 +57,6 @@ function Rodape() {
             </a>
           </div>
 
-          {/* Links */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-10">
             <Coluna titulo="Plataforma">
               <ItemLink para={autenticada ? '/candidata/vagas' : '/#areas'}>Vagas</ItemLink>

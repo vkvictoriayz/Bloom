@@ -14,9 +14,6 @@ import { dataCurta, lerCandidaturaEmpresa, mudarStatusCandidatura, STATUS_CANDID
 import { abrirConversa, baixarCurriculoCandidatura } from '../../services/recursos'
 import { tamanhoLegivel } from '../../utils/arquivos'
 
-// Detalhe de uma candidatura recebida. O backend só devolve candidaturas
-// das vagas desta empresa; a candidata aparece com o que enviou, o perfil
-// profissional dela e os dados públicos da comunidade.
 function DetalheCandidatura() {
   const { id } = useParams()
   const navigate = useNavigate()

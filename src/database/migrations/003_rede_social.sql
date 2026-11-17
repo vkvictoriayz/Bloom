@@ -1,11 +1,3 @@
--- 003: rede social da Bloom
---  * imagem opcional nas publicações (feed e comunidades) e marca de edição;
---  * ícone predefinido como alternativa à foto (candidatas e empresas) e
---    ícone das comunidades temáticas;
---  * conversas diretas entre candidatas (separadas das conversas com empresas).
--- Aplicada automaticamente pelo servidor (src/database/migracoes.js), uma vez.
--- Só acrescenta tabelas e colunas; nenhum dado existente é alterado.
-
 ALTER TABLE PUBLICACAO ADD COLUMN editada_em DATETIME NULL;
 
 CREATE TABLE IF NOT EXISTS PUBLICACAO_IMAGEM (
@@ -33,7 +25,6 @@ CREATE TABLE IF NOT EXISTS ICONE_PERFIL (
 
 ALTER TABLE COMUNIDADE ADD COLUMN icone VARCHAR(40) NULL;
 
--- Cada par de candidatas tem uma conversa só: id_usuaria_a < id_usuaria_b.
 CREATE TABLE IF NOT EXISTS CONVERSA_DIRETA (
   id_conversa_direta INT AUTO_INCREMENT PRIMARY KEY,
   id_usuaria_a INT NOT NULL,

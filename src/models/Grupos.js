@@ -1,10 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-// Comunidades temáticas (grupos por tema), criadas pelas próprias integrantes.
-// Tabelas novas; as publicações continuam na tabela PUBLICACAO e só ganham
-// um vínculo com a comunidade (COMUNIDADE_PUBLICACAO).
-
 const opcoes = (tableName, extra = {}) => ({ tableName, freezeTableName: true, timestamps: false, ...extra });
 const refUsuaria = { model: "CADASTRO_USUARIA", key: "id_usuario" };
 const refComunidade = { model: "COMUNIDADE", key: "id_comunidade" };
@@ -17,9 +13,7 @@ export const Comunidade = sequelize.define(
     tema: { type: DataTypes.STRING(60), allowNull: false },
     descricao: { type: DataTypes.STRING(500), allowNull: false },
     criadoraId: { type: DataTypes.INTEGER, allowNull: false, field: "id_criadora", references: refUsuaria },
-    // Coluna da migration 003: ícone predefinido ("icone:<nome>:<cor>").
     icone: { type: DataTypes.STRING(40) },
-    // Migration 009: regras escritas por quem criou.
     regras: { type: DataTypes.STRING(1000) },
     criadaEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "criada_em" },
   },
@@ -53,8 +47,6 @@ export const ComunidadePublicacao = sequelize.define(
   opcoes("COMUNIDADE_PUBLICACAO")
 );
 
-// Capa (imagem de topo) da comunidade — migration 009. Servida por
-// /api/imagens/<chave>, como as fotos de perfil.
 export const ComunidadeCapa = sequelize.define(
   "ComunidadeCapa",
   {

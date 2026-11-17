@@ -2,14 +2,9 @@ import { Op } from "sequelize";
 import { Bloqueio, MensagemImagem } from "../models/RedeSocial.js";
 import { lerImagem, novaChave } from "../utils/imagem.js";
 
-// Peças do chat usadas pelas conversas com empresas (InteracaoController) e
-// entre candidatas (MensagemDiretaController).
-
-const LIMITE_IMAGEM = 2 * 1024 * 1024; // 2 MB (a tela reduz a foto antes de enviar)
+const LIMITE_IMAGEM = 2 * 1024 * 1024;
 const medida = (v) => (Number.isInteger(v) && v > 0 && v <= 10000 ? v : null);
 
-// Lê { texto, imagem?, largura?, altura? }: precisa de texto ou imagem.
-// Devolve { texto, imagem } ou { falha: [mensagem, campo] }.
 export function lerMensagem(body = {}, limiteTexto = 1000) {
   const texto = typeof body.texto === "string" ? body.texto.trim() : "";
   if (texto.length > limiteTexto) return { falha: [`Use até ${limiteTexto} caracteres.`, "texto"] };
@@ -30,7 +25,6 @@ export async function gravarImagem(origem, mensagemId, imagem, transaction) {
   return { chave, largura: imagem.largura, altura: imagem.altura };
 }
 
-// Imagens de várias mensagens: Map(idMensagem -> { chave, largura, altura }).
 export async function imagensDe(origem, ids) {
   if (!ids.length) return new Map();
   const linhas = await MensagemImagem.findAll({ attributes: ["mensagemId", "chave", "largura", "altura"], where: { origem, mensagemId: { [Op.in]: ids } } });
@@ -40,14 +34,12 @@ export async function imagensDe(origem, ids) {
 export const apagarImagens = (origem, ids, transaction) =>
   ids.length ? MensagemImagem.destroy({ where: { origem, mensagemId: { [Op.in]: ids } }, transaction }) : 0;
 
-// Prévia da última mensagem na lista de conversas.
 export function previa(m, minha, imagem) {
   if (m.apagadaEm) return "Mensagem apagada";
   const corpo = m.texto || (imagem ? "📷 Foto" : "");
   return `${minha ? "Você: " : ""}${imagem && m.texto ? "📷 " : ""}${corpo}`;
 }
 
-// Bloqueio entre duas candidatas, nos dois sentidos.
 export async function bloqueioEntre(meuId, outraId) {
   const linhas = await Bloqueio.findAll({
     where: { [Op.or]: [{ usuariaId: meuId, bloqueadaId: outraId }, { usuariaId: outraId, bloqueadaId: meuId }] },

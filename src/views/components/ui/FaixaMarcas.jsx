@@ -1,8 +1,5 @@
 import { cn } from '../../lib/cn'
 
-// Faixa contínua (LogoSlider do VengeanceUI). A lista é duplicada e desliza
-// exatamente -50%; cada item usa padding (não gap), então o laço não salta.
-// Pausa no hover/foco; com movimento reduzido vira uma lista que quebra linha.
 function FaixaMarcas({ itens, duracao = 50, rotulo, className }) {
   return (
     <div

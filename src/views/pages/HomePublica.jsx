@@ -17,7 +17,6 @@ import { cn } from '../lib/cn'
 import imgAbertura from '../assets/ilustracoes/home-abertura.webp'
 import imgComoFunciona from '../assets/ilustracoes/como-funciona.webp'
 
-// O que a plataforma realmente oferece hoje (nada de números inventados).
 const recursos = [
   {
     icone: 'mensagem',
@@ -68,7 +67,6 @@ const perguntas = [
   },
 ]
 
-// Título de seção no mesmo padrão da área logada.
 function TituloSecao({ id, titulo, descricao, acao }) {
   return (
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -83,8 +81,6 @@ function TituloSecao({ id, titulo, descricao, acao }) {
   )
 }
 
-// Empresas cadastradas na Bloom (as que têm mais vagas primeiro). Vazio
-// enquanto nenhuma empresa se cadastrou: a seção some.
 function useEmpresas() {
   const [empresas, setEmpresas] = useState([])
   useEffect(() => {
@@ -104,7 +100,6 @@ function HomePublica() {
   return (
     <Pagina titulo="Carreiras em tecnologia" className="bg-papel">
       <div className="mx-auto flex max-w-7xl flex-col gap-16 px-4 py-8 sm:px-6 lg:gap-24 lg:px-8 lg:py-12">
-        {/* ── Abertura ─────────────────────────────────────────── */}
         <section className="grid overflow-hidden rounded-2xl border border-linha bg-branco lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           <div className="flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-16">
             <h1 className="font-display text-[2.1rem] leading-[1.1] text-balance text-tinta sm:text-[2.6rem] xl:text-[2.9rem]">
@@ -143,7 +138,6 @@ function HomePublica() {
           </div>
         </section>
 
-        {/* ── Áreas ────────────────────────────────────────────── */}
         <section id="areas" aria-labelledby="titulo-areas" className="scroll-mt-24">
           <TituloSecao id="titulo-areas" titulo="Vagas em todas as áreas de T.I." descricao="Do primeiro emprego à liderança técnica: escolha uma área para começar." />
           <div className="rounded-2xl border border-linha bg-branco py-8">
@@ -151,11 +145,8 @@ function HomePublica() {
           </div>
         </section>
 
-        {/* ── O que você encontra ─────────────────────────────── */}
         <section aria-labelledby="titulo-recursos" id="como-funciona" className="scroll-mt-24">
           <TituloSecao id="titulo-recursos" titulo="Tudo para a sua carreira, em um só lugar" descricao="Os mesmos recursos que você usa depois de entrar na plataforma." />
-          {/* Grade bento (Why-Us Bento do VengeanceUI): blocos de tamanhos
-              alternados; os grandes levam as ilustrações da marca. */}
           <ul className="grid gap-4 md:grid-cols-6">
             {recursos.map((r, i) => {
               const grande = i === 0 || i === 3
@@ -186,7 +177,6 @@ function HomePublica() {
           </ul>
         </section>
 
-        {/* ── Como funciona ────────────────────────────────────── */}
         <section aria-labelledby="titulo-passos" className="grid gap-4 lg:grid-cols-2">
           <div className="flex items-center overflow-hidden rounded-2xl border border-linha bg-papel">
             <img
@@ -219,7 +209,6 @@ function HomePublica() {
           </div>
         </section>
 
-        {/* ── Empresas ─────────────────────────────────────────── */}
         {empresas.length > 0 && (
         <section aria-labelledby="titulo-empresas">
           <TituloSecao
@@ -252,7 +241,6 @@ function HomePublica() {
         </section>
         )}
 
-        {/* ── Para empresas + perguntas ────────────────────────── */}
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <section aria-labelledby="titulo-para-empresas" className="flex flex-col rounded-2xl bg-vinho p-8 text-white sm:p-10">
             <span className="grid size-11 place-items-center rounded-full bg-white/15" aria-hidden="true">
@@ -282,7 +270,6 @@ function HomePublica() {
           </section>
         </div>
 
-        {/* ── Chamada final ────────────────────────────────────── */}
         <section className="rounded-2xl bg-vinho-escuro px-6 py-14 text-center text-white sm:px-10">
           <h2 className="font-display text-4xl leading-tight sm:text-5xl">
             Seu talento merece espaço para <em className="text-rosa">florescer.</em>

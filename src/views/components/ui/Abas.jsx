@@ -1,8 +1,6 @@
 import { useRef } from 'react'
 import { cn } from '../../lib/cn'
 
-// Abas acessíveis (Tabs do VengeanceUI): as setas do teclado trocam de aba.
-// O conteúdo de cada aba usa id="painel-<id>" e aria-labelledby="aba-<id>".
 function Abas({ abas, ativa, aoTrocar, rotulo, className }) {
   const refs = useRef([])
 

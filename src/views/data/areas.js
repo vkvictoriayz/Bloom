@@ -1,5 +1,3 @@
-// Áreas de T.I. da Bloom: carrossel da home (cada uma abre as vagas da área)
-// e opções de área nos formulários (vaga da empresa, preferências da candidata).
 export const areasTI = [
   { nome: 'Desenvolvimento', descricao: 'Front-end, back-end, mobile e full stack.' },
   { nome: 'Dados', descricao: 'Análise de dados, engenharia de dados, BI e ciência de dados.' },

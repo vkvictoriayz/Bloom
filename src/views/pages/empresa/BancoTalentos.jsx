@@ -8,9 +8,6 @@ import { useCarregar } from '../../components/empresa/useCarregar'
 import { Entrada } from '../../components/ui/Campo'
 import { listarTalentos } from '../../services/empresa'
 
-// Banco de talentos: as profissionais organizadas por área de atuação, com
-// interesses e número de publicações. Só dados públicos da comunidade.
-// Salvar ou marcar perfis ainda não tem suporte no backend.
 function BancoTalentos() {
   const r = useCarregar(() => listarTalentos())
   const [filtro, setFiltro] = useState('')

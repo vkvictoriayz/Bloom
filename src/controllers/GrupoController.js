@@ -11,18 +11,15 @@ import { iconeValido } from "../services/icones.js";
 import { lerImagem, novaChave } from "../utils/imagem.js";
 import { gravarImagem, lerPublicacao, montarPublicacoes } from "./ComunidadeController.js";
 
-// Comunidades temáticas. Leitura: candidatas e empresas. Criar, participar,
-// publicar, editar e excluir: só candidatas (exigirLogin nas rotas).
-
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
 const erro = (res, status, mensagem, campo) => res.status(status).json({ erro: mensagem, campo });
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
 const souCandidata = (req) => req.auth.tipo === "usuaria";
 const LIMITE_CRIADAS = 5;
-const LIMITE_CAPA = 1024 * 1024; // 1 MB, como as capas de perfil
+const LIMITE_CAPA = 1024 * 1024;
 const POR_PAGINA = 20;
 const SEMANA = 7 * 24 * 60 * 60 * 1000;
-const AMOSTRA = 4; // fotos de participantes mostradas no cartão
+const AMOSTRA = 4;
 
 const comTratamento = (fn_) => async (req, res) => {
   try {
@@ -44,8 +41,6 @@ async function contagens(ids) {
   return new Map(linhas.map((l) => [l.comunidadeId, Number(l.total)]));
 }
 
-// Atividade de cada comunidade: publicações na última semana e a data da
-// publicação mais recente (de contas não suspensas).
 async function atividade(ids) {
   if (!ids.length) return new Map();
   const suspensas = [...(await contasSuspensas("usuaria"))];
@@ -62,7 +57,6 @@ async function atividade(ids) {
   return new Map(linhas.map((l) => [l.id, { publicacoesSemana: Number(l.semana) || 0, ultimaAtividade: l.ultima }]));
 }
 
-// Algumas participantes (perfil visível) de cada comunidade, para o cartão.
 async function amostras(ids, meuId) {
   if (!ids.length) return new Map();
   const [membros, ocultos] = await Promise.all([
@@ -113,7 +107,6 @@ function comunidadeJson(c, { participantes = 0, participando = false, minha = fa
   };
 }
 
-// GET /api/comunidades?filtro=minhas|descobrir&busca=
 export const listar = comTratamento(async (req, res) => {
   const meuId = souCandidata(req) ? req.auth.sub : null;
   const busca = texto(req.query.busca).toLowerCase().slice(0, 80);
@@ -144,7 +137,6 @@ export const listar = comTratamento(async (req, res) => {
         amostra: fotos.get(c.id) ?? [],
       })
     )
-    // As mais movimentadas primeiro.
     .sort((a, b) => b.participantes - a.participantes || b.publicacoesSemana - a.publicacoesSemana || a.nome.localeCompare(b.nome, "pt-BR"));
   return res.json({ comunidades });
 });
@@ -161,7 +153,6 @@ function lerComunidade(body = {}) {
   return [{ nome, tema, descricao, icone: icone || null }];
 }
 
-// POST /api/comunidades { nome, tema, descricao, icone? }
 export const criar = comTratamento(async (req, res) => {
   const [dados, falha] = lerComunidade(req.body);
   if (!dados) return erro(res, 400, ...falha);
@@ -182,8 +173,6 @@ export const criar = comTratamento(async (req, res) => {
   }
 });
 
-// GET /api/comunidades/:id?pagina=1 — dados, criadora, participantes e
-// publicações (20 por página; "temMais" diz se há mais).
 export const ver = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const comunidade = id && (await Comunidade.findByPk(id));
@@ -196,8 +185,6 @@ export const ver = comTratamento(async (req, res) => {
     perfisOcultos(),
     contasSuspensas("usuaria"),
   ]);
-  // Quem escondeu o perfil não aparece na lista (a não ser para ela mesma);
-  // conta suspensa também não.
   const visiveis = membros.filter((m) => (!ocultos.has(m.usuariaId) || m.usuariaId === meuId) && !suspensas.has(m.usuariaId));
   const [contas, fotos] = await Promise.all([
     Usuaria.findAll({ where: { id: { [Op.in]: visiveis.map((m) => m.usuariaId).concat(comunidade.criadoraId) } } }),
@@ -205,7 +192,6 @@ export const ver = comTratamento(async (req, res) => {
   ]);
   const nome = new Map(contas.map((c) => [c.id, c.nome]));
 
-  // Publicações da página pedida (sem as de contas suspensas).
   const pubIds = (await ComunidadePublicacao.findAll({ attributes: ["publicacaoId"], where: { comunidadeId: id } })).map((v) => v.publicacaoId);
   const filtroPub = { id: { [Op.in]: pubIds.length ? pubIds : [0] } };
   const semSuspensas = [...suspensas].filter((s) => s !== meuId);
@@ -240,8 +226,6 @@ export const ver = comTratamento(async (req, res) => {
   });
 });
 
-// POST /api/comunidades/:id/participar — entra ou sai (alterna). Quem criou
-// recebe um aviso quando alguém entra.
 export const participar = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const comunidade = id && (await Comunidade.findByPk(id));
@@ -266,7 +250,6 @@ export const participar = comTratamento(async (req, res) => {
   return res.json({ participando: !existente, participantes: await ComunidadeMembro.count({ where: { comunidadeId: id } }) });
 });
 
-// POST /api/comunidades/:id/publicacoes { texto, tipo, imagem? } — só participantes.
 export const publicar = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   if (!id || !(await Comunidade.findByPk(id))) return erro(res, 404, "Comunidade não encontrada.");
@@ -286,9 +269,6 @@ export const publicar = comTratamento(async (req, res) => {
   return res.status(201).json({ publicacao });
 });
 
-// DELETE /api/comunidades/:id/publicacoes/:publicacaoId — quem criou a
-// comunidade tira uma publicação dela (moderação). A publicação continua no
-// feed e no perfil de quem publicou; só deixa de aparecer na comunidade.
 export const tirarPublicacao = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const publicacaoId = idParam(req.params.publicacaoId);
@@ -301,8 +281,6 @@ export const tirarPublicacao = comTratamento(async (req, res) => {
   return res.status(204).end();
 });
 
-// PUT /api/comunidades/:id { icone?, tema?, descricao?, regras? } — só quem
-// criou. Campo ausente não muda; icone null volta para a inicial do nome.
 export const atualizar = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const comunidade = id && (await Comunidade.findByPk(id));
@@ -338,7 +316,6 @@ export const atualizar = comTratamento(async (req, res) => {
   });
 });
 
-// PUT /api/comunidades/:id/capa { imagem: dataURL } | DELETE — só quem criou.
 export const enviarCapa = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const comunidade = id && (await Comunidade.findByPk(id));
@@ -362,8 +339,6 @@ export const removerCapa = comTratamento(async (req, res) => {
   return res.json({ capa: null });
 });
 
-// DELETE /api/comunidades/:id — só quem criou. As publicações continuam no
-// feed, sem o vínculo com a comunidade.
 export const excluir = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const comunidade = id && (await Comunidade.findByPk(id));

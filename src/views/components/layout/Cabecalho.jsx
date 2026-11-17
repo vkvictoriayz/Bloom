@@ -10,10 +10,6 @@ import { iniciais, primeiroNome, useSessao } from '../../hooks/useSessao'
 import { sair } from '../../services/auth'
 import { cn } from '../../lib/cn'
 
-// Duas navegações com objetivos diferentes:
-//  - visitante: conhecer a Bloom e criar conta;
-//  - usuária autenticada: trabalhar — vagas, candidaturas, empresas, mensagens.
-// A empresa autenticada tem uma terceira, que leva para a área dela.
 const NAV_PUBLICA = [
   { rotulo: 'Oportunidades', para: '/#areas' },
   { rotulo: 'Empresas', para: '/empresas' },
@@ -38,7 +34,6 @@ const NAV_EMPRESA = [
   { rotulo: 'Empresas', para: '/empresas' },
 ]
 
-// Atalhos do menu da conta, conforme o tipo de conta.
 const CONTA = {
   usuaria: [
     { rotulo: 'Meu perfil', para: '/perfil', icone: 'perfil' },
@@ -51,7 +46,6 @@ const CONTA = {
 }
 
 function ItemNav({ item, mobile }) {
-  // Âncoras (/#...) não ficam "ativas": são atalhos dentro da home.
   const ancora = item.para.includes('#')
   const Componente = ancora ? Link : NavLink
 
@@ -70,7 +64,6 @@ function ItemNav({ item, mobile }) {
   )
 }
 
-// Menu da conta (avatar). Fecha com Esc e com clique fora.
 function MenuConta({ usuario, atalhos, aoSair }) {
   const [aberto, setAberto] = useState(false)
   const caixa = useRef(null)
@@ -138,7 +131,6 @@ function Cabecalho() {
   const [menuAberto, setMenuAberto] = useState(false)
   const [rolou, setRolou] = useState(false)
 
-  // Fecha o menu mobile ao trocar de página.
   const [paginaAnterior, setPaginaAnterior] = useState(pathname)
   if (paginaAnterior !== pathname) {
     setPaginaAnterior(pathname)

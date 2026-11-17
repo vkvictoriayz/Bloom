@@ -1,7 +1,6 @@
 import { DataTypes, Op } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-// Tabela da migration 006 (src/database/migrations/006_denuncias.sql).
 export const ALVOS_DENUNCIA = ["publicacao", "publicacao_empresa", "comentario", "perfil", "empresa", "vaga", "comunidade"];
 export const MOTIVOS_DENUNCIA = {
   spam: "Spam ou propaganda enganosa",
@@ -31,8 +30,6 @@ export const Denuncia = sequelize.define(
   { tableName: "DENUNCIA", freezeTableName: true, timestamps: false }
 );
 
-// Fecha as denúncias abertas de um alvo (ex.: quando a equipe remove o
-// conteúdo). Devolve quem denunciou, para avisar.
 export async function fecharDenunciasDoAlvo(alvoTipo, alvoId, adminId, resolucao, status = "resolvida") {
   const abertas = await Denuncia.findAll({ where: { alvoTipo, alvoId, status: "aberta" } });
   if (!abertas.length) return [];

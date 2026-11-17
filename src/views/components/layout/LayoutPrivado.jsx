@@ -8,22 +8,6 @@ import { sair } from '../../services/auth'
 import { contarMensagensNaoLidas, contarNaoLidas, EVENTO_MENSAGENS, EVENTO_NOTIFICACOES } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
-// Moldura das áreas logadas (candidata e empresa): menu lateral que expande
-// (ícone + nome) ou recolhe (só ícones, com dica ao passar o mouse ou focar),
-// gaveta em telas menores, barra superior com busca, mensagens,
-// notificações e menu da conta. Cada área passa o próprio menu em "config".
-//
-// config = {
-//   rotuloNav, inicio, chavePreferencia, idGaveta,
-//   secoes: [{ itens } | { grupo, icone, itens } | { divisor: true }],
-//   promo?: { titulo, texto, rotuloAcao, para },
-//   busca: { placeholder, rotulo, para: (termo) => url },
-//   mensagens, notificacoes, perfil, configuracoes, selo?, aoSair?,
-// }
-// "contexto" chega às páginas por useOutletContext(); "faixa" aparece acima
-// do conteúdo de todas as páginas (ex.: aviso para confirmar o e-mail).
-// Item: { rotulo, para, icone, tambem?: ['/prefixo/'] }
-
 function lerRecolhido(chave) {
   try {
     return localStorage.getItem(chave) === '1'
@@ -36,8 +20,6 @@ function usaPrefixo(item, pathname) {
   return item.tambem?.some((prefixo) => pathname.startsWith(prefixo))
 }
 
-// Nome da opção: some suavemente quando o menu recolhe, mas continua
-// disponível para leitores de tela; no lugar, aparece a dica flutuante.
 function Rotulo({ recolhido, children }) {
   return (
     <>
@@ -91,7 +73,6 @@ function ItemMenu({ item, recolhido, sub = false, aoNavegar }) {
   )
 }
 
-// Grupo que abre e fecha. Recolhido, mostra os itens como ícones.
 function Grupo({ secao, recolhido, aoNavegar }) {
   const idLista = useId()
   const [aberto, setAberto] = useState(true)
@@ -140,7 +121,6 @@ function Grupo({ secao, recolhido, aoNavegar }) {
 function ConteudoMenu({ config, recolhido, aoNavegar, aoSair }) {
   return (
     <>
-      {/* Recolhido, sem rolagem: as dicas flutuantes não podem ser cortadas. */}
       <nav aria-label={config.rotuloNav} className={cn('flex flex-1 flex-col gap-1 py-4', recolhido ? 'overflow-visible px-3' : 'overflow-y-auto px-4')}>
         {config.secoes.map((secao, i) =>
           secao.divisor ? (
@@ -240,7 +220,6 @@ function MenuConta({ usuario, foto, config, aoSair }) {
   )
 }
 
-// Busca da barra superior: leva à página de busca da área com o termo.
 function BuscaGeral({ busca }) {
   const navigate = useNavigate()
   const [termo, setTermo] = useState('')
@@ -265,8 +244,6 @@ function BuscaGeral({ busca }) {
   )
 }
 
-// Quantas notificações (ou mensagens) não lidas: consulta ao trocar de
-// página, a cada minuto (com a aba visível) e quando algo é marcado como lido.
 function useNaoLidas(ativo = true, contar = contarNaoLidas, evento = EVENTO_NOTIFICACOES) {
   const { pathname } = useLocation()
   const [total, setTotal] = useState(0)
@@ -297,7 +274,6 @@ function useNaoLidas(ativo = true, contar = contarNaoLidas, evento = EVENTO_NOTI
 }
 
 function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
-  // A administração não tem mensagens nem notificações (config sem esses atalhos).
   const naoLidas = useNaoLidas(Boolean(config.notificacoes))
   const mensagensNaoLidas = useNaoLidas(Boolean(config.mensagens), contarMensagensNaoLidas, EVENTO_MENSAGENS)
   const navigate = useNavigate()
@@ -306,7 +282,6 @@ function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
   const [gaveta, setGaveta] = useState(false)
   const botaoFecharGaveta = useRef(null)
 
-  // Fecha a gaveta ao trocar de página e leva a página ao topo.
   const [paginaAnterior, setPaginaAnterior] = useState(pathname)
   if (paginaAnterior !== pathname) {
     setPaginaAnterior(pathname)
@@ -329,7 +304,6 @@ function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
       try {
         localStorage.setItem(config.chavePreferencia, v ? '0' : '1')
       } catch {
-        // a preferência só não fica lembrada
       }
       return !v
     })
@@ -352,7 +326,6 @@ function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
         Pular para o conteúdo
       </a>
 
-      {/* Menu lateral (desktop) */}
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-linha bg-branco transition-[width] duration-300 ease-out lg:flex',
@@ -388,7 +361,6 @@ function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
       </aside>
 
       <div className={cn('transition-[padding] duration-300 ease-out', recolhido ? 'lg:pl-[76px]' : 'lg:pl-64')}>
-        {/* Barra superior */}
         <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-linha bg-branco/95 px-4 backdrop-blur-sm sm:px-6 lg:px-10">
           <button
             type="button"
@@ -447,7 +419,6 @@ function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
         </main>
       </div>
 
-      {/* Gaveta (celular e tablet): desliza da esquerda */}
       <div
         id={config.idGaveta}
         className={cn('fixed inset-0 z-[60] lg:hidden', gaveta ? 'visible' : 'invisible delay-300')}

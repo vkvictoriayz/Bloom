@@ -2,10 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { cn } from '../../lib/cn'
 
-// Navegação com uma pílula que desliza até o item sob o mouse ou o foco do
-// teclado e, ao sair, volta para o item ativo (aria-current="page").
-// Adaptado do Spotlight Navbar do VengeanceUI: em vez do brilho e da mola
-// do framer-motion, um fundo blush com transição em CSS.
 function NavSpotlight({ rotulo, className, children }) {
   const nav = useRef(null)
   const [pilula, setPilula] = useState(null)
@@ -22,7 +18,6 @@ function NavSpotlight({ rotulo, className, children }) {
     moverPara(nav.current?.querySelector('[aria-current="page"]'))
   }, [moverPara])
 
-  // Reposiciona ao trocar de página e quando a janela muda de tamanho.
   useEffect(() => {
     voltarAoAtivo()
     window.addEventListener('resize', voltarAoAtivo)

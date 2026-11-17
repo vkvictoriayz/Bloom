@@ -4,15 +4,11 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import Icone from '../Icone'
 import { cn } from '../../lib/cn'
 
-// Busca de vagas (cargo, tecnologia, empresa ou palavra-chave).
-// Envia para /vagas?busca=..., onde a lista é filtrada.
-// "destaque" é a versão grande usada no painel e na página de vagas.
 function BuscaVagas({ destaque = false, aoBuscar, autoFoco, className }) {
   const { pathname } = useLocation()
   const [parametros] = useSearchParams()
   const termoDaUrl = pathname === '/vagas' ? parametros.get('busca') ?? '' : ''
 
-  // Recomeça o campo quando a busca da URL muda (ex.: "limpar" na página de vagas).
   const [ultimoDaUrl, setUltimoDaUrl] = useState(termoDaUrl)
   const [termo, setTermo] = useState(termoDaUrl)
   if (ultimoDaUrl !== termoDaUrl) {

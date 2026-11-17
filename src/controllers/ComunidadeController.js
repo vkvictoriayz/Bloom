@@ -12,7 +12,7 @@ import { lerImagem, novaChave } from "../utils/imagem.js";
 
 export const TIPOS = ["dica", "experiencia", "projeto", "conquista", "oportunidade", "duvida"];
 const POR_PAGINA = 20;
-const LIMITE_IMAGEM = 2 * 1024 * 1024; // 2 MB (a tela reduz a foto antes de enviar)
+const LIMITE_IMAGEM = 2 * 1024 * 1024;
 
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
 const erro = (res, status, mensagem, campo) => res.status(status).json({ erro: mensagem, campo });
@@ -20,7 +20,6 @@ const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
 const listaInteresses = (s) => (s ? s.split(",").map((i) => i.trim()).filter(Boolean) : []);
 const medida = (v) => (Number.isInteger(v) && v > 0 && v <= 10000 ? v : null);
 
-// Só contas de usuária participam da comunidade.
 function eu(req) {
   return req.auth.sub;
 }
@@ -43,10 +42,6 @@ export async function perfisPor(ids) {
   );
 }
 
-// ------------------------------------------------------------ Imagem
-
-// Lê o corpo de uma publicação: texto, tipo e imagem.
-// imagem: undefined = não mexe; null = remove; objeto = nova imagem.
 export function lerPublicacao(body = {}, { exigirConteudo = true } = {}) {
   const conteudo = texto(body.texto);
   const tipo = texto(body.tipo) || "dica";
@@ -63,7 +58,6 @@ export function lerPublicacao(body = {}, { exigirConteudo = true } = {}) {
   return { conteudo, tipo, imagem };
 }
 
-// Grava (ou troca, ou remove) a imagem de uma publicação.
 export async function gravarImagem(publicacaoId, imagem, transaction) {
   if (imagem === undefined) return;
   await PublicacaoImagem.destroy({ where: { publicacaoId }, transaction });
@@ -117,19 +111,14 @@ const comTratamento = (fn) => async (req, res) => {
   }
 };
 
-// Uma integrante que a pessoa logada pode ver (perfil oculto só para ela mesma).
 async function integranteVisivel(id, meuId) {
   if (!id || !(await Usuaria.findByPk(id))) return false;
   if (id === meuId) return true;
   return !(await perfisOcultos()).has(id);
 }
 
-// ------------------------------------------------------------ Feed
-
-// Texto para LIKE, sem curingas vindos da busca.
 const paraLike = (s) => `%${s.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 
-// GET /feed?filtro=todas|seguindo&autora=eu|<id>&tipo=dica&busca=&pagina=1
 export const feed = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const pagina = Math.max(1, Number(req.query.pagina) || 1);
@@ -139,7 +128,6 @@ export const feed = comTratamento(async (req, res) => {
     if (!TIPOS.includes(req.query.tipo)) return erro(res, 400, "Tipo de publicação inválido.");
     where.tipo = req.query.tipo;
   }
-  // ?autora=eu (página "Meu perfil") ou ?autora=<id> (perfil de outra integrante).
   if (req.query.autora === "eu") {
     where.usuariaId = meuId;
   } else if (req.query.autora) {
@@ -151,11 +139,9 @@ export const feed = comTratamento(async (req, res) => {
     where.usuariaId = { [Op.in]: [meuId, ...seguidas.map((c) => c.seguidaId)] };
   }
 
-  // Conta suspensa pela administração: as publicações dela somem do feed.
   const suspensas = [...(await contasSuspensas("usuaria"))].filter((i) => i !== meuId);
   if (suspensas.length) where[Op.and] = [{ usuariaId: { [Op.notIn]: suspensas } }];
 
-  // ?busca= procura no texto das publicações (até 100 caracteres).
   const busca = texto(req.query.busca).slice(0, 100);
   if (busca) where.texto = { [Op.like]: paraLike(busca) };
 
@@ -170,12 +156,9 @@ export const feed = comTratamento(async (req, res) => {
   return res.json({ publicacoes, temMais });
 });
 
-// Hashtags (#assunto) das publicações dos últimos 14 dias, contando quantas
-// publicações usam cada uma. Mesmas regras do feed: contas suspensas não entram.
 const HASHTAG = /(?:^|[^\p{L}\p{N}_&/])#([\p{L}\p{N}_]{2,40})/gu;
 const JANELA_EM_ALTA = 14 * 24 * 60 * 60 * 1000;
 
-// GET /em-alta
 export const emAlta = comTratamento(async (req, res) => {
   const where = { criadaEm: { [Op.gte]: new Date(Date.now() - JANELA_EM_ALTA) }, texto: { [Op.like]: "%#%" } };
   const suspensas = [...(await contasSuspensas("usuaria"))];
@@ -184,7 +167,6 @@ export const emAlta = comTratamento(async (req, res) => {
 
   const contagem = new Map();
   for (const { texto: t } of linhas) {
-    // Cada publicação conta uma vez por assunto; maiúsculas não importam.
     const tags = new Map();
     for (const m of (t ?? "").matchAll(HASHTAG)) {
       const chave = m[1].toLocaleLowerCase("pt-BR");
@@ -200,7 +182,6 @@ export const emAlta = comTratamento(async (req, res) => {
   return res.json({ assuntos });
 });
 
-// POST /publicacoes { texto, tipo, imagem?, largura?, altura? }
 export const publicar = comTratamento(async (req, res) => {
   const lida = lerPublicacao(req.body);
   if (lida.falha) return erro(res, 400, ...lida.falha);
@@ -214,8 +195,6 @@ export const publicar = comTratamento(async (req, res) => {
   return res.status(201).json({ publicacao });
 });
 
-// PUT /publicacoes/:id { texto, tipo, imagem? } — só a autora.
-// imagem: data URL troca; null remove; ausente mantém a atual.
 export const editar = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const publicacao = id && (await Publicacao.findByPk(id));
@@ -235,7 +214,6 @@ export const editar = comTratamento(async (req, res) => {
   return res.json({ publicacao: atualizada });
 });
 
-// DELETE /publicacoes/:id (somente a autora)
 export const excluir = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const publicacao = id && (await Publicacao.findByPk(id));
@@ -252,7 +230,6 @@ export const excluir = comTratamento(async (req, res) => {
   return res.json({ ok: true });
 });
 
-// POST /publicacoes/:id/curtir (alterna)
 export const curtir = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const publicacao = id && (await Publicacao.findByPk(id));
@@ -269,8 +246,6 @@ export const curtir = comTratamento(async (req, res) => {
   return res.json({ curtiu: !existente, curtidas: total });
 });
 
-// Avisa a autora de uma publicação (nunca ela mesma). Curtidas e comentários
-// da mesma publicação se juntam num aviso só até ela ler.
 async function avisarAutora(publicacao, req, tipo, acao) {
   if (publicacao.usuariaId === eu(req)) return;
   const quem = await Usuaria.findByPk(eu(req));
@@ -284,21 +259,17 @@ async function avisarAutora(publicacao, req, tipo, acao) {
   });
 }
 
-// ------------------------------------------------------- Comentários
-
 function comentarioJson(c, autoras, publicacao, meuId) {
   return {
     id: c.id,
     texto: c.texto,
     criadoEm: c.criadoEm,
     autora: autoras.get(c.usuariaId) ?? { id: c.usuariaId, nome: "Integrante", area: "" },
-    // Quem escreveu exclui o próprio; a autora da publicação modera todos.
     podeExcluir: c.usuariaId === meuId || publicacao.usuariaId === meuId,
     minha: c.usuariaId === meuId,
   };
 }
 
-// GET /publicacoes/:id/comentarios
 export const listarComentarios = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const publicacao = id && (await Publicacao.findByPk(id));
@@ -312,7 +283,6 @@ export const listarComentarios = comTratamento(async (req, res) => {
   return res.json({ comentarios: linhas.map((c) => comentarioJson(c, autoras, publicacao, eu(req))) });
 });
 
-// POST /publicacoes/:id/comentarios { texto }
 export const comentar = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const publicacao = id && (await Publicacao.findByPk(id));
@@ -329,7 +299,6 @@ export const comentar = comTratamento(async (req, res) => {
   return res.status(201).json({ comentario: comentarioJson(criado, autoras, publicacao, eu(req)), comentarios: total });
 });
 
-// DELETE /comentarios/:id — quem escreveu ou a autora da publicação.
 export const excluirComentario = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const comentario = id && (await Comentario.findByPk(id));
@@ -343,9 +312,6 @@ export const excluirComentario = comTratamento(async (req, res) => {
   return res.json({ comentarios: total });
 });
 
-// ---------------------------------------------------- Perfis e conexões
-
-// GET /perfis?busca=&conectadas=1 — outras integrantes, com o estado da conexão
 export const perfis = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const busca = texto(req.query.busca).toLowerCase();
@@ -354,7 +320,6 @@ export const perfis = comTratamento(async (req, res) => {
     Conexao.findAll({ where: { seguidoraId: meuId } }),
     perfisOcultos(),
   ]);
-  // Quem escondeu o perfil não aparece em buscas nem em sugestões.
   const contas = contasTodas.filter((c) => !ocultos.has(c.id));
   const seguidasIds = new Set(seguidas.map((c) => c.seguidaId));
   const mapa = await perfisPor(contas.map((c) => c.id));
@@ -376,7 +341,6 @@ async function numerosDe(id) {
   return { seguindo, seguidoras, publicacoes };
 }
 
-// GET /perfis/:id — perfil de uma integrante, números e se eu sigo.
 export const perfilPublico = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const meuId = eu(req);
@@ -390,8 +354,6 @@ export const perfilPublico = comTratamento(async (req, res) => {
   return res.json({ perfil: mapa.get(id), numeros, seguindo: Boolean(eu_sigo), segueVoce: Boolean(me_segue), souEu: id === meuId });
 });
 
-// GET /perfis/:id/seguidoras | /perfis/:id/seguindo — listas de conexões
-// (sem perfis ocultos), com o estado da conexão de quem está vendo.
 const listaConexoes = (lado) =>
   comTratamento(async (req, res) => {
     const id = idParam(req.params.id);
@@ -421,13 +383,12 @@ async function avisarNovaSeguidora(req, id) {
   });
 }
 
-// Começa a seguir (sem duplicar: índice único + findOrCreate).
 async function comecarASeguir(req, id) {
   try {
     const [, criada] = await Conexao.findOrCreate({ where: { seguidoraId: eu(req), seguidaId: id } });
     if (criada) await avisarNovaSeguidora(req, id);
   } catch (e) {
-    if (e.name !== "SequelizeUniqueConstraintError") throw e; // duas abas ao mesmo tempo
+    if (e.name !== "SequelizeUniqueConstraintError") throw e;
   }
 }
 
@@ -444,7 +405,6 @@ async function respostaConexao(res, req, id) {
   return res.json({ seguindo: Boolean(seguindoAgora), seguidoras: numeros.seguidoras });
 }
 
-// PUT /perfis/:id/seguir — segue (idempotente).
 export const seguir = comTratamento(async (req, res) => {
   const id = await alvoDeConexao(req, res);
   if (typeof id !== "number") return id;
@@ -452,7 +412,6 @@ export const seguir = comTratamento(async (req, res) => {
   return respostaConexao(res, req, id);
 });
 
-// DELETE /perfis/:id/seguir — deixa de seguir (idempotente).
 export const deixarDeSeguir = comTratamento(async (req, res) => {
   const id = await alvoDeConexao(req, res);
   if (typeof id !== "number") return id;
@@ -460,7 +419,6 @@ export const deixarDeSeguir = comTratamento(async (req, res) => {
   return respostaConexao(res, req, id);
 });
 
-// POST /perfis/:id/seguir — alterna (mantido para compatibilidade).
 export const alternarSeguir = comTratamento(async (req, res) => {
   const id = await alvoDeConexao(req, res);
   if (typeof id !== "number") return id;
@@ -470,7 +428,6 @@ export const alternarSeguir = comTratamento(async (req, res) => {
   return respostaConexao(res, req, id);
 });
 
-// GET /meu-perfil
 export const meuPerfil = comTratamento(async (req, res) => {
   const mapa = await perfisPor([eu(req)]);
   const perfil = mapa.get(eu(req));
@@ -478,7 +435,6 @@ export const meuPerfil = comTratamento(async (req, res) => {
   return res.json({ perfil, numeros: await numerosDe(eu(req)) });
 });
 
-// PUT /meu-perfil { area, interesses: [], bio }
 export const atualizarPerfil = comTratamento(async (req, res) => {
   const area = texto(req.body.area);
   const bio = texto(req.body.bio);
@@ -502,8 +458,6 @@ export const atualizarPerfil = comTratamento(async (req, res) => {
   return res.json({ perfil: mapa.get(eu(req)) });
 });
 
-// ------------------------------------------------------------ Projetos
-
 const projetoPublico = (p, autora) => ({
   id: String(p.id),
   nome: p.nome,
@@ -517,8 +471,6 @@ const projetoPublico = (p, autora) => ({
   autora,
 });
 
-// GET /projetos?busca=&autora=<id> — projetos de outras integrantes (perfis
-// ocultos ficam de fora). Busca no nome, na descrição e nas tecnologias.
 export const projetos = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const where = {};

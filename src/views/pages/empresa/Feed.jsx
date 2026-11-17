@@ -11,9 +11,6 @@ import Botao from '../../components/ui/Botao'
 import { Vazio, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { fotoEmpresa, lerFeedEmpresa } from '../../services/empresa'
 
-// Feed da empresa: mesma estrutura do feed da candidata (coluna central,
-// caixa de publicação no topo), com o resumo do perfil e atalhos para
-// vagas e candidaturas. As publicações vêm da API (integrantes e empresas).
 function Feed() {
   const { perfil: dados } = useOutletContext()
   const [pagina, setPagina] = useState(1)
@@ -24,11 +21,9 @@ function Feed() {
     document.title = 'Feed · BLOOM'
   }, [])
 
-  // Junta as páginas carregadas (r.dados só muda quando chega uma resposta).
   const pronto = r.tipo === 'pronto' ? r.dados : null
   useEffect(() => {
     if (!pronto) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLista((atual) => (pagina === 1 ? pronto.publicacoes : [...atual, ...pronto.publicacoes.filter((p) => !atual.some((a) => a.id === p.id))]))
   }, [pronto, pagina])
 
@@ -38,7 +33,6 @@ function Feed() {
     <div className="mx-auto flex max-w-[760px] flex-col gap-5">
       <h1 className="sr-only">Feed da empresa</h1>
 
-      {/* Resumo da empresa + atalhos */}
       <section className="cartao p-5 sm:p-6">
         <div className="flex items-center gap-4">
           <Avatar nome={dados?.empresa.nome} foto={fotoEmpresa(dados)} tamanho="lg" className="rounded-2xl" />
@@ -72,7 +66,6 @@ function Feed() {
         </div>
       </section>
 
-      {/* Criar publicação */}
       <Link to="/empresa/publicacoes/criar" className="cartao flex items-center gap-4 p-5 hover:border-vinho/40">
         <Avatar nome={dados?.empresa.nome} foto={fotoEmpresa(dados)} className="rounded-xl" />
         <span className="flex-1 rounded-xl bg-papel-2 px-4 py-3 text-[15px] text-suave">Compartilhe uma oportunidade, evento ou novidade…</span>
@@ -83,7 +76,6 @@ function Feed() {
         </span>
       </Link>
 
-      {/* Publicações */}
       {r.tipo === 'erro' && <ErroAoCarregar erro={r.erro} aoTentar={r.recarregar} />}
       {r.tipo === 'carregando' && lista.length === 0 && <Carregando quantidade={2} altura="h-40" />}
       {r.tipo === 'pronto' && lista.length === 0 && (

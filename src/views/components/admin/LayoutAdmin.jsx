@@ -3,8 +3,6 @@ import { Navigate, useLocation } from 'react-router-dom'
 import LayoutPrivado from '../layout/LayoutPrivado'
 import { useSessao } from '../../hooks/useSessao'
 
-// Moldura da área de administração (/admin/*): o mesmo layout das outras
-// áreas, com o menu da equipe da Bloom. Sem mensagens nem notificações.
 function config(nivel) {
   return {
     rotuloNav: 'Administração',
@@ -59,7 +57,6 @@ function LayoutAdmin() {
   const sessao = useSessao()
   const { pathname } = useLocation()
   const usuario = sessao?.usuario
-  // Senha inicial (criada por outra pessoa): só "Minha conta" até trocar.
   if (usuario?.deveTrocarSenha && pathname !== '/admin/conta') return <Navigate to="/admin/conta" replace />
   return <LayoutPrivado config={config(usuario?.nivel)} usuario={usuario} foto="" />
 }

@@ -1,11 +1,8 @@
 import { Op } from "sequelize";
 import { Empresa, Usuaria } from "../models/index.js";
 
-// Contas suspensas pela administração. A lista fica em memória por alguns
-// segundos para o login de cada requisição não consultar o banco toda vez;
-// ao suspender ou reativar, a administração limpa o cache na hora.
 const VALIDADE = 10 * 1000;
-const cache = new Map(); // tipo -> { ate, ids }
+const cache = new Map();
 
 export async function contasSuspensas(tipo) {
   const atual = cache.get(tipo);

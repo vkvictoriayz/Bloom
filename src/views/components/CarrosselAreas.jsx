@@ -2,9 +2,6 @@ import { Link } from 'react-router-dom'
 
 import FaixaMarcas from './ui/FaixaMarcas'
 
-// Carrossel contínuo das áreas de T.I., montado sobre a FaixaMarcas
-// (LogoSlider do VengeanceUI): movimento linear, sem salto no laço,
-// pausa no hover/foco e lista estática com movimento reduzido.
 function CarrosselAreas({ areas, estaAutenticada = false }) {
   function urlArea(area) {
     if (!estaAutenticada) return '/login'

@@ -1,9 +1,6 @@
 import { api } from './api.js'
 import { obterSessao } from './auth.js'
 
-// Bloom Premium (API /api/premium). Pagamento pelo Mercado Pago: a API
-// devolve o link (initPoint) e o status só muda com a confirmação dele.
-
 function chamar(caminho, opcoes = {}) {
   const token = obterSessao()?.token
   if (!token) return Promise.reject(new Error('Sessão inválida. Faça login novamente.'))

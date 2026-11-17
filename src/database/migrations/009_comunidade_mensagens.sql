@@ -1,10 +1,3 @@
--- 009: comunidades e mensagens com mais recursos de rede social
---  * capa (imagem de topo) das comunidades, guardada no banco como as fotos;
---  * regras da comunidade, escritas por quem criou;
---  * mensagens entre candidatas podem ser apagadas por quem enviou (o texto
---    sai do banco; fica só o aviso "mensagem apagada").
--- Aplicada automaticamente pelo servidor (src/database/migracoes.js), uma vez.
-
 ALTER TABLE COMUNIDADE ADD COLUMN regras VARCHAR(1000) NULL;
 
 CREATE TABLE IF NOT EXISTS COMUNIDADE_CAPA (

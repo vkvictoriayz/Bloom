@@ -7,20 +7,12 @@ const TEMAS = {
   rosado: 'bg-blush text-tinta',
 }
 
-// O recorte da foto é o elemento gráfico da Bloom: arco (pétala erguida),
-// folha (cantos opostos arredondados) ou círculo.
 const FORMAS = {
   arco: 'rounded-t-[999px] lg:rounded-b-none',
   folha: 'rounded-tl-[140px] rounded-br-[140px] lg:rounded-tl-[200px] lg:rounded-br-[200px]',
   circulo: 'rounded-full',
 }
 
-// Cabeçalho de página com foto. A composição muda por página (tema, forma e
-// lado da foto), mantendo a mesma grade, tipografia e espaçamento.
-//
-// variante="retangular": composição limpa e neutra — fundo do próprio site,
-// foto reta (sem recorte arredondado, moldura ou cor de fundo) e o texto ao
-// lado. Quando "rodape" é informado, ele entra na mesma grade, abaixo do texto.
 function CabecalhoPagina({ rotulo, titulo, descricao, foto, posicaoFoto, tema = 'claro', forma = 'arco', lado = 'direita', variante, children, rodape }) {
   if (variante === 'retangular') {
     return (

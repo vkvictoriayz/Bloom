@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import TelaAcesso, { LinkAcesso } from '../components/TelaAcesso'
@@ -27,8 +26,6 @@ function LoginEmpresa() {
       return
     }
 
-    // Login real pela API (/api/auth/empresa/login): o tipo da conta vem
-    // no token, e a área da empresa só abre para contas "empresa".
     setCarregando(true)
     try {
       const sessao = await entrarEmpresa({ email: email.trim(), senha })

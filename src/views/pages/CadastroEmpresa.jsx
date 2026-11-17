@@ -10,8 +10,6 @@ import { cadastrarEmpresa, consultarCnpj, salvarSessao } from '../services/auth'
 import { destinoAposLogin } from '../services/destino'
 import { formatarCNPJ, formatarTelefone, somenteDigitos, validarCNPJ } from '../utils/documentos'
 
-// Dados devolvidos pela consulta do CNPJ, só para conferência: o servidor
-// consulta de novo ao cadastrar e nunca usa o que vem do navegador.
 function DadosEmpresa({ dados }) {
   const linhas = [
     ['Razão social', dados.razaoSocial],
@@ -68,7 +66,7 @@ function CadastroEmpresa() {
     setConsulta({ tipo: 'consultando' })
     try {
       const resultado = await consultarCnpj(digitos)
-      if (ultimaConsulta.current !== digitos) return // o CNPJ mudou enquanto consultava
+      if (ultimaConsulta.current !== digitos) return
       setConsulta({ tipo: 'pronto', dados: resultado })
       setNomeExibicao(resultado.nomeFantasia || resultado.razaoSocial)
     } catch (erro) {
@@ -85,7 +83,6 @@ function CadastroEmpresa() {
     if (digitos === ultimaConsulta.current && consulta.tipo !== 'ocioso') return
     ultimaConsulta.current = ''
     setConsulta({ tipo: 'ocioso' })
-    // Consulta sozinha quando os 14 números estão completos.
     if (digitos.length === 14) consultar(digitos)
   }
 

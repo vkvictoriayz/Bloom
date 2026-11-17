@@ -1,10 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-// Tabelas da migration 003 (src/database/migrations/003_rede_social.sql):
-// imagem das publicações, ícone de perfil e conversas entre candidatas.
-// Criadas pela migration; aqui só o mapeamento.
-
 const opcoes = (tableName) => ({ tableName, freezeTableName: true, timestamps: false });
 
 export const PublicacaoImagem = sequelize.define(
@@ -34,7 +30,6 @@ export const IconePerfil = sequelize.define(
   opcoes("ICONE_PERFIL")
 );
 
-// Par de candidatas: sempre usuariaA < usuariaB (uma conversa por par).
 export const ConversaDireta = sequelize.define(
   "ConversaDireta",
   {
@@ -56,14 +51,11 @@ export const MensagemDireta = sequelize.define(
     texto: { type: DataTypes.STRING(1000), allowNull: false },
     enviadaEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "enviada_em" },
     lidaEm: { type: DataTypes.DATE, field: "lida_em" },
-    // Migration 009: quando quem enviou apagou a mensagem (o texto sai do banco).
     apagadaEm: { type: DataTypes.DATE, field: "apagada_em" },
   },
   opcoes("MENSAGEM_DIRETA")
 );
 
-// Imagem anexada a uma mensagem (migration 011). "origem": conversa com
-// empresa (MENSAGEM) ou entre candidatas (MENSAGEM_DIRETA).
 export const MensagemImagem = sequelize.define(
   "MensagemImagem",
   {
@@ -80,7 +72,6 @@ export const MensagemImagem = sequelize.define(
   opcoes("MENSAGEM_IMAGEM")
 );
 
-// Bloqueio entre candidatas (migration 011): "usuariaId" bloqueou "bloqueadaId".
 export const Bloqueio = sequelize.define(
   "Bloqueio",
   {

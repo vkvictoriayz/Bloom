@@ -13,7 +13,7 @@ import { enviarImagem, escolherIcone, removerIcone, removerImagem } from '../../
 import { SeletorIcone } from '../../components/IconePerfil'
 import { ehIcone } from '../../data/icones'
 
-const LIMITE_IMAGEM = 1024 * 1024 // 1 MB, o mesmo limite do servidor
+const LIMITE_IMAGEM = 1024 * 1024
 const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp']
 
 function urlValida(valor) {
@@ -26,8 +26,6 @@ function urlValida(valor) {
   }
 }
 
-// Foto e capa da empresa: enviadas ao servidor na hora (como na candidata) e
-// vistas pelas candidatas nas vagas e por quem acessa o perfil da empresa.
 function ImagensEmpresa({ dados, aoMudar }) {
   const [ocupado, setOcupado] = useState(false)
   const [aviso, setAviso] = useState(null)
@@ -126,9 +124,6 @@ function ImagensEmpresa({ dados, aoMudar }) {
   )
 }
 
-// Edição do perfil da empresa (PERFIL_EMPRESA): só os campos que o banco
-// tem. A foto e a capa são enviadas à parte (ImagensEmpresa); o logo por
-// endereço, de versões anteriores, continua valendo quando não há foto.
 function FormularioPerfil({ inicial, aoSalvar }) {
   const [dados, setDados] = useState(inicial)
   const [erros, setErros] = useState({})

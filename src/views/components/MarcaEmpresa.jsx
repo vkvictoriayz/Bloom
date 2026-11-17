@@ -12,19 +12,14 @@ const TAMANHOS = {
 
 const LADO_PX = { sm: 40, md: 48, lg: 80, xl: 112 }
 
-// Siglas longas ("ipiranga") encolhem para caber no quadro.
 function tamanhoFonte(sigla, tamanho) {
   const lado = LADO_PX[tamanho]
   return Math.min(lado * 0.26, (lado * 0.84) / (sigla.length * 0.66))
 }
 
-// Marca da empresa: a foto de perfil enviada pela empresa (ou o logo informado
-// em PERFIL_EMPRESA.logo) e, até lá, a sigla na cor institucional — nunca uma
-// imagem de terceiros.
 function MarcaEmpresa({ empresa, tamanho = 'md', className }) {
   if (!empresa) return null
 
-  // Ícone escolhido pela empresa no lugar da foto (o logo informado tem prioridade).
   if (ehIcone(empresa.foto) && !empresa.logo) return <IconeAvatar valor={empresa.foto} forma="quadrado" className={cn(TAMANHOS[tamanho], className)} />
   const logo = urlImagem(ehIcone(empresa.foto) ? empresa.logo : empresa.foto || empresa.logo)
   if (logo) {

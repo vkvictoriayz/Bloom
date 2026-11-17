@@ -10,9 +10,6 @@ function Bloco({ titulo, children }) {
   )
 }
 
-// Perfil profissional da candidata, visto pela empresa que recebeu a
-// candidatura (dados da API: resumo, competências, experiência, formação,
-// cursos, links e projetos). Só mostra as partes preenchidas.
 function PerfilProfissional({ perfil }) {
   if (!perfil) return null
   const links = LINKS.map((l) => ({ ...l, url: enderecoSeguro(perfil.links?.[l.chave]) })).filter((l) => l.url)

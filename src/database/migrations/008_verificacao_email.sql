@@ -1,10 +1,3 @@
--- 008: confirmação do e-mail da conta (candidata e empresa)
---  * a conta guarda quando o e-mail foi confirmado (vazio = ainda não);
---  * links de confirmação de uso único, válidos por 24 horas. Só o hash
---    (SHA-256) do token fica no banco, como na redefinição de senha.
--- Aplicada automaticamente pelo servidor (src/database/migracoes.js), uma vez.
--- Contas que já existem ficam como "não confirmado" e recebem o aviso no site.
-
 ALTER TABLE CADASTRO_USUARIA ADD COLUMN email_verificado_em DATETIME NULL;
 ALTER TABLE CADASTRO_EMPRESA ADD COLUMN email_verificado_em DATETIME NULL;
 

@@ -1,7 +1,5 @@
 import { cn } from '../../lib/cn'
 
-// Fotografia responsiva: o navegador escolhe a largura certa pelo "sizes".
-// "prioridade" carrega já (cabeçalhos); as demais carregam ao rolar.
 function Foto({ foto, sizes = '100vw', prioridade = false, className, posicao = 'center' }) {
   return (
     <img

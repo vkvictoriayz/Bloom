@@ -5,8 +5,6 @@ import Botao from '../ui/Botao'
 import { AreaTexto, Campo, Entrada } from '../ui/Campo'
 import { cn } from '../../lib/cn'
 
-// Lista editável de itens do perfil (experiências, formação, cursos, projetos).
-// "campos" descreve o formulário; "renderizar" desenha um item salvo.
 function FormularioItem({ campos, inicial, aoSalvar, aoCancelar }) {
   const [valores, setValores] = useState(() =>
     Object.fromEntries(campos.map((c) => [c.nome, inicial?.[c.nome] ?? '']))
@@ -55,9 +53,6 @@ function FormularioItem({ campos, inicial, aoSalvar, aoCancelar }) {
   )
 }
 
-// Formas de exibir os itens salvos:
-//  lista: linhas separadas por fios; linha: linha do tempo com marcadores;
-//  grade: blocos em duas colunas (projetos).
 const LAYOUTS = {
   lista: { lista: 'border-t border-linha', item: 'border-b border-linha py-5' },
   linha: {
@@ -69,7 +64,6 @@ const LAYOUTS = {
 
 function EditorItens({ itens, campos, renderizar, rotuloAdicionar, vazio, aoMudar, layout = 'lista' }) {
   const estilo = LAYOUTS[layout]
-  // null = nada aberto; "novo" = adicionando; número = editando aquele índice
   const [editando, setEditando] = useState(null)
 
   function salvar(item) {

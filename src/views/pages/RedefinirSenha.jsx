@@ -6,8 +6,6 @@ import Botao from '../components/ui/Botao'
 import { Aviso } from '../components/ui/Campo'
 import { redefinirSenha } from '../services/auth'
 
-// Destino do link enviado por e-mail (/redefinir-senha?token=...). O token
-// vale por 30 minutos e uma única vez; quem confere é o servidor.
 function RedefinirSenha() {
   const [parametros] = useSearchParams()
   const token = parametros.get('token') ?? ''

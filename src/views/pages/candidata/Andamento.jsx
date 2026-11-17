@@ -10,9 +10,6 @@ import { cn } from '../../lib/cn'
 import { useCandidaturasEstado } from '../../hooks/useVagasReais'
 import Esqueleto from '../../components/ui/Esqueleto'
 
-// Linha do tempo vertical do processo seletivo. As etapas seguem os status
-// do banco (Recebida -> Em análise -> Em entrevista -> Aprovada/Reprovada). Só marcamos como
-// concluída a etapa confirmada nos dados; nada é inventado.
 function Andamento() {
   const { id } = useParams()
   const { lista, carregando } = useCandidaturasEstado()

@@ -9,9 +9,6 @@ import * as Chat from "../services/chat.js";
 import { CATEGORIAS, notificar, preferenciasDe } from "../services/notificacoes.js";
 import { PreferenciaNotificacao } from "../models/Premium.js";
 
-// Notificações e mensagens, para candidatas e empresas. O tipo da conta vem
-// do token (req.auth.tipo) e cada consulta filtra pelo dono.
-
 const erro = (res, status, mensagem, campo) => res.status(status).json({ erro: mensagem, campo });
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
 const LIMITE_MENSAGEM = 1000;
@@ -25,11 +22,8 @@ const comTratamento = (fn) => async (req, res) => {
   }
 };
 
-// ------------------------------------------------------- Notificações
-
 const minhas = (req) => ({ tipoConta: req.auth.tipo, contaId: req.auth.sub });
 
-// GET /api/notificacoes (com ?resumo=1, só a contagem de não lidas)
 export const listarNotificacoes = comTratamento(async (req, res) => {
   if (req.query.resumo === "1") {
     return res.json({ naoLidas: await Notificacao.count({ where: { ...minhas(req), lidaEm: { [Op.is]: null } } }) });
@@ -44,7 +38,6 @@ export const listarNotificacoes = comTratamento(async (req, res) => {
   });
 });
 
-// POST /api/notificacoes/:id/lida
 export const marcarLida = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const [alteradas] = id ? await Notificacao.update({ lidaEm: new Date() }, { where: { id, ...minhas(req), lidaEm: { [Op.is]: null } } }) : [0];
@@ -52,12 +45,10 @@ export const marcarLida = comTratamento(async (req, res) => {
   return res.status(204).end();
 });
 
-// GET /api/notificacoes/preferencias
 export const lerPreferencias = comTratamento(async (req, res) => {
   return res.json({ preferencias: await preferenciasDe(req.auth.tipo, req.auth.sub) });
 });
 
-// PUT /api/notificacoes/preferencias { vagasCompativeis?, candidaturas?, ... }
 export const salvarPreferencias = comTratamento(async (req, res) => {
   const tipo = req.auth.tipo;
   const mudancas = {};
@@ -71,19 +62,15 @@ export const salvarPreferencias = comTratamento(async (req, res) => {
   return res.json({ preferencias: await preferenciasDe(tipo, req.auth.sub) });
 });
 
-// POST /api/notificacoes/lidas — marca todas
 export const marcarTodas = comTratamento(async (req, res) => {
   await Notificacao.update({ lidaEm: new Date() }, { where: { ...minhas(req), lidaEm: { [Op.is]: null } } });
   return res.status(204).end();
 });
 
-// ----------------------------------------------------------- Mensagens
-
 const doTipo = (req) => (req.auth.tipo === "empresa" ? { empresaId: req.auth.sub } : { usuariaId: req.auth.sub });
 const outroTipo = (tipo) => (tipo === "empresa" ? "usuaria" : "empresa");
 const rotaMensagens = (tipo) => (tipo === "empresa" ? "/empresa/mensagens" : "/candidata/mensagens");
 
-// Quem está do outro lado (nome e foto) e de qual vaga é a conversa.
 async function detalhesConversas(conversas, tipo) {
   if (!conversas.length) return new Map();
   const ids = (campo) => [...new Set(conversas.map((c) => c[campo]))];
@@ -106,7 +93,6 @@ async function detalhesConversas(conversas, tipo) {
   );
 }
 
-// GET /api/mensagens
 export const listarConversas = comTratamento(async (req, res) => {
   const tipo = req.auth.tipo;
   const conversas = await Conversa.findAll({ where: doTipo(req), order: [["atualizadaEm", "DESC"]], limit: 100 });
@@ -132,8 +118,6 @@ export const listarConversas = comTratamento(async (req, res) => {
   });
 });
 
-// POST /api/mensagens { candidaturaId } — abre (ou reabre) a conversa de uma
-// candidatura. A candidata só da própria; a empresa só das suas vagas.
 export const abrirConversa = comTratamento(async (req, res) => {
   const candidaturaId = idParam(req.body?.candidaturaId);
   const candidatura = candidaturaId && (await Candidatura.findByPk(candidaturaId));
@@ -157,7 +141,6 @@ async function minhaConversa(req) {
   return id ? Conversa.findOne({ where: { id, ...doTipo(req) } }) : null;
 }
 
-// Mensagem apagada: o texto e a imagem não saem do servidor.
 function mensagemJson(m, tipo, imagem = null) {
   return {
     id: m.id,
@@ -171,16 +154,13 @@ function mensagemJson(m, tipo, imagem = null) {
   };
 }
 
-// GET /api/mensagens/:id — também marca como lidas as mensagens recebidas.
 export const lerConversa = comTratamento(async (req, res) => {
   const conversa = await minhaConversa(req);
   if (!conversa) return erro(res, 404, "Conversa não encontrada.");
   const tipo = req.auth.tipo;
   await Mensagem.update({ lidaEm: new Date() }, { where: { conversaId: conversa.id, autorTipo: outroTipo(tipo), lidaEm: { [Op.is]: null } } });
-  // O aviso de "nova mensagem" desta conversa deixa de fazer sentido.
   await Notificacao.update({ lidaEm: new Date() }, { where: { tipoConta: tipo, contaId: req.auth.sub, chave: `conversa-${conversa.id}`, lidaEm: { [Op.is]: null } } });
 
-  // ?depois=<id>: só as mensagens novas (a tela consulta de tempos em tempos).
   const depois = idParam(req.query.depois);
   const onde = depois ? { conversaId: conversa.id, id: { [Op.gt]: depois } } : { conversaId: conversa.id };
   const mensagens = await Mensagem.findAll({ where: onde, order: [["enviadaEm", "ASC"], ["id", "ASC"]], limit: 500 });
@@ -194,7 +174,6 @@ export const lerConversa = comTratamento(async (req, res) => {
   });
 });
 
-// POST /api/mensagens/:id { texto }
 export const enviarMensagem = comTratamento(async (req, res) => {
   const conversa = await minhaConversa(req);
   if (!conversa) return erro(res, 404, "Conversa não encontrada.");
@@ -222,8 +201,6 @@ export const enviarMensagem = comTratamento(async (req, res) => {
   return res.status(201).json({ mensagem: mensagemJson(mensagem, tipo, imagem) });
 });
 
-// DELETE /api/mensagens/:id/mensagens/:mensagemId — quem enviou apaga a
-// própria mensagem (texto e imagem saem do banco; fica "mensagem apagada").
 export const apagarMensagem = comTratamento(async (req, res) => {
   const conversa = await minhaConversa(req);
   if (!conversa) return erro(res, 404, "Conversa não encontrada.");
@@ -240,9 +217,6 @@ export const apagarMensagem = comTratamento(async (req, res) => {
   return res.json({ mensagem: mensagemJson(mensagem, req.auth.tipo) });
 });
 
-// GET /api/mensagens/nao-lidas — total de mensagens não lidas (para o ícone
-// de mensagens no topo). A candidata soma as conversas com empresas e as
-// conversas com outras candidatas.
 export const naoLidasMensagens = comTratamento(async (req, res) => {
   const tipo = req.auth.tipo;
   const conversas = await Conversa.findAll({ attributes: ["id"], where: doTipo(req) });

@@ -7,8 +7,6 @@ import Botao from '../ui/Botao'
 import Selo from '../ui/Selo'
 import { formatarPublicacao } from '../../data/vagas'
 
-// Cartão de vaga da área da candidata. Todos têm a mesma estrutura e
-// altura (grade simétrica): empresa, cargo, metadados, resumo e ações.
 function CartaoVaga({ vaga, candidatura }) {
   const empresa = vaga.dadosEmpresa
 

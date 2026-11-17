@@ -1,6 +1,3 @@
-// Ícones de traço fino, no lugar dos emojis (que mudam de cara em cada sistema).
-// Uso: <Icone nome="local" />  — herda a cor do texto (currentColor).
-
 const CAMINHOS = {
   inicio: (
     <>
@@ -248,8 +245,6 @@ const CAMINHOS = {
       <circle cx="12" cy="12.5" r="3.2" />
     </>
   ),
-  // Ícones de perfil e comunidades (tecnologia, carreira e rede; "codigo"
-  // e os demais já existentes acima também fazem parte do catálogo).
   terminal: (
     <>
       <rect x="3.5" y="5" width="17" height="14" rx="2" />

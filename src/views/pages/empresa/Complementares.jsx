@@ -12,9 +12,6 @@ import { DISPONIVEL, lerComunidadeTematica, listarComunidades } from '../../serv
 import { Mensagens as MensagensCompartilhadas } from '../candidata/Mensagens'
 import { Conversa as ConversaCompartilhada } from '../candidata/Conversa'
 
-// Comunidades e mensagens da empresa. A empresa acompanha as comunidades
-// (somente leitura): participar e publicar é das integrantes.
-
 export function Comunidades() {
   const r = useRecurso(DISPONIVEL.comunidades, listarComunidades)
   return (
@@ -105,8 +102,6 @@ export function DetalheComunidade() {
   )
 }
 
-// Mensagens: as mesmas telas da candidata (a API separa as conversas pelo
-// tipo da conta), na rota da empresa.
 export function Mensagens() {
   return <MensagensCompartilhadas base="/empresa/mensagens" descricao="Converse com as candidatas das suas vagas." />
 }

@@ -44,8 +44,6 @@ function Tabela({ titulo, colunas, linhas, vazio }) {
   )
 }
 
-// ------------------------------------------------------------ Pagamentos
-
 export function PagamentosAdmin() {
   const r = useCarregar(lerPagamentosAdmin)
   return (
@@ -100,8 +98,6 @@ export function PagamentosAdmin() {
     </>
   )
 }
-
-// ------------------------------------------------------------ Registro
 
 export function RegistroAdmin() {
   const [p, setP] = useSearchParams()
@@ -165,8 +161,6 @@ export function RegistroAdmin() {
     </>
   )
 }
-
-// ------------------------------------------------------------ Administradores (só "super")
 
 const VAZIO = { nome: '', usuario: '', email: '', senha: '', nivel: 'moderador' }
 
@@ -288,8 +282,6 @@ export function Administradores() {
     </>
   )
 }
-
-// ------------------------------------------------------------ Comunicados (só "super")
 
 const PUBLICOS = [
   ['todos', 'Todas as contas'],

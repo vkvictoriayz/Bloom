@@ -1,11 +1,5 @@
 import { cn } from '../../lib/cn'
 
-// Ilustrações vetoriais da Bloom, desenhadas para fundos claros.
-// Linguagem única: traço de 2,5 px na cor "tinta", preenchimentos em
-// vinho, rosa e blush, cantos arredondados, pontilhados de conexão e a
-// borboleta da marca como assinatura. São decorativas (aria-hidden):
-// o texto ao lado sempre explica o conteúdo.
-
 const C = {
   tinta: 'var(--color-tinta)',
   vinho: 'var(--color-vinho)',
@@ -26,7 +20,6 @@ function Svg({ className, children, viewBox = '0 0 480 360' }) {
   )
 }
 
-// Borboleta da marca, para assinar as composições.
 function Borboleta({ x, y, escala = 1, cor = C.vinho }) {
   return (
     <g transform={`translate(${x} ${y}) scale(${escala})`} fill={cor}>
@@ -52,12 +45,10 @@ function Folhas({ x, y, escala = 1 }) {
   )
 }
 
-// Linhas de "texto" dentro de cartões.
 function Linhas({ x, y, larguras, cor = C.blush, altura = 7, espaco = 13 }) {
   return larguras.map((l, i) => <rect key={i} x={x} y={y + i * espaco} width={l} height={altura} rx={altura / 2} fill={cor} />)
 }
 
-// Programação: notebook com código, perfil, vaga e conversa conectados.
 export function IlustracaoCodigo({ className }) {
   return (
     <Svg className={className}>
@@ -66,7 +57,6 @@ export function IlustracaoCodigo({ className }) {
       <path d="M340 110C370 100 385 80 390 70" stroke={C.rosa} strokeWidth="2" strokeDasharray="4 7" strokeLinecap="round" />
       <path d="M330 215C350 230 360 240 370 248" stroke={C.rosa} strokeWidth="2" strokeDasharray="4 7" strokeLinecap="round" />
 
-      {/* notebook */}
       <rect x="130" y="88" width="220" height="150" rx="14" fill={C.branco} {...traco} />
       <path d="M130 112H350" {...traco} />
       <circle cx="146" cy="100" r="3.5" fill={C.vinho} />
@@ -84,18 +74,15 @@ export function IlustracaoCodigo({ className }) {
       <path d="M110 238H370L384 258H96Z" fill={C.branco} {...traco} />
       <path d="M210 248H270" {...traco} />
 
-      {/* cartão de perfil */}
       <rect x="28" y="150" width="122" height="72" rx="14" fill={C.branco} {...traco} />
       <circle cx="56" cy="186" r="15" fill={C.rosa} {...traco} />
       <Linhas x={80} y={174} larguras={[54, 36]} />
 
-      {/* cartão de vaga */}
       <rect x="330" y="38" width="128" height="66" rx="14" fill={C.branco} {...traco} />
       <rect x="346" y="56" width="30" height="30" rx="9" fill={C.vinho} />
       <path d="M354 66h14v12h-14zM357 66v-3h8v3" stroke={C.branco} strokeWidth="2" strokeLinejoin="round" />
       <Linhas x={384} y={60} larguras={[58, 40]} />
 
-      {/* conversa */}
       <path d="M352 236h88a14 14 0 0 1 14 14v26a14 14 0 0 1-14 14h-58l-16 14v-14h-14a14 14 0 0 1-14-14v-26a14 14 0 0 1 14-14Z" fill={C.branco} {...traco} />
       <circle cx="378" cy="263" r="4.5" fill={C.vinho} />
       <circle cx="396" cy="263" r="4.5" fill={C.rosa} />
@@ -109,7 +96,6 @@ export function IlustracaoCodigo({ className }) {
   )
 }
 
-// Conexões: rede de profissionais ligadas, com a borboleta ao centro.
 export function IlustracaoConexoes({ className }) {
   const pessoas = [
     { x: 90, y: 92, cor: C.rosa },
@@ -142,7 +128,6 @@ export function IlustracaoConexoes({ className }) {
   )
 }
 
-// Crescimento: gráfico subindo, broto e marco alcançado.
 export function IlustracaoCrescimento({ className }) {
   const barras = [
     { x: 118, h: 56, cor: C.blush },
@@ -173,7 +158,6 @@ export function IlustracaoCrescimento({ className }) {
   )
 }
 
-// Empresas: prédio, vaga publicada e talentos chegando.
 export function IlustracaoEmpresa({ className }) {
   return (
     <Svg className={className}>

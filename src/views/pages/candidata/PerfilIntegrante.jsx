@@ -15,8 +15,6 @@ import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components
 import { definirSeguindo, lerFeed, lerPerfilIntegrante } from '../../services/comunidade'
 import { abrirConversaCandidata } from '../../services/recursos'
 
-// Perfil de outra integrante: apresentação, números, seguir, mensagem e publicações.
-// Remontado a cada perfil (key), para começar sempre do zero.
 function PerfilIntegrante() {
   const { id } = useParams()
   return <ConteudoPerfil key={id} id={id} />
@@ -61,7 +59,6 @@ function ConteudoPerfil({ id }) {
     )
   }
   if (!dados) return <Esqueleto className="h-80 rounded-xl" />
-  // O próprio perfil tem página completa (com currículo e edição).
   if (dados.souEu) return <Navigate to="/candidata/perfil" replace />
 
   const { perfil, numeros } = dados

@@ -10,12 +10,9 @@ import { candidaturaDaVaga } from '../../services/candidaturas'
 import { EVENTO_SALVAS, lerSalvas } from '../../services/salvas'
 import { useCandidaturas, useVagas } from '../../hooks/useVagasReais'
 
-// Vagas salvas: mesma persistência de antes (chave "bloom-vagas-salvas").
-// O coração de cada cartão remove a vaga da lista.
 function VagasSalvas() {
   const salvas = useDadosLocais(lerSalvas, [EVENTO_SALVAS])
   const candidaturas = useCandidaturas()
-  // Vagas (ids "b<id>") que a candidata salvou na conta.
   const { vagas: todas } = useVagas()
   const vagas = salvas.map((id) => todas.find((v) => String(v.id) === String(id))).filter(Boolean)
 

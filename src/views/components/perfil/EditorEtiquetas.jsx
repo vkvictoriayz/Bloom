@@ -4,14 +4,10 @@ import Icone from '../Icone'
 import { estiloControle } from '../ui/Campo'
 import { cn } from '../../lib/cn'
 
-// Competências como etiquetas: digite e tecle Enter (ou vírgula) para incluir.
-// variante "cheia" (técnicas) ou "contorno" (comportamentais), para
-// diferenciar os dois grupos à primeira vista.
 function EditorEtiquetas({ rotulo, itens, aoMudar, sugestao, vazio, variante = 'contorno' }) {
   const [texto, setTexto] = useState('')
   const id = useId()
 
-  // Aceita uma ou várias separadas por vírgula (ex.: texto colado).
   function incluir(valor = texto) {
     const novos = valor
       .split(',')

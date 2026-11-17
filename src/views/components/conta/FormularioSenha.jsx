@@ -5,8 +5,6 @@ import Botao from '../ui/Botao'
 import { Aviso } from '../ui/Campo'
 import { alterarSenha } from '../../services/recursos'
 
-// Troca de senha de quem está logada (candidata ou empresa), pela API
-// PUT /api/auth/senha, que confere a senha atual.
 function FormularioSenha() {
   const [senhaAtual, setSenhaAtual] = useState('')
   const [novaSenha, setNovaSenha] = useState('')

@@ -5,11 +5,7 @@ import { ConfigUsuaria, Experiencia, Favorito, Formacao, Habilidade, PerfilDetal
 import { deLinha } from "../services/privacidade.js";
 import { Vaga } from "../models/Empresarial.js";
 import { CurriculoCandidata, enviarArquivo, resumoArquivo } from "../models/Curriculo.js";
-import { lerCurriculo } from "../utils/documento.js";
-
-// Área da candidata: perfil profissional, projetos e vagas salvas.
-// Rotas protegidas por exigirLogin(["usuaria"]); cada uma só mexe nos dados
-// da própria candidata (req.auth.sub).
+import { lerCurriculo } from "../utils/curriculo.js";
 
 const eu = (req) => req.auth.sub;
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
@@ -36,8 +32,6 @@ const comTratamento = (fn) => async (req, res) => {
     return erro(res, 500, "Erro interno. Tente novamente mais tarde.");
   }
 };
-
-// ----------------------------------------------------------- Validação
 
 function curto(valor, max, campo, rotulo, obrigatorio = false) {
   const v = texto(valor);
@@ -78,19 +72,14 @@ function listaObjetos(valor, maxItens, campo, ler) {
   return valor.map((item) => ler(item && typeof item === "object" ? item : {}));
 }
 
-// "AAAA-MM" <-> DATE do banco ("AAAA-MM-01").
 const paraData = (m) => (m ? `${m}-01` : null);
 const paraMes = (d) => (d ? String(d).slice(0, 7) : "");
-
-// ------------------------------------------------------------- Perfil
 
 async function meuPerfilUsuaria(usuariaId, transaction) {
   const [perfil] = await PerfilUsuaria.findOrCreate({ where: { usuariaId }, defaults: { usuariaId }, transaction });
   return perfil;
 }
 
-// Perfil completo no formato usado pelas telas. Também usado pela empresa
-// ao abrir uma candidatura (EmpresaController.verCandidatura).
 export async function perfilCompleto(usuariaId, { comContato = true } = {}) {
   const conta = await Usuaria.findByPk(usuariaId);
   if (!conta) return null;
@@ -129,22 +118,16 @@ export async function perfilCompleto(usuariaId, { comContato = true } = {}) {
   };
 }
 
-// GET /api/candidata/perfil
 export const perfil = comTratamento(async (req, res) => {
   const dados = await perfilCompleto(eu(req));
   if (!dados) return erro(res, 401, "Sessão inválida. Faça login novamente.");
   return res.json({ perfil: dados });
 });
 
-// PUT /api/candidata/perfil — atualiza só as seções enviadas:
-// { nome, telefone, cargo, local, links } | { sobre, objetivo } |
-// { tecnicas, comportamentais } | { experiencias } | { formacoes } |
-// { cursos } | { preferencias }
 export const atualizarPerfil = comTratamento(async (req, res) => {
   const b = req.body ?? {};
   const tem = (chave) => Object.prototype.hasOwnProperty.call(b, chave);
 
-  // Valida tudo antes de gravar qualquer coisa.
   const conta = {};
   if (tem("nome")) conta.nome = curto(b.nome, 100, "nome", "o nome", true);
   if (conta.nome !== undefined && conta.nome.length < 2) falhar("Informe seu nome (ao menos 2 letras).", "nome");
@@ -211,7 +194,6 @@ export const atualizarPerfil = comTratamento(async (req, res) => {
     const [det] = await PerfilDetalhes.findOrCreate({ where: { usuariaId }, defaults: { usuariaId }, transaction });
     await det.update({ ...detalhes, atualizadoEm: new Date() }, { transaction });
 
-    // Listas: a seção enviada substitui a anterior inteira.
     if (experiencias) {
       await Experiencia.destroy({ where: { perfilId: perfilBase.id }, transaction });
       await Experiencia.bulkCreate(experiencias.map((x) => ({ ...x, perfilId: perfilBase.id })), { transaction });
@@ -233,8 +215,6 @@ export const atualizarPerfil = comTratamento(async (req, res) => {
 
   return res.json({ perfil: await perfilCompleto(eu(req)) });
 });
-
-// ------------------------------------------------------------ Projetos
 
 const LIMITE_IMAGEM_PROJETO = 400 * 1024;
 
@@ -304,8 +284,6 @@ export const excluirProjeto = comTratamento(async (req, res) => {
   return res.status(204).end();
 });
 
-// -------------------------------------------------------- Vagas salvas
-
 export const listarSalvas = comTratamento(async (req, res) => {
   const lista = await Favorito.findAll({ where: { usuariaId: eu(req) }, order: [["id", "DESC"]] });
   return res.json({ vagas: lista.map((f) => f.vagaId) });
@@ -327,15 +305,11 @@ export const removerSalva = comTratamento(async (req, res) => {
   return res.status(204).end();
 });
 
-// --------------------------------------------------------- Privacidade
-
-// GET /api/candidata/privacidade
 export const privacidade = comTratamento(async (req, res) => {
   const config = await ConfigUsuaria.findOne({ where: { usuariaId: eu(req) } });
   return res.json({ privacidade: deLinha(config) });
 });
 
-// PUT /api/candidata/privacidade { perfilPublico?, mostrarExperiencia?, mostrarContato? }
 export const atualizarPrivacidade = comTratamento(async (req, res) => {
   const mudancas = {};
   for (const chave of ["perfilPublico", "mostrarExperiencia", "mostrarContato"]) {
@@ -348,15 +322,11 @@ export const atualizarPrivacidade = comTratamento(async (req, res) => {
   return res.json({ privacidade: deLinha(config) });
 });
 
-// ------------------------------------------------------------ Currículo
-
-// GET /api/candidata/curriculo — nome, tamanho e data do arquivo (ou null).
 export const curriculo = comTratamento(async (req, res) => {
   const atual = await CurriculoCandidata.findOne({ attributes: ["nomeArquivo", "tamanho", "enviadoEm"], where: { usuariaId: eu(req) } });
   return res.json({ curriculo: resumoArquivo(atual) });
 });
 
-// PUT /api/candidata/curriculo { nome, arquivo (base64) } — PDF, DOC ou DOCX até 5 MB.
 export const enviarCurriculo = comTratamento(async (req, res) => {
   const lido = lerCurriculo(req.body?.nome, req.body?.arquivo);
   if (lido.erro) return erro(res, 400, lido.erro, "curriculo");
@@ -367,15 +337,12 @@ export const enviarCurriculo = comTratamento(async (req, res) => {
   return res.json({ curriculo: resumoArquivo(valores) });
 });
 
-// GET /api/candidata/curriculo/arquivo — baixa o próprio currículo.
 export const baixarCurriculo = comTratamento(async (req, res) => {
   const atual = await CurriculoCandidata.findOne({ where: { usuariaId: eu(req) } });
   if (!atual) return erro(res, 404, "Você ainda não enviou um currículo.");
   return enviarArquivo(res, atual);
 });
 
-// DELETE /api/candidata/curriculo — tira do perfil (as cópias já enviadas
-// em candidaturas continuam com as empresas).
 export const removerCurriculo = comTratamento(async (req, res) => {
   await CurriculoCandidata.destroy({ where: { usuariaId: eu(req) } });
   return res.json({ curriculo: null });

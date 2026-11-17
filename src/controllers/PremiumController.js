@@ -14,11 +14,6 @@ import {
 } from "../services/mercadopago.js";
 import { notificar } from "../services/notificacoes.js";
 
-// Bloom Premium (candidatas e empresas). Regras:
-//  - planos e preços vêm da tabela PLANO (tabela de preços da Bloom);
-//  - nada fica "ativo" ou "pago" sem confirmação do Mercado Pago: o status é
-//    sempre lido na API dele (webhook ou sincronização), nunca do navegador.
-
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
 const erro = (res, status, mensagem, campo) => res.status(status).json({ erro: mensagem, campo });
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
@@ -42,9 +37,6 @@ function planoJson(p) {
 
 const voltarPara = (tipo, extra) => `${(process.env.FRONTEND_URL ?? "http://localhost:3006").replace(/\/$/, "")}/${tipo === "empresa" ? "empresa" : "candidata"}/premium?retorno=${extra}`;
 
-// ---------------------------------------------------------- Registro
-
-// Grava (ou atualiza) um pagamento informado pelo Mercado Pago.
 async function registrarPagamento({ idExterno, status, valor, pagoEm, tipoConta, contaId, planoId, assinaturaId = null, campanhaId = null }) {
   const existente = await Pagamento.findOne({ where: { idExterno: String(idExterno) } });
   const dados = { status: String(status ?? "desconhecido").slice(0, 30), valor: Number(valor ?? 0), pagoEm: pagoEm ? new Date(pagoEm) : null };
@@ -52,7 +44,6 @@ async function registrarPagamento({ idExterno, status, valor, pagoEm, tipoConta,
   return Pagamento.create({ ...dados, idExterno: String(idExterno), tipoConta, contaId, planoId, assinaturaId, campanhaId, provedor: "mercadopago" });
 }
 
-// Atualiza a assinatura local a partir do que o Mercado Pago diz dela.
 async function aplicarAssinatura(local, remota) {
   const status = STATUS_ASSINATURA[remota.status] ?? local.status;
   const virouAtiva = status === "ativa" && local.status !== "ativa";
@@ -67,7 +58,6 @@ async function aplicarAssinatura(local, remota) {
   }
 }
 
-// Busca os pagamentos de uma referência ("assinatura-12", "campanha-3") e registra.
 async function sincronizarPagamentos(referencia, base) {
   const r = await buscarPagamentosPorReferencia(referencia);
   for (const p of r?.results ?? []) {
@@ -76,9 +66,6 @@ async function sincronizarPagamentos(referencia, base) {
   return (r?.results ?? []).some((p) => p.status === "approved");
 }
 
-// ---------------------------------------------------------- Consulta
-
-// GET /api/premium — planos, assinatura atual, campanhas e histórico.
 export const visaoGeral = comTratamento(async (req, res) => {
   const { tipoConta, contaId } = minha(req);
   const [planos, assinaturas, pagamentos, campanhas] = await Promise.all([
@@ -117,9 +104,6 @@ export const visaoGeral = comTratamento(async (req, res) => {
   });
 });
 
-// ---------------------------------------------------------- Assinatura
-
-// POST /api/premium/assinatura { plano } — devolve o link de pagamento.
 export const assinar = comTratamento(async (req, res) => {
   const { tipoConta, contaId } = minha(req);
   if (!pagamentosAtivos()) return erro(res, 503, "Os pagamentos ainda não foram configurados na Bloom. Tente novamente mais tarde.");
@@ -152,8 +136,6 @@ async function minhaAssinaturaAberta(req) {
   return Assinatura.findOne({ where: { ...minha(req), status: ABERTAS }, order: [["id", "DESC"]] });
 }
 
-// POST /api/premium/assinatura/sincronizar — relê o status no Mercado Pago
-// (usado na volta do pagamento, sem depender do webhook).
 export const sincronizarAssinatura = comTratamento(async (req, res) => {
   const local = await minhaAssinaturaAberta(req);
   if (local?.idExterno) {
@@ -163,8 +145,6 @@ export const sincronizarAssinatura = comTratamento(async (req, res) => {
   return visaoGeral(req, res);
 });
 
-// DELETE /api/premium/assinatura — cancela no Mercado Pago; só marca como
-// cancelada depois que ele confirma.
 export const cancelar = comTratamento(async (req, res) => {
   const local = await minhaAssinaturaAberta(req);
   if (!local) return erro(res, 404, "Você não tem assinatura ativa.");
@@ -178,9 +158,6 @@ export const cancelar = comTratamento(async (req, res) => {
   return visaoGeral(req, res);
 });
 
-// ---------------------------------------------------------- Publicidade
-
-// POST /api/premium/campanhas { titulo, texto, link? } — só empresas.
 export const criarCampanha = comTratamento(async (req, res) => {
   if (!pagamentosAtivos()) return erro(res, 503, "Os pagamentos ainda não foram configurados na Bloom. Tente novamente mais tarde.");
   const titulo = texto(req.body?.titulo);
@@ -218,7 +195,6 @@ async function minhaCampanha(req) {
   return id ? Campanha.findOne({ where: { id, empresaId: req.auth.sub } }) : null;
 }
 
-// POST /api/premium/campanhas/:id/sincronizar — confere o pagamento.
 export const sincronizarCampanha = comTratamento(async (req, res) => {
   const campanha = await minhaCampanha(req);
   if (!campanha) return erro(res, 404, "Campanha não encontrada.");
@@ -229,7 +205,6 @@ export const sincronizarCampanha = comTratamento(async (req, res) => {
   return visaoGeral(req, res);
 });
 
-// DELETE /api/premium/campanhas/:id — desiste de uma campanha ainda não paga.
 export const cancelarCampanha = comTratamento(async (req, res) => {
   const campanha = await minhaCampanha(req);
   if (!campanha) return erro(res, 404, "Campanha não encontrada.");
@@ -238,10 +213,6 @@ export const cancelarCampanha = comTratamento(async (req, res) => {
   return visaoGeral(req, res);
 });
 
-// ---------------------------------------------------------- Webhook
-
-// POST /api/pagamentos/mercadopago/webhook — aviso do Mercado Pago. O corpo
-// só diz "o que mudou"; o status verdadeiro é relido na API dele.
 export async function webhook(req, res) {
   const tipo = req.query.type ?? req.query.topic ?? req.body?.type ?? req.body?.topic;
   const dataId = req.query["data.id"] ?? req.body?.data?.id ?? req.query.id;
@@ -287,7 +258,6 @@ export async function webhook(req, res) {
     }
     return res.status(200).json({ ok: true });
   } catch (e) {
-    // 5xx faz o Mercado Pago tentar de novo mais tarde.
     console.error("Webhook Mercado Pago:", e.message);
     return res.status(500).json({ erro: "Falha ao processar." });
   }

@@ -26,8 +26,6 @@ function Contato({ icone, href, children }) {
   )
 }
 
-// Perfil público de uma empresa da Bloom, visto pela candidata: dados que a
-// própria empresa publicou e as vagas abertas dela.
 function EmpresaPerfil() {
   const { id } = useParams()
   const r = useRecurso(true, () => lerEmpresaPublica(id), [id])

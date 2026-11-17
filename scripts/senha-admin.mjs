@@ -1,6 +1,3 @@
-// npm run admin:senha — define uma senha nova para um administrador que a
-// esqueceu (e o reativa, se estiver desativado). Só quem tem acesso ao
-// servidor e ao .env consegue rodar; a ação fica no registro do painel.
 import bcrypt from "bcrypt";
 import { Op } from "sequelize";
 import { sequelize } from "../src/config/database.js";
@@ -22,7 +19,6 @@ try {
 
   const senha = await pedirSenhaNova();
   const mudancas = { senhaHash: await bcrypt.hash(senha, 12), ativo: true, deveTrocarSenha: false };
-  // Perdeu o celular? Desliga a verificação em duas etapas para configurar de novo no painel.
   let desligou = false;
   if (admin.totpAtivo) {
     const r = (await perguntar("A verificação em duas etapas está ligada. Desligar (celular perdido)? [s/N]: ", { permitirVazio: true })).toLowerCase();

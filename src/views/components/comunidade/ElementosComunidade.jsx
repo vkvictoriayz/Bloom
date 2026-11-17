@@ -4,9 +4,6 @@ import { iniciais } from '../../hooks/useSessao'
 import { urlImagem } from '../../services/api'
 import { cn } from '../../lib/cn'
 
-// Peças visuais das comunidades, usadas na lista e na página de cada uma.
-
-// Capa: a imagem enviada por quem criou ou, sem ela, um degradê da marca.
 export function CapaComunidade({ capa, className, children }) {
   return (
     <div className={cn('relative overflow-hidden bg-linear-to-br from-vinho via-vinho-escuro to-tinta', className)}>
@@ -27,7 +24,6 @@ export function CapaComunidade({ capa, className, children }) {
   )
 }
 
-// Ícone escolhido ou, sem ele, as iniciais do nome.
 export function IconeComunidade({ comunidade, className }) {
   if (comunidade.icone) return <IconeAvatar valor={comunidade.icone} forma="quadrado" className={className} />
   return (
@@ -37,7 +33,6 @@ export function IconeComunidade({ comunidade, className }) {
   )
 }
 
-// Fotos sobrepostas de algumas participantes e "+N" para o resto.
 export function PilhaAvatares({ pessoas = [], total = pessoas.length, tamanho = 'sm', className }) {
   const resto = Math.max(0, total - pessoas.length)
   if (!pessoas.length && !resto) return null

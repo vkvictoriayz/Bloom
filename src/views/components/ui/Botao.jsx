@@ -2,10 +2,6 @@ import { forwardRef } from 'react'
 import { cva } from 'class-variance-authority'
 import { cn } from '../../lib/cn'
 
-// Adaptado do Button do VengeanceUI (cva + variantes), com as cores da Bloom.
-// Formato pílula em toda a plataforma; a seta desliza no hover
-// (ideia do Interactive Hover Button, sem framer-motion).
-// Use "as" para renderizar um Link ou <a> com o mesmo visual.
 const botaoVariantes = cva(
   'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-colors duration-150 [&_.icone-seta]:transition-transform [&_.icone-seta]:duration-200 [&_.icone-seta]:ease-(--ease-bloom) hover:[&_.icone-seta]:translate-x-1 disabled:cursor-not-allowed disabled:opacity-55 [&_svg]:shrink-0',
   {

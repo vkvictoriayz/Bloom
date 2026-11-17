@@ -4,8 +4,6 @@ import { Link } from 'react-router-dom'
 import Icone from '../Icone'
 import { Vazio, VazioAcoes, VazioDescricao, VazioIcone, VazioTitulo } from '../ui/Vazio'
 
-// Título de página da área da candidata: atualiza o <title>, mostra um
-// "voltar" opcional, título, descrição e ações à direita.
 function TituloPagina({ titulo, descricao, acoes, voltar }) {
   useEffect(() => {
     document.title = `${titulo} · BLOOM`
@@ -29,8 +27,6 @@ function TituloPagina({ titulo, descricao, acoes, voltar }) {
   )
 }
 
-// Estado para recursos que ainda dependem de uma API do backend.
-// Diz com clareza o que falta, sem simular dados.
 export function RecursoIndisponivel({ icone, ilustracao: Ilustracao, titulo, descricao, children }) {
   return (
     <Vazio className="bg-branco">

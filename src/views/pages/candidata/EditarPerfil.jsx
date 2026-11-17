@@ -22,7 +22,7 @@ import { aguardarSincronizacao, salvarSecoesPerfil, sincronizarAreaCandidata } f
 import { completude, EVENTO_PERFIL, lerPerfil, salvarPerfil } from '../../services/perfil'
 import { cn } from '../../lib/cn'
 
-const LIMITE_IMAGEM = 1024 * 1024 // 1 MB, o mesmo limite do servidor
+const LIMITE_IMAGEM = 1024 * 1024
 const TIPOS_IMAGEM = ['image/jpeg', 'image/png', 'image/webp']
 
 const SECOES = [
@@ -76,7 +76,6 @@ function FormularioPerfil() {
   const [resumo, setResumo] = useState({ sobre: perfil.sobre, objetivo: perfil.objetivo })
   const [preferencias, setPreferencias] = useState(perfil.preferencias)
 
-  // Área, interesses e apresentação curta vêm da API da comunidade.
   const [comunidade, setComunidade] = useState(null)
   const [erroComunidade, setErroComunidade] = useState('')
   const [salvandoComunidade, setSalvandoComunidade] = useState(false)
@@ -94,7 +93,6 @@ function FormularioPerfil() {
       .catch((e) => setErroComunidade(e.message))
   }, [])
 
-  // Foto e capa podem mudar fora desta tela (sincronização com o servidor).
   useEffect(() => {
     const atualizar = () => {
       const atual = lerPerfil(sessao?.usuario)
@@ -104,7 +102,6 @@ function FormularioPerfil() {
     return () => window.removeEventListener(EVENTO_PERFIL, atualizar)
   }, [sessao?.usuario])
 
-  // Links do tipo /candidata/perfil/editar#competencias rolam até a seção.
   useEffect(() => {
     if (hash) document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' })
   }, [hash])
@@ -113,8 +110,6 @@ function FormularioPerfil() {
     setMensagens((m) => ({ ...m, [secao]: { tipo, texto } }))
   }
 
-  // Salva no servidor e atualiza a cópia local. Foto e capa já foram ao
-  // servidor pela API de imagens: aqui só a cópia local muda.
   async function gravar(secao, mudancas, texto = 'Alterações salvas.') {
     const usuario = sessao?.usuario
     const soImagens = Object.keys(mudancas).every((chave) => chave === 'foto' || chave === 'capa')
@@ -171,8 +166,6 @@ function FormularioPerfil() {
     }
   }
 
-  // Foto e capa vão para o servidor (outras integrantes e empresas veem);
-  // o perfil local guarda o endereço devolvido, usado no menu e nas telas.
   async function publicarImagem(campo, imagem) {
     setEnviandoImagem(true)
     try {
@@ -185,7 +178,6 @@ function FormularioPerfil() {
     }
   }
 
-  // Ícone predefinido no lugar da foto (a foto enviada, se houver, sai).
   async function usarIcone(icone) {
     setEnviandoImagem(true)
     try {
@@ -229,7 +221,6 @@ function FormularioPerfil() {
     }
   }
 
-  // Imagens escolhidas antes do envio ao servidor ficaram só neste navegador.
   const imagensLocais = ['foto', 'capa'].filter((campo) => soNesteNavegador(perfil[campo]))
   async function publicarImagensLocais() {
     for (const campo of imagensLocais) await publicarImagem(campo, perfil[campo])
@@ -569,8 +560,6 @@ function FormularioPerfil() {
   )
 }
 
-// Espera o perfil chegar do servidor antes de montar o formulário: assim um
-// navegador novo nunca salva campos vazios por cima do que está na conta.
 function EditarPerfil() {
   const sessao = useSessao()
   const [estado, setEstado] = useState({ tipo: 'carregando' })

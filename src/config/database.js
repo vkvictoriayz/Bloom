@@ -1,6 +1,5 @@
 import { Sequelize } from "sequelize";
 
-// Conexão com o MySQL (banco criado pelo arquivo "banco bloom.sql").
 export const sequelize = new Sequelize(
   process.env.DB_NAME ?? "BLOOM",
   process.env.DB_USER ?? "root",

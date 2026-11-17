@@ -3,7 +3,6 @@ import { useState } from 'react'
 import Icone from './Icone'
 import { Campo, Entrada } from './ui/Campo'
 
-// Campo de senha com o botão de mostrar/ocultar.
 function CampoSenha({ rotulo, valor, aoMudar, placeholder, autoComplete = 'current-password', acessorio }) {
   const [mostrar, setMostrar] = useState(false)
 

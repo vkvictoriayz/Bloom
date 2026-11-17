@@ -9,10 +9,6 @@ import * as Chat from "../services/chat.js";
 import { notificar } from "../services/notificacoes.js";
 import { perfisOcultos } from "../services/privacidade.js";
 
-// Conversas entre candidatas (/api/mensagens/candidatas). Ficam em tabelas
-// próprias, separadas das conversas com empresas (CONVERSA/MENSAGEM, que são
-// ligadas a uma candidatura). Só as duas participantes leem e escrevem.
-
 const erro = (res, status, mensagem, campo) => res.status(status).json({ erro: mensagem, campo });
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
 const LIMITE = 1000;
@@ -30,7 +26,6 @@ const comTratamento = (fn) => async (req, res) => {
   }
 };
 
-// Nome, foto e área (do perfil da comunidade) de cada participante.
 async function participantes(ids) {
   const lista = ids.length ? ids : [0];
   const [contas, fotos, perfis] = await Promise.all([
@@ -43,7 +38,6 @@ async function participantes(ids) {
   return new Map(ids.map((id) => [id, { id, nome: nome.get(id) ?? "Conta removida", foto: fotos.get(id)?.foto ?? null, area: area.get(id) || null }]));
 }
 
-// Mensagem apagada: o texto e a imagem não saem do servidor.
 const mensagemJson = (m, meuId, imagem = null) => ({
   id: m.id,
   texto: m.apagadaEm ? "" : m.texto,
@@ -55,8 +49,6 @@ const mensagemJson = (m, meuId, imagem = null) => ({
   lidaEm: m.lidaEm ?? null,
 });
 
-
-// GET /api/mensagens/candidatas
 export const listar = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const conversas = await ConversaDireta.findAll({ where: minhas(meuId), order: [["atualizadaEm", "DESC"]], limit: 100 });
@@ -77,7 +69,6 @@ export const listar = comTratamento(async (req, res) => {
       bloqueada: bloqueios.euBloqueei.has(outraId) || bloqueios.meBloquearam.has(outraId),
       ultimaMensagem: ultima ? Chat.previa(ultima, ultima.autoraId === meuId, fotos.get(ultima.id)) : "Conversa iniciada",
       ultimaEm: ultima?.enviadaEm ?? c.criadaEm,
-      // Para os "vistos" na lista: a última foi minha? Já foi lida?
       ultimaMinha: Boolean(ultima && ultima.autoraId === meuId),
       ultimaLida: Boolean(ultima?.lidaEm),
       atualizadaEm: c.atualizadaEm,
@@ -87,8 +78,6 @@ export const listar = comTratamento(async (req, res) => {
   return res.json({ conversas: lista, naoLidas: lista.reduce((t, c) => t + c.naoLidas, 0) });
 });
 
-// POST /api/mensagens/candidatas { usuariaId } — abre (ou reabre) a conversa
-// com outra candidata. Perfil oculto não recebe conversa nova.
 export const abrir = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const outraId = idParam(req.body?.usuariaId);
@@ -97,7 +86,6 @@ export const abrir = comTratamento(async (req, res) => {
 
   const [usuariaA, usuariaB] = [Math.min(meuId, outraId), Math.max(meuId, outraId)];
   const existente = await ConversaDireta.findOne({ where: { usuariaA, usuariaB } });
-  // Conversa que já existe abre mesmo com bloqueio (o histórico continua visível).
   if (existente) return res.json({ conversa: { id: existente.id } });
   if ((await perfisOcultos()).has(outraId)) return erro(res, 404, "Integrante não encontrada.");
   const bloqueio = await Chat.bloqueioEntre(meuId, outraId);
@@ -107,7 +95,6 @@ export const abrir = comTratamento(async (req, res) => {
     const criada = await ConversaDireta.create({ usuariaA, usuariaB });
     return res.status(201).json({ conversa: { id: criada.id } });
   } catch (e) {
-    // As duas abriram ao mesmo tempo: usa a que já foi criada.
     if (e.name !== "SequelizeUniqueConstraintError") throw e;
     const c = await ConversaDireta.findOne({ where: { usuariaA, usuariaB } });
     return res.json({ conversa: { id: c.id } });
@@ -119,11 +106,6 @@ async function minhaConversa(req) {
   return id ? ConversaDireta.findOne({ where: { id, ...minhas(eu(req)) } }) : null;
 }
 
-// GET /api/mensagens/candidatas/:id[?antes=<id>|?depois=<id>]
-// Sem parâmetro: as 50 mais recentes. "antes": 50 anteriores (rolar para
-// cima). "depois": só as novas (a tela consulta de tempos em tempos).
-// Também marca como lidas as recebidas. "lidasAte" diz até qual mensagem
-// minha a outra pessoa já leu (para o "Visto").
 export const ler = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const conversa = await minhaConversa(req);
@@ -155,7 +137,6 @@ export const ler = comTratamento(async (req, res) => {
     Chat.bloqueioEntre(meuId, outra(conversa, meuId)),
   ]);
   return res.json({
-    // bloqueio: "eu" (eu bloqueei), "ela" (ela me bloqueou) ou null.
     conversa: { id: conversa.id, participante: pessoas.get(outra(conversa, meuId)), bloqueio: bloqueio.euBloqueei ? "eu" : bloqueio.meBloqueou ? "ela" : null },
     mensagens: mensagens.map((m) => mensagemJson(m, meuId, fotos.get(m.id))),
     temMais,
@@ -163,7 +144,6 @@ export const ler = comTratamento(async (req, res) => {
   });
 });
 
-// POST /api/mensagens/candidatas/:id { texto }
 export const enviar = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const conversa = await minhaConversa(req);
@@ -191,8 +171,6 @@ export const enviar = comTratamento(async (req, res) => {
   return res.status(201).json({ mensagem: mensagemJson(mensagem, meuId, imagem) });
 });
 
-// DELETE /api/mensagens/candidatas/:id/mensagens/:mensagemId — quem enviou
-// apaga a própria mensagem. O texto sai do banco; fica "mensagem apagada".
 export const apagar = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const conversa = await minhaConversa(req);
@@ -210,9 +188,6 @@ export const apagar = comTratamento(async (req, res) => {
   return res.json({ mensagem: mensagemJson(mensagem, meuId) });
 });
 
-// PUT /api/mensagens/candidatas/:id/bloqueio — bloqueia a outra pessoa da
-// conversa: ela deixa de conseguir enviar mensagens e abrir conversa nova.
-// DELETE desfaz. A outra pessoa não é avisada.
 export const bloquear = comTratamento(async (req, res) => {
   const meuId = eu(req);
   const conversa = await minhaConversa(req);

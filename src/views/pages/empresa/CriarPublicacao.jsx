@@ -11,15 +11,11 @@ import { criarPublicacaoEmpresa } from '../../services/empresa'
 import { LIMITE_PUBLICACAO, TIPOS } from '../../services/comunidade'
 import { cn } from '../../lib/cn'
 
-// Criar publicação: escrever, pré-visualizar e publicar. Só é dada como
-// publicada depois da resposta da API. Imagens e anexos ainda não têm
-// suporte no backend, por isso não aparecem aqui.
 function CriarPublicacao() {
   const navigate = useNavigate()
   const { perfil: dados } = useOutletContext()
   const [texto, setTexto] = useState('')
   const [tipo, setTipo] = useState('oportunidade')
-  // Guarda o horário em que a prévia foi aberta (null = sem prévia).
   const [previa, setPrevia] = useState(null)
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
 

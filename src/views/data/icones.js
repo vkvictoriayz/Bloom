@@ -1,8 +1,3 @@
-// Catálogo dos ícones predefinidos da Bloom: alternativa à foto (candidatas e
-// empresas) e imagem das comunidades. Guardados como "icone:<nome>:<cor>"; a
-// API confere a mesma lista em src/services/icones.js. Os desenhos estão em
-// components/Icone.jsx e o avatar em components/IconePerfil.jsx.
-
 const TECNOLOGIA = [
   ['codigo', 'Código'],
   ['terminal', 'Terminal'],
@@ -52,7 +47,6 @@ export const GRUPOS_ICONES = {
   ],
 }
 
-// Cores da identidade da Bloom (fundo, traço). Todas com contraste ≥ 4,5:1.
 export const CORES_ICONE = {
   vinho: { nome: 'Vinho', fundo: '#85243d', traco: '#ffffff' },
   ameixa: { nome: 'Ameixa', fundo: '#4e1226', traco: '#f4e4e9' },

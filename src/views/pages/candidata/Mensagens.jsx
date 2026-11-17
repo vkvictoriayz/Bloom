@@ -10,14 +10,8 @@ import { lerPerfis, tempoRelativo } from '../../services/comunidade'
 import { abrirConversaCandidata, EVENTO_MENSAGENS, listarConversas, listarConversasCandidatas } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
-// Mensagens em duas colunas, como nos apps de conversa: a lista à esquerda e
-// a conversa aberta à direita (no celular, uma de cada vez). A candidata tem
-// as abas "Candidatas" (entre integrantes) e "Empresas" (processos
-// seletivos); a empresa vê só as conversas com candidatas.
-
 const INTERVALO_LISTA = 15000
 
-// Uma linha da lista: foto, nome, prévia, hora, "vistos" e não lidas.
 function ItemConversa({ c, para, ativa }) {
   return (
     <li>
@@ -55,7 +49,6 @@ function ItemConversa({ c, para, ativa }) {
   )
 }
 
-// Começar conversa com outra candidata: busca pelo nome, área ou interesse.
 function NovaConversa({ aoFechar }) {
   const navigate = useNavigate()
   const [busca, setBusca] = useState('')
@@ -91,7 +84,6 @@ function NovaConversa({ aoFechar }) {
     }
   }
 
-  // Quem eu sigo aparece primeiro.
   const lista = (pessoas ?? []).slice().sort((a, b) => Number(b.seguindo) - Number(a.seguindo)).slice(0, 20)
 
   return (
@@ -136,7 +128,6 @@ function NovaConversa({ aoFechar }) {
   )
 }
 
-// Estado vazio da coluna da conversa (nenhuma aberta).
 function SemConversa({ podeIniciar, aoIniciar }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 bg-papel p-8 text-center">
@@ -158,14 +149,11 @@ function SemConversa({ podeIniciar, aoIniciar }) {
   )
 }
 
-// base: rota da área ("/candidata/mensagens" ou "/empresa/mensagens").
-// selecionada: tipo da conversa aberta pela rota ("candidatas" | "empresas").
 export function Mensagens({ base = '/candidata/mensagens', selecionada = null }) {
   const { id } = useParams()
   const [parametros, setParametros] = useSearchParams()
   const daCandidata = base === '/candidata/mensagens'
   const aberta = selecionada && id ? { tipo: selecionada, id } : null
-  // A aba acompanha a conversa aberta; sem conversa, vem da URL.
   const aba = !daCandidata ? 'empresas' : aberta ? aberta.tipo : parametros.get('aba') === 'empresas' ? 'empresas' : 'candidatas'
   const [listas, setListas] = useState({ candidatas: null, empresas: null })
   const [erro, setErro] = useState('')
@@ -184,18 +172,15 @@ export function Mensagens({ base = '/candidata/mensagens', selecionada = null })
   }, [daCandidata])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     recarregar()
     const t = setInterval(() => document.visibilityState === 'visible' && recarregar(), INTERVALO_LISTA)
     return () => clearInterval(t)
   }, [recarregar])
 
-  // Abrir uma conversa zera as não lidas dela na lista.
   useEffect(() => {
     if (!aberta) return
     const t = setTimeout(recarregar, 800)
     return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aberta?.tipo, aberta?.id])
 
   useEffect(() => {
@@ -217,7 +202,6 @@ export function Mensagens({ base = '/candidata/mensagens', selecionada = null })
     <div className="-mx-4 -my-8 flex h-[calc(100dvh-4rem)] min-h-[480px] overflow-hidden border-linha bg-branco sm:-mx-6 lg:mx-0 lg:my-0 lg:h-[calc(100dvh-9rem)] lg:rounded-2xl lg:border">
       <h1 className="sr-only">Mensagens</h1>
 
-      {/* Coluna da lista */}
       <section className={cn('flex min-h-0 w-full flex-col border-linha lg:w-[340px] lg:shrink-0 lg:border-r', aberta && 'max-lg:hidden')} aria-label="Conversas">
         {novaConversa ? (
           <NovaConversa aoFechar={() => setNovaConversa(false)} />
@@ -294,7 +278,6 @@ export function Mensagens({ base = '/candidata/mensagens', selecionada = null })
         )}
       </section>
 
-      {/* Coluna da conversa */}
       <section className={cn('min-h-0 min-w-0 flex-1', !aberta && 'max-lg:hidden')} aria-label="Conversa">
         {aberta ? (
           <Chat key={`${aberta.tipo}-${aberta.id}`} tipo={aberta.tipo} id={aberta.id} base={base} aoMudar={recarregar} className="h-full" />

@@ -8,8 +8,6 @@ import { sincronizarAreaCandidata } from '../../services/candidataApi'
 import { lerMinhasImagens, sincronizarImagensLocais } from '../../services/imagens'
 import { EVENTO_PERFIL, lerPerfil } from '../../services/perfil'
 
-// Layout da área privada da candidata (/candidata/*, /vagas/:id,
-// /comunidades/:id): a moldura compartilhada com o menu da candidata.
 const CONFIG = {
   rotuloNav: 'Área da candidata',
   inicio: '/candidata/feed',
@@ -66,13 +64,10 @@ function LayoutCandidata() {
   const usuario = sessao?.usuario
   const perfil = useDadosLocais(() => lerPerfil(usuario), [EVENTO_PERFIL])
 
-  // Foto e capa ficam no servidor; o perfil local acompanha (outro navegador,
-  // troca feita em outra aba etc.). Sem servidor, segue o que está salvo aqui.
   useEffect(() => {
     lerMinhasImagens()
       .then((r) => sincronizarImagensLocais(usuario, r.imagens))
       .catch(() => {})
-    // Perfil, projetos e vagas salvas vêm da conta (ver candidataApi.js).
     sincronizarAreaCandidata(usuario).catch(() => {})
   }, [usuario])
   return <LayoutPrivado config={CONFIG} usuario={usuario} foto={perfil.foto} faixa={<AvisoConfirmarEmail />} />

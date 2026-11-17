@@ -1,7 +1,3 @@
--- 006: denúncias de conteúdo e de contas, analisadas pela administração.
--- Aplicada automaticamente pelo servidor (src/database/migracoes.js), uma vez.
--- Só cria uma tabela nova; nenhum dado existente é alterado.
-
 CREATE TABLE IF NOT EXISTS DENUNCIA (
   id_denuncia INT AUTO_INCREMENT PRIMARY KEY,
   tipo_conta ENUM('usuaria', 'empresa') NOT NULL,

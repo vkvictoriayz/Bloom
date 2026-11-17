@@ -4,8 +4,6 @@ import { exigirLogin } from "../middlewares/autenticacao.js";
 
 const router = Router();
 
-// Só esta rota aceita corpo grande (imagem de até 1 MB em base64); o resto
-// da API continua com o limite de 20 kB definido em app.js.
 const corpoImagem = express.json({ limit: "1500kb" });
 const logada = exigirLogin(["usuaria", "empresa"]);
 

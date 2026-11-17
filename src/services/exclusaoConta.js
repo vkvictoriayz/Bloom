@@ -2,15 +2,6 @@ import { QueryTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 import { notificar } from "./notificacoes.js";
 
-// Exclusão definitiva de uma conta e de tudo o que é dela (LGPD). Roda numa
-// transação só: ou apaga tudo, ou nada. A ordem segue as chaves estrangeiras
-// do banco (filhos antes dos pais).
-//
-// Fica guardado só o registro financeiro (ASSINATURA e PAGAMENTO: plano, valor,
-// data e o código do Mercado Pago), sem dado pessoal além do id numérico da
-// conta, que deixa de existir. A conta com assinatura ativa não é excluída
-// (ver AuthController.excluirConta).
-
 async function ids(sql, replacements, transaction) {
   const linhas = await sequelize.query(sql, { replacements, type: QueryTypes.SELECT, transaction });
   return linhas.map((l) => Object.values(l)[0]);
@@ -20,7 +11,6 @@ async function apagar(sql, replacements, transaction) {
   await sequelize.query(sql, { replacements, transaction });
 }
 
-// Listas vazias viram [0] para o "IN (...)" continuar válido.
 const lista = (valores) => (valores.length ? valores : [0]);
 
 export async function excluirUsuaria(id) {
@@ -45,10 +35,8 @@ export async function excluirUsuaria(id) {
     await apagar("DELETE FROM FAVORITOS WHERE id_usuario = :id", r, t);
     await apagar("DELETE FROM PROJETO_CANDIDATA WHERE id_usuario = :id", r, t);
     await apagar("DELETE FROM PERFIL_CANDIDATA_DETALHES WHERE id_usuario = :id", r, t);
-    // EXPERIENCIA, FORMACAO e PERFIL_HABILIDADE saem em cascata com PERFIL_USUARIA.
     await apagar("DELETE FROM PERFIL_USUARIA WHERE id_usuario = :id", r, t);
     await apagar("DELETE FROM CONFIG_USUARIA WHERE id_usuaria = :id", r, t);
-    // Comunidades criadas por ela deixam de existir; as que ela só participa ficam.
     await apagar("DELETE FROM COMUNIDADE_PUBLICACAO WHERE id_comunidade IN (:criadas) OR id_publicacao IN (:publicacoes)", r, t);
     await apagar("DELETE FROM COMUNIDADE_MEMBRO WHERE id_comunidade IN (:criadas) OR id_usuario = :id", r, t);
     await apagar("DELETE FROM COMUNIDADE_CAPA WHERE id_comunidade IN (:criadas)", r, t);
@@ -81,7 +69,6 @@ export async function excluirUsuaria(id) {
 }
 
 export async function excluirEmpresa(id) {
-  // Avisos às candidatas com candidatura nas vagas da empresa (antes de apagar).
   const afetadas = await sequelize.query(
     `SELECT DISTINCT c.id_usuario, v.titulo, e.nome FROM CANDIDATURAS c
        JOIN VAGAS v ON v.id_vaga = c.id_vaga
@@ -104,7 +91,6 @@ export async function excluirEmpresa(id) {
     await apagar("DELETE FROM DENUNCIA WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
     await apagar("DELETE FROM PREFERENCIA_NOTIFICACAO WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
     await apagar("DELETE FROM CONVITE WHERE id_empresa = :id OR id_vaga IN (:vagas)", r, t);
-    // Campanhas saem; os pagamentos delas ficam (registro financeiro), sem o vínculo.
     await apagar("UPDATE PAGAMENTO SET id_campanha = NULL WHERE id_campanha IN (SELECT id_campanha FROM CAMPANHA WHERE id_empresa = :id)", r, t);
     await apagar("DELETE FROM CAMPANHA WHERE id_empresa = :id", r, t);
     await apagar("DELETE FROM ICONE_PERFIL WHERE dono_tipo = 'empresa' AND dono_id = :id", r, t);

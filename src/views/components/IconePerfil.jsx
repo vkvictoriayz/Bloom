@@ -6,11 +6,6 @@ import { cn } from '../lib/cn'
 import Botao from './ui/Botao'
 import { CORES_ICONE, ehIcone, GRUPOS_ICONES, lerIcone } from '../data/icones'
 
-// Fundo cheio + traço claro, para ficar legível tanto nos fundos claros quanto
-// nos escuros do site.
-
-// O ícone desenhado: círculo (perfil) ou quadrado arredondado (empresa e comunidade).
-// "className" define o tamanho (ex.: "size-11").
 export function IconeAvatar({ valor, forma = 'circulo', className, rotulo }) {
   const { nome, cor } = lerIcone(valor)
   const { fundo, traco } = CORES_ICONE[cor]
@@ -27,8 +22,6 @@ export function IconeAvatar({ valor, forma = 'circulo', className, rotulo }) {
   )
 }
 
-// Seletor: grade de ícones + cores, com prévia. "publico" escolhe a lista
-// ("usuaria" | "empresa" | "comunidade"). Chama aoEscolher("icone:nome:cor").
 export function SeletorIcone({ publico = 'usuaria', valor, aoEscolher, forma = 'circulo', rotuloBotao = 'Usar este ícone', ocupado = false, aoCancelar }) {
   const inicial = ehIcone(valor) ? lerIcone(valor) : { nome: GRUPOS_ICONES[publico][0][1][0][0], cor: 'vinho' }
   const [nome, setNome] = useState(inicial.nome)

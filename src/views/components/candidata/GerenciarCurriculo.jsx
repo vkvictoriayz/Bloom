@@ -9,7 +9,6 @@ import { baixarMeuCurriculo, enviarCurriculo, lerCurriculo, removerCurriculo } f
 const LIMITE = 5 * 1024 * 1024
 const EXTENSOES = /\.(pdf|docx?)$/i
 
-
 const lerBase64 = (arquivo) =>
   new Promise((ok, falha) => {
     const leitor = new FileReader()
@@ -18,11 +17,9 @@ const lerBase64 = (arquivo) =>
     leitor.readAsDataURL(arquivo)
   })
 
-// Currículo do perfil, guardado no servidor: enviar, trocar, baixar e remover.
-// Ele pode ser anexado às candidaturas.
 function GerenciarCurriculo() {
   const entrada = useRef(null)
-  const [atual, setAtual] = useState(undefined) // undefined = carregando
+  const [atual, setAtual] = useState(undefined)
   const [ocupado, setOcupado] = useState(false)
   const [aviso, setAviso] = useState(null)
   const [confirmando, setConfirmando] = useState(false)

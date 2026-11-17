@@ -10,7 +10,6 @@ import Botao from '../../components/ui/Botao'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../../components/ui/Vazio'
 import { listarPublicacoesEmpresa } from '../../services/empresa'
 
-// Publicações da própria empresa, com edição e exclusão pela API.
 function Publicacoes() {
   const r = useCarregar(listarPublicacoesEmpresa)
 

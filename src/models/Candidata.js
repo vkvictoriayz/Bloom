@@ -1,15 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-// Perfil profissional da candidata.
-//
-// Usa as tabelas que já existem em "banco bloom.sql" (PERFIL_USUARIA,
-// EXPERIENCIA, FORMACAO, HABILIDADE, PERFIL_HABILIDADE e FAVORITOS),
-// mapeadas exatamente como estão: nada nelas é alterado. O que o banco não
-// tem coluna para guardar (título, objetivo, links, preferências,
-// competências comportamentais e cursos) e os projetos ficam em duas tabelas
-// novas.
-
 const opcoes = (tableName, extra = {}) => ({ tableName, freezeTableName: true, timestamps: false, ...extra });
 const refUsuaria = { model: "CADASTRO_USUARIA", key: "id_usuario" };
 const refPerfil = { model: "PERFIL_USUARIA", key: "id_perfil_usuaria" };
@@ -19,10 +10,10 @@ export const PerfilUsuaria = sequelize.define(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, field: "id_perfil_usuaria" },
     usuariaId: { type: DataTypes.INTEGER, allowNull: false, unique: true, field: "id_usuario", references: refUsuaria },
-    foto: { type: DataTypes.STRING(255) }, // não usada: a foto fica em IMAGEM_PERFIL
-    descricao: { type: DataTypes.STRING(500) }, // "Resumo" do perfil
+    foto: { type: DataTypes.STRING(255) },
+    descricao: { type: DataTypes.STRING(500) },
     localizacao: { type: DataTypes.STRING(150) },
-    curriculo: { type: DataTypes.STRING(255) }, // ainda sem envio de arquivo
+    curriculo: { type: DataTypes.STRING(255) },
   },
   opcoes("PERFIL_USUARIA")
 );
@@ -55,7 +46,6 @@ export const Formacao = sequelize.define(
   opcoes("FORMACAO")
 );
 
-// Catálogo de competências técnicas, compartilhado entre as candidatas.
 export const Habilidade = sequelize.define(
   "Habilidade",
   {
@@ -79,7 +69,6 @@ export const PerfilHabilidade = sequelize.define(
   opcoes("PERFIL_HABILIDADE")
 );
 
-// Vagas salvas.
 export const Favorito = sequelize.define(
   "Favorito",
   {
@@ -91,8 +80,6 @@ export const Favorito = sequelize.define(
   opcoes("FAVORITOS", { indexes: [{ unique: true, fields: ["id_usuario", "id_vaga"] }] })
 );
 
-// Privacidade (tabela do banco original, usada como está). Só três colunas
-// têm uso hoje: perfil_publico, mostrar_experiencia e mostrar_contato.
 export const ConfigUsuaria = sequelize.define(
   "ConfigUsuaria",
   {
@@ -108,24 +95,22 @@ export const ConfigUsuaria = sequelize.define(
   opcoes("CONFIG_USUARIA")
 );
 
-// Nova: o que o perfil tem e o banco não tinha onde guardar.
 export const PerfilDetalhes = sequelize.define(
   "PerfilDetalhes",
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, field: "id_detalhes" },
     usuariaId: { type: DataTypes.INTEGER, allowNull: false, unique: true, field: "id_usuario", references: refUsuaria },
-    cargo: { type: DataTypes.STRING(100) }, // título profissional
+    cargo: { type: DataTypes.STRING(100) },
     objetivo: { type: DataTypes.STRING(500) },
-    links: { type: DataTypes.JSON }, // { linkedin, github, portfolio }
-    preferencias: { type: DataTypes.JSON }, // { modalidades[], areas[], disponibilidade }
-    comportamentais: { type: DataTypes.JSON }, // ["Comunicação", ...]
-    cursos: { type: DataTypes.JSON }, // [{ nome, instituicao, ano, link }]
+    links: { type: DataTypes.JSON },
+    preferencias: { type: DataTypes.JSON },
+    comportamentais: { type: DataTypes.JSON },
+    cursos: { type: DataTypes.JSON },
     atualizadoEm: { type: DataTypes.DATE, field: "atualizado_em" },
   },
   opcoes("PERFIL_CANDIDATA_DETALHES")
 );
 
-// Nova: projetos do portfólio.
 export const Projeto = sequelize.define(
   "Projeto",
   {
@@ -133,18 +118,17 @@ export const Projeto = sequelize.define(
     usuariaId: { type: DataTypes.INTEGER, allowNull: false, field: "id_usuario", references: refUsuaria },
     nome: { type: DataTypes.STRING(100), allowNull: false },
     descricao: { type: DataTypes.STRING(1000) },
-    imagem: { type: DataTypes.TEXT("medium") }, // data: URL de até 400 KB
+    imagem: { type: DataTypes.TEXT("medium") },
     tecnologias: { type: DataTypes.JSON },
     repositorio: { type: DataTypes.STRING(255) },
     demo: { type: DataTypes.STRING(255) },
-    inicio: { type: DataTypes.STRING(7) }, // AAAA-MM
+    inicio: { type: DataTypes.STRING(7) },
     fim: { type: DataTypes.STRING(7) },
     criadoEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "criado_em" },
   },
   opcoes("PROJETO_CANDIDATA")
 );
 
-// Cria só o que falta (as tabelas do banco original já existem e ficam como estão).
 export async function prepararCandidata() {
   for (const modelo of [PerfilUsuaria, Experiencia, Formacao, Habilidade, PerfilHabilidade, Favorito, ConfigUsuaria, PerfilDetalhes, Projeto]) {
     await modelo.sync();

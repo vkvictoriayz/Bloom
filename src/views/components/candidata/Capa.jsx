@@ -1,8 +1,6 @@
 import { cn } from '../../lib/cn'
 import { urlImagem } from '../../services/api'
 
-// Capa do perfil: a imagem enviada (pela integrante ou pela empresa) ou, sem ela, a borboleta
-// da marca repetida em padrão discreto sobre o vinho.
 function Capa({ imagem, className }) {
   return (
     <div className={cn('relative h-36 overflow-hidden rounded-t-xl bg-vinho-escuro sm:h-48', className)}>

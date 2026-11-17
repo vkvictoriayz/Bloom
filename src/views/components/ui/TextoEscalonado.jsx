@@ -1,5 +1,3 @@
-// Revela as palavras de um título uma a uma (staggerText do VengeanceUI).
-// Versão em CSS puro, sem framer-motion; desliga com prefers-reduced-motion.
 function TextoEscalonado({ texto, atraso = 0, className }) {
   const palavras = texto.split(' ')
 

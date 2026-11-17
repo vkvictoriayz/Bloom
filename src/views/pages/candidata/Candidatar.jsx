@@ -32,7 +32,6 @@ function Bloco({ titulo, acao, children }) {
   )
 }
 
-// Fluxo de candidatura: revisar dados -> confirmar -> enviar.
 function Candidatar() {
   const { id } = useParams()
   const { vaga, carregando } = useVaga(id)
@@ -43,14 +42,13 @@ function Candidatar() {
   const candidaturas = useCandidaturas()
   const existente = vaga ? candidaturaDaVaga(vaga.id, candidaturas) : null
 
-  const [etapa, setEtapa] = useState('dados') // dados | revisao | enviada
+  const [etapa, setEtapa] = useState('dados')
   const [apresentacao, setApresentacao] = useState('')
   const [escolhidos, setEscolhidos] = useState([])
   const [confirmo, setConfirmo] = useState(false)
   const [erro, setErro] = useState('')
   const [enviada, setEnviada] = useState(null)
   const [enviando, setEnviando] = useState(false)
-  // Currículo do perfil (undefined enquanto carrega; null se não houver).
   const [curriculo, setCurriculo] = useState(undefined)
   const [anexarCurriculo, setAnexarCurriculo] = useState(true)
 
@@ -114,7 +112,6 @@ function Candidatar() {
     setEtapa('revisao')
   }
 
-  // A candidatura vai para a API e só é confirmada depois da resposta do servidor.
   async function enviar() {
     setEnviando(true)
     setErro('')

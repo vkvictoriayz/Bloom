@@ -6,24 +6,26 @@ import denunciaRoutes from "./routes/denunciaRoutes.js";
 import publicoRoutes from "./routes/publicoRoutes.js";
 import comunidadeRoutes from "./routes/comunidadeRoutes.js";
 import imagemRoutes from "./routes/imagemRoutes.js";
-import { candidataRoutes, grupoRoutes, mensagemDiretaRoutes, mensagemRoutes, notificacaoRoutes } from "./routes/candidataRoutes.js";
-import { pagamentoRoutes, premiumRoutes } from "./routes/premiumRoutes.js";
-import { candidaturaRoutes, empresaRoutes, vagaRoutes } from "./routes/empresaRoutes.js";
+import candidataRoutes from "./routes/candidataRoutes.js";
+import grupoRoutes from "./routes/grupoRoutes.js";
+import mensagemDiretaRoutes from "./routes/mensagemDiretaRoutes.js";
+import mensagemRoutes from "./routes/mensagemRoutes.js";
+import notificacaoRoutes from "./routes/notificacaoRoutes.js";
+import premiumRoutes from "./routes/premiumRoutes.js";
+import pagamentoRoutes from "./routes/pagamentoRoutes.js";
+import empresaRoutes from "./routes/empresaRoutes.js";
+import vagaRoutes from "./routes/vagaRoutes.js";
+import candidaturaRoutes from "./routes/candidaturaRoutes.js";
 
 const app = express();
 
 app.use(cors({ origin: process.env.FRONTEND_URL ?? "http://localhost:3006" }));
-// Foto e capa vêm antes do limite geral: essa rota aceita até 1 MB de imagem.
 app.use("/api/imagens", imagemRoutes);
-// Perfil completo e projetos com imagem: limites próprios (ver candidataRoutes.js).
 app.use("/api/candidata", candidataRoutes);
-// Publicações com imagem (feed e comunidades): cada rota define o próprio limite.
 app.use("/api/comunidade", comunidadeRoutes);
 app.use("/api/comunidades", grupoRoutes);
 app.use("/api/mensagens/candidatas", mensagemDiretaRoutes);
-// Mensagens com empresas (enviar aceita imagem): limite próprio por rota.
 app.use("/api/mensagens", mensagemRoutes);
-// Administração: limite próprio de corpo (ver adminRoutes.js).
 app.use("/api/admin", adminRoutes);
 app.use(express.json({ limit: "20kb" }));
 
@@ -40,9 +42,7 @@ app.use("/api/publico", publicoRoutes);
 
 app.use((req, res) => res.status(404).json({ erro: "Rota não encontrada." }));
 
-// JSON malformado e erros inesperados
-// eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   if (err.type === "entity.parse.failed") {
     return res.status(400).json({ erro: "Requisição inválida." });
   }

@@ -11,7 +11,6 @@ import { CONTRATOS, criarVaga, editarVaga, lerVagaEmpresa, MODALIDADES, NIVEIS }
 
 const VAZIA = { titulo: '', descricao: '', requisitos: '', beneficios: '', area: '', nivel: '', localizacao: '', modalidade: '', tipoContrato: '', salario: '', salarioMax: '' }
 
-// "5.000,00", "5000.5" ou "5000" -> número (ou null se vazio, NaN se inválido).
 function valor(texto) {
   const t = String(texto ?? '').trim()
   if (!t) return null
@@ -19,7 +18,6 @@ function valor(texto) {
   return /^\d+(\.\d{1,2})?$/.test(normal) ? Number(normal) : NaN
 }
 
-// Campos da tabela VAGAS, com os limites do banco.
 function Formulario({ inicial, editando, idVaga, rascunhoAtual }) {
   const navigate = useNavigate()
   const [dados, setDados] = useState(inicial)
@@ -27,7 +25,6 @@ function Formulario({ inicial, editando, idVaga, rascunhoAtual }) {
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
   const campo = (nome) => (e) => setDados((d) => ({ ...d, [nome]: e.target.value }))
 
-  // rascunho: salva sem publicar (só ao criar; depois, publica-se pela vaga).
   async function enviar(e, rascunho = false) {
     e?.preventDefault()
     const novos = {}

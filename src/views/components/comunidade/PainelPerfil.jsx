@@ -5,7 +5,6 @@ import { Aviso, Campo, Entrada, AreaTexto } from '../ui/Campo'
 import Avatar from './Avatar'
 import { salvarMeuPerfil } from '../../services/comunidade'
 
-// "Meu perfil" na comunidade: como a pessoa aparece (área, interesses, apresentação).
 function PainelPerfil({ nome, perfil, numeros, aoSalvar }) {
   const [editando, setEditando] = useState(false)
   const [area, setArea] = useState(perfil.area)

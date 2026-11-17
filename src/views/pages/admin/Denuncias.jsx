@@ -22,8 +22,6 @@ const TIPOS = {
 
 const linkConta = (dono) => (dono?.tipo === 'empresa' ? `/admin/empresas/${dono.id}` : `/admin/candidatas/${dono?.id}`)
 
-// Ação que resolve o problema direto da fila (remove, encerra ou leva à conta).
-// Remover pelo painel já fecha as denúncias do alvo e avisa quem denunciou.
 function AcaoNoAlvo({ alvo, aoConcluir }) {
   if (alvo.removido) return <p className="text-sm text-suave">O conteúdo já foi removido. Feche a denúncia como resolvida.</p>
   switch (alvo.tipo) {

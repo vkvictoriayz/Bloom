@@ -1,6 +1,5 @@
 import { cn } from '../../lib/cn'
 
-// Estado vazio, adaptado do Empty do VengeanceUI (mesma composição em partes).
 export function Vazio({ className, ...props }) {
   return (
     <div

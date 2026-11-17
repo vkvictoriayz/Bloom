@@ -56,8 +56,6 @@ function Busca({ valor, aoMudar, placeholder }) {
 
 const VAZIO = (texto) => <p className="rounded-xl border border-dashed border-linha-forte bg-branco px-5 py-6 text-sm text-suave">{texto}</p>
 
-// ------------------------------------------------------------ Vagas
-
 const STATUS = [
   ['', 'Todas'],
   ['Aberta', 'Abertas'],
@@ -148,8 +146,6 @@ export function VagasAdmin() {
     </>
   )
 }
-
-// ------------------------------------------------------------ Publicações
 
 function Comentarios({ publicacaoId, aoMudarTotal }) {
   const r = useCarregar(() => listarComentariosAdmin(publicacaoId), [publicacaoId])
@@ -263,8 +259,6 @@ export function PublicacoesAdmin() {
     </>
   )
 }
-
-// ------------------------------------------------------------ Comunidades
 
 export function ComunidadesAdmin() {
   const [f, definir] = useParametros(['busca'])

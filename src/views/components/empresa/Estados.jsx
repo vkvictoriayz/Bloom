@@ -3,8 +3,6 @@ import { Aviso } from '../ui/Campo'
 import Esqueleto from '../ui/Esqueleto'
 import { cn } from '../../lib/cn'
 
-// Estados comuns das páginas da empresa.
-
 export function Carregando({ quantidade = 3, altura = 'h-24', className }) {
   return (
     <div className={cn('flex flex-col gap-3', className)} aria-busy="true" aria-label="Carregando">
@@ -28,8 +26,6 @@ export function ErroAoCarregar({ erro, aoTentar }) {
   )
 }
 
-// Cartão de talento: só dados públicos da comunidade (nome, área,
-// interesses, apresentação). Usado em Explorar e no Banco de talentos.
 export function CartaoTalento({ talento, acao }) {
   return (
     <article className="cartao flex h-full flex-col p-5">

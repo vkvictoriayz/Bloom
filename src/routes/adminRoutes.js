@@ -3,20 +3,16 @@ import * as A from "../controllers/AdminController.js";
 import { exigirAdmin } from "../middlewares/autenticacao.js";
 import { criarLimitador, limitarPorIp } from "../utils/limitador.js";
 
-// Área de administração (/api/admin). Login próprio; não existe cadastro
-// público de administrador (o primeiro é criado com "npm run admin:criar").
 const router = Router();
 router.use(express.json({ limit: "20kb" }));
 
 const limiteLogin = limitarPorIp(criarLimitador({ janela: 60 * 1000, maximo: 10 }), "Muitas tentativas. Aguarde um minuto e tente de novo.");
 router.post("/login", limiteLogin, A.login);
-// O passo do código tem limite próprio (além do bloqueio de 5 códigos errados por pessoa).
 const limiteCodigo = limitarPorIp(criarLimitador({ janela: 60 * 1000, maximo: 20 }), "Muitas tentativas. Aguarde um minuto e tente de novo.");
 router.post("/login/codigo", limiteCodigo, A.loginCodigo);
 
 const admin = exigirAdmin();
 const soSuper = exigirAdmin(["super"]);
-// Liberadas mesmo com a troca de senha pendente (para a pessoa conseguir trocar).
 const duranteTroca = exigirAdmin(undefined, { durantetroca: true });
 
 router.get("/me", duranteTroca, A.me);

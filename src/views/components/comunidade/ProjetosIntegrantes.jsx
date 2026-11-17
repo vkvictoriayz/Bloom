@@ -8,10 +8,8 @@ import Avatar from './Avatar'
 import { enderecoSeguro } from '../candidata/utilPerfil'
 import { listarProjetosComunidade } from '../../services/recursos'
 
-// Projetos de outras integrantes (perfis públicos): no Explorar (com busca)
-// e no perfil de uma integrante ("autora"). Dados vêm de /api/comunidade/projetos.
 function ProjetosIntegrantes({ busca = '', autora, limite, vazio }) {
-  const [resultado, setResultado] = useState(null) // { chave, projetos } | { chave, erro }
+  const [resultado, setResultado] = useState(null)
   const chave = `${autora ?? ''}|${busca.trim()}`
 
   useEffect(() => {

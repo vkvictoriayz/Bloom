@@ -27,8 +27,6 @@ export function formatarCNPJ(valor) {
     .replace(/(\d{4})(\d)/, "$1-$2");
 }
 
-// Dígitos verificadores: o número é válido, o que não prova que existe nem
-// de quem é. A confirmação fica com o servidor e as APIs de consulta.
 export function validarCPF(valor) {
   const cpf = somenteDigitos(valor);
   if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;

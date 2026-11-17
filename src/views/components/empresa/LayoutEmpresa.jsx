@@ -4,9 +4,6 @@ import { useCarregar } from './useCarregar'
 import { useSessao } from '../../hooks/useSessao'
 import { fotoEmpresa, lerPerfilEmpresa } from '../../services/empresa'
 
-// Layout da área privada da empresa (/empresa/* depois do login): a mesma
-// moldura da candidata, com o menu da empresa. Os 12 itens seguem a ordem
-// combinada, agrupados para não poluir o menu.
 const CONFIG = {
   rotuloNav: 'Área da empresa',
   selo: 'Empresa',

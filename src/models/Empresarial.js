@@ -1,22 +1,10 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-// Models da área empresarial.
-//
-// PERFIL_EMPRESA, VAGAS e CANDIDATURAS seguem exatamente "banco bloom.sql"
-// (mesmos nomes de tabela, colunas e ENUMs). Duas tabelas são novas:
-//  - CANDIDATURA_ENVIO: o que a candidata enviou junto com a candidatura
-//    (apresentação, links, título e competências), já que CANDIDATURAS não
-//    tem colunas para isso;
-//  - PUBLICACAO_EMPRESA: publicações feitas por empresas (PUBLICACAO só
-//    aceita usuárias).
-// prepararEmpresarial() cria só o que faltar; nunca altera nem apaga tabelas.
-
 const opcoes = (tableName) => ({ tableName, freezeTableName: true, timestamps: false });
 const refEmpresa = { model: "CADASTRO_EMPRESA", key: "id_empresa" };
 const refUsuaria = { model: "CADASTRO_USUARIA", key: "id_usuario" };
 
-// Valores depois da migration 001 (src/database/migrations/001_area_empresa.sql).
 export const STATUS_VAGA = ["Rascunho", "Aberta", "Pausada", "Encerrada"];
 export const STATUS_CANDIDATURA = ["Recebida", "Em análise", "Em entrevista", "Aprovada", "Reprovada"];
 
@@ -29,7 +17,6 @@ export const PerfilEmpresa = sequelize.define(
     descricao: { type: DataTypes.STRING(500) },
     localizacao: { type: DataTypes.STRING(150) },
     site: { type: DataTypes.STRING(255) },
-    // Colunas da migration 001
     areaAtuacao: { type: DataTypes.STRING(100), field: "area_atuacao" },
     linkedin: { type: DataTypes.STRING(255) },
     emailContato: { type: DataTypes.STRING(150), field: "email_contato" },
@@ -55,10 +42,9 @@ export const Vaga = sequelize.define(
     localizacao: { type: DataTypes.STRING(150) },
     modalidade: { type: DataTypes.STRING(50) },
     tipoContrato: { type: DataTypes.STRING(50), field: "tipo_contrato" },
-    salario: { type: DataTypes.DECIMAL(10, 2) }, // salário (ou mínimo da faixa)
+    salario: { type: DataTypes.DECIMAL(10, 2) },
     dataPublicacao: { type: DataTypes.DATEONLY, field: "data_publicacao" },
     status: { type: DataTypes.ENUM(...STATUS_VAGA) },
-    // Colunas da migration 001
     nivel: { type: DataTypes.STRING(30) },
     beneficios: { type: DataTypes.STRING(500) },
     salarioMax: { type: DataTypes.DECIMAL(10, 2), field: "salario_max" },
@@ -90,9 +76,9 @@ export const CandidaturaEnvio = sequelize.define(
       references: { model: "CANDIDATURAS", key: "id_candidatura" },
     },
     titulo: { type: DataTypes.STRING(100) },
-    competencias: { type: DataTypes.STRING(500) }, // separadas por vírgula
+    competencias: { type: DataTypes.STRING(500) },
     apresentacao: { type: DataTypes.STRING(1000) },
-    links: { type: DataTypes.STRING(1500) }, // JSON: [{ rotulo, url }]
+    links: { type: DataTypes.STRING(1500) },
   },
   opcoes("CANDIDATURA_ENVIO")
 );
@@ -110,7 +96,6 @@ export const PublicacaoEmpresa = sequelize.define(
   opcoes("PUBLICACAO_EMPRESA")
 );
 
-// Cria só as tabelas que faltam, na ordem das chaves estrangeiras.
 export async function prepararEmpresarial() {
   for (const modelo of [PerfilEmpresa, Vaga, Candidatura, CandidaturaEnvio, PublicacaoEmpresa]) {
     await modelo.sync();

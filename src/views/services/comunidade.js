@@ -1,8 +1,6 @@
 import { api } from "./api.js";
 import { obterSessao } from "./auth.js";
 
-// Cliente da API da comunidade (src/routes/comunidadeRoutes.js).
-// Usa o token da sessão atual; sem sessão, nada é enviado.
 export const TIPOS = [
   { id: "dica", rotulo: "Dica" },
   { id: "experiencia", rotulo: "Experiência" },
@@ -26,16 +24,11 @@ const consulta = (params) => {
   return q ? `?${q}` : "";
 };
 
-// autora: "eu" traz só as publicações da própria usuária.
-// autora: também aceita o id de outra integrante (perfil público).
 export const lerFeed = ({ filtro, tipo, autora, busca, pagina = 1 } = {}) =>
   chamar(`/feed${consulta({ filtro, tipo, autora, busca, pagina: pagina > 1 ? pagina : "" })}`);
-// Assuntos (#hashtags) mais usados nas publicações dos últimos 14 dias.
 export const lerEmAlta = () => chamar("/em-alta");
-// Busca de publicações por um assunto (#tag), na tela Explorar.
 export const linkAssunto = (tag) => `/candidata/explorar?categoria=publicacoes&q=${encodeURIComponent(`#${tag}`)}`;
 export const publicar = (corpo) => chamar("/publicacoes", { method: "POST", corpo });
-// corpo.imagem: data URL troca; null remove; ausente mantém.
 export const editarPublicacao = (id, corpo) => chamar(`/publicacoes/${id}`, { method: "PUT", corpo });
 export const excluirPublicacao = (id) => chamar(`/publicacoes/${id}`, { method: "DELETE" });
 export const curtir = (id) => chamar(`/publicacoes/${id}/curtir`, { method: "POST" });
@@ -47,14 +40,12 @@ export const lerPerfis = ({ busca, conectadas } = {}) => chamar(`/perfis${consul
 export const seguir = (id) => chamar(`/perfis/${id}/seguir`, { method: "POST" });
 export const seguirPerfil = (id) => chamar(`/perfis/${id}/seguir`, { method: "PUT" });
 export const deixarDeSeguir = (id) => chamar(`/perfis/${id}/seguir`, { method: "DELETE" });
-// Liga ou desliga conforme o estado desejado (evita alternar duas vezes).
 export const definirSeguindo = (id, seguir) => (seguir ? seguirPerfil(id) : deixarDeSeguir(id));
 export const lerPerfilIntegrante = (id) => chamar(`/perfis/${id}`);
 export const lerConexoes = (id, lado) => chamar(`/perfis/${id}/${lado === "seguindo" ? "seguindo" : "seguidoras"}`);
 export const lerMeuPerfil = () => chamar("/meu-perfil");
 export const salvarMeuPerfil = (corpo) => chamar("/meu-perfil", { method: "PUT", corpo });
 
-// "há 5 min", "há 3 h", "ontem" ou a data.
 export function tempoRelativo(data, agora = Date.now()) {
   const ms = agora - new Date(data).getTime();
   if (Number.isNaN(ms)) return "";
@@ -69,7 +60,6 @@ export function tempoRelativo(data, agora = Date.now()) {
   return new Date(data).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
 }
 
-// "12 publicações esta semana", "Ativa há 3 dias" ou "Sem publicações ainda".
 export function textoAtividade(c) {
   if (c.publicacoesSemana > 0) return `${c.publicacoesSemana} ${c.publicacoesSemana === 1 ? 'publicação' : 'publicações'} esta semana`
   if (c.ultimaAtividade) return `Última publicação: ${tempoRelativo(c.ultimaAtividade)}`

@@ -11,9 +11,6 @@ import { Usuaria } from "../models/Usuaria.js";
 import { notificar } from "../services/notificacoes.js";
 import { empresasVerificadas } from "../services/representante.js";
 
-// Vagas publicadas pelas empresas, vistas pela candidata, e as candidaturas
-// dela. Rotas exigem login de usuária (exigirLogin(["usuaria"])).
-
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
 const erro = (res, status, mensagem, campo) => res.status(status).json({ erro: mensagem, campo });
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
@@ -29,7 +26,6 @@ const comTratamento = (fn) => async (req, res) => {
   }
 };
 
-// Empresa dona de cada vaga (nome e dados públicos do perfil).
 async function empresasDas(vagas) {
   const perfis = await PerfilEmpresa.findAll({ where: { id: { [Op.in]: [...new Set(vagas.map((v) => v.perfilEmpresaId))] } } });
   const contas = await Empresa.findAll({ where: { id: { [Op.in]: perfis.map((p) => p.empresaId) } } });
@@ -73,17 +69,14 @@ export const vagaPublica = (v, empresa) => ({
   empresa,
 });
 
-// GET /api/vagas — vagas abertas
 export const listar = comTratamento(async (req, res) => {
   const vagas = await Vaga.findAll({ where: { status: "Aberta" }, order: [["dataPublicacao", "DESC"], ["id", "DESC"]], limit: 200 });
   const empresas = await empresasDas(vagas);
-  // Premium: vagas de empresas assinantes aparecem primeiro (mais visibilidade).
   const lista = vagas.map((v) => vagaPublica(v, empresas.get(v.perfilEmpresaId)));
   lista.sort((a, b) => Number(Boolean(b.empresa?.premium)) - Number(Boolean(a.empresa?.premium)));
   return res.json({ vagas: lista });
 });
 
-// GET /api/vagas/empresas/:id — perfil público de uma empresa e as vagas abertas dela.
 export const empresaPublica = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const conta = id && (await Empresa.findByPk(id));
@@ -111,17 +104,14 @@ export const empresaPublica = comTratamento(async (req, res) => {
   return res.json({ empresa, vagas: vagas.map((v) => vagaPublica(v, dadosEmpresa)) });
 });
 
-// GET /api/vagas/:id — também mostra vagas pausadas/encerradas (com o status)
 export const ver = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const vaga = id && (await Vaga.findByPk(id));
-  // Rascunho não é público.
   if (!vaga || vaga.status === "Rascunho") return erro(res, 404, "Vaga não encontrada.");
   const empresas = await empresasDas([vaga]);
   return res.json({ vaga: vagaPublica(vaga, empresas.get(vaga.perfilEmpresaId)) });
 });
 
-// POST /api/candidaturas { vagaId, titulo, competencias[], apresentacao, links[] }
 export const candidatar = comTratamento(async (req, res) => {
   const vagaId = idParam(req.body.vagaId);
   const vaga = vagaId && (await Vaga.findByPk(vagaId));
@@ -144,7 +134,6 @@ export const candidatar = comTratamento(async (req, res) => {
 
   const existente = await Candidatura.findOne({ where: { usuariaId: eu(req), vagaId } });
   if (existente) return erro(res, 409, "Você já se candidatou a esta vaga.");
-  // Currículo do perfil, se ela escolheu enviar (vai uma cópia, que não muda depois).
   const curriculo = req.body.incluirCurriculo === true ? await CurriculoCandidata.findOne({ where: { usuariaId: eu(req) } }) : null;
   if (req.body.incluirCurriculo === true && !curriculo) return erro(res, 400, "Envie um currículo no seu perfil antes de anexá-lo.", "curriculo");
 
@@ -172,7 +161,6 @@ export const candidatar = comTratamento(async (req, res) => {
   return res.status(201).json({ candidatura: { id: cand.id, vagaId, data: cand.data, status: cand.status, comCurriculo: Boolean(curriculo) } });
 });
 
-// GET /api/candidaturas/minhas
 export const minhas = comTratamento(async (req, res) => {
   const cands = await Candidatura.findAll({ where: { usuariaId: eu(req) }, order: [["data", "DESC"], ["id", "DESC"]] });
   const vagas = cands.length ? await Vaga.findAll({ where: { id: { [Op.in]: cands.map((c) => c.vagaId) } } }) : [];
@@ -201,14 +189,8 @@ export const minhas = comTratamento(async (req, res) => {
   });
 });
 
-// Etapas em que a candidata ainda pode desistir. Depois de aprovada ou
-// reprovada o processo acabou, e a candidatura fica como histórico.
 const PODE_RETIRAR = ["Recebida", "Em análise", "Em entrevista"];
 
-// DELETE /api/candidaturas/:id — a candidata retira a candidatura. Apaga a
-// candidatura e o que foi enviado com ela (apresentação, cópia do currículo e a
-// conversa com a empresa), e avisa a empresa. Depois ela pode se candidatar de
-// novo, se a vaga continuar aberta.
 export const retirar = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const cand = id && (await Candidatura.findOne({ where: { id, usuariaId: eu(req) } }));

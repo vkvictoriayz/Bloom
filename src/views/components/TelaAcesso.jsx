@@ -12,16 +12,12 @@ const ILUSTRACOES = {
   empresa: IlustracaoEmpresa,
 }
 
-// "itens" (a lista com marcadores abaixo da frase) só aparece quando a tela
-// pede: login e cadastro não usam.
 const VISUAL_PADRAO = {
   ilustracao: 'codigo',
   frase: 'Florescer é voltar para você.',
   itens: [],
 }
 
-// Para onde o seletor "Candidata | Empresa" leva, conforme a tela atual.
-// É só navegação: o tipo da conta continua vindo do backend no login.
 const TROCAS = {
   '/login': { publico: 'candidata', candidata: '/login', empresa: '/empresa/login' },
   '/cadastro': { publico: 'candidata', candidata: '/cadastro', empresa: '/empresa/cadastro' },
@@ -57,11 +53,6 @@ function SeletorPublico({ troca }) {
   )
 }
 
-// Moldura das telas de acesso (login, cadastro, recuperação de senha e área
-// da empresa), no mesmo visual da área logada: barra superior branca, fundo
-// claro e um cartão com o formulário ao lado do painel visual da marca
-// (ilustração vetorial: codigo, conexoes ou empresa, ou uma imagem).
-// Em vez da ilustração vetorial, a tela pode usar uma imagem (visual.imagem).
 function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, visual = {} }) {
   const { ilustracao, imagem, frase, itens } = { ...VISUAL_PADRAO, ...visual }
   const Ilustracao = ILUSTRACOES[ilustracao] ?? IlustracaoCodigo
@@ -92,7 +83,6 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
 
       <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 lg:py-12">
         <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-linha bg-branco lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
-          {/* Formulário */}
           <section className="px-6 py-8 sm:px-10 sm:py-10 lg:px-12">
             {troca && <SeletorPublico troca={troca} />}
             {imagem ? (
@@ -113,12 +103,9 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
             {rodape && <div className="mt-8 flex flex-col gap-2 border-t border-linha pt-6 text-sm text-tinta-2">{rodape}</div>}
           </section>
 
-          {/* Painel visual da marca: ilustração vetorial, frase e o que a pessoa encontra */}
           <aside className="hidden p-3 lg:block">
             <div className="flex h-full min-h-[560px] flex-col justify-between rounded-xl bg-papel p-8">
               {imagem ? (
-                // A imagem ocupa o espaço livre sem aumentar a altura do cartão,
-                // que continua definida pelo formulário.
                 <div className="relative -mx-8 -mt-8 mb-6 min-h-[320px] flex-1 overflow-hidden rounded-t-xl">
                   <img
                     src={imagem}
@@ -155,7 +142,6 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
   )
 }
 
-// Agrupa campos com um título curto numerado (usado no cadastro).
 export function GrupoCampos({ indice, titulo, children }) {
   return (
     <fieldset className="flex flex-col gap-5">
@@ -169,7 +155,6 @@ export function GrupoCampos({ indice, titulo, children }) {
   )
 }
 
-// Link do rodapé das telas de acesso.
 export function LinkAcesso({ to, children }) {
   return (
     <Link to={to} className="font-semibold text-vinho underline-offset-4 hover:underline">

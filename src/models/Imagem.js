@@ -2,10 +2,6 @@ import { DataTypes, Op } from "sequelize";
 import { sequelize } from "../config/database.js";
 import { IconePerfil } from "./RedeSocial.js";
 
-// Foto e capa de perfil (de integrantes e de empresas), guardadas no banco.
-// Tabela nova: não altera CADASTRO_USUARIA, CADASTRO_EMPRESA nem PERFIL_EMPRESA.
-// Cada envio gera uma "chave" aleatória nova, usada no endereço público da
-// imagem (/api/imagens/<chave>); a chave só circula em respostas autenticadas.
 export const ImagemPerfil = sequelize.define(
   "ImagemPerfil",
   {
@@ -26,11 +22,8 @@ export const ImagemPerfil = sequelize.define(
   }
 );
 
-// Endereço (relativo à API) de uma imagem.
 const caminho = (chave) => `/imagens/${chave}`;
 
-// Foto e capa de várias contas de um tipo: Map(id -> { foto, capa, icone }).
-// "foto" é o endereço da foto enviada ou, sem ela, o ícone escolhido.
 export async function imagensDe(tipo, ids) {
   const unicos = [...new Set(ids)].filter(Boolean);
   const mapa = new Map(unicos.map((id) => [id, { foto: null, capa: null, icone: null }]));
@@ -40,7 +33,6 @@ export async function imagensDe(tipo, ids) {
     where: { donoTipo: tipo, donoId: { [Op.in]: unicos } },
   });
   for (const l of linhas) mapa.get(l.donoId)[l.campo] = caminho(l.chave);
-  // Sem foto enviada, vale o ícone escolhido ("icone:<nome>:<cor>"), se houver.
   const icones = await IconePerfil.findAll({ attributes: ["donoId", "icone"], where: { donoTipo: tipo, donoId: { [Op.in]: unicos } } });
   for (const i of icones) {
     const item = mapa.get(i.donoId);

@@ -15,7 +15,6 @@ const ABAS = [
   { id: 'seguindo', rotulo: 'Seguindo' },
 ]
 
-// Listas "Seguidoras" e "Seguindo" de uma integrante (também da própria).
 function Conexoes() {
   const { id } = useParams()
   const [parametros, setParametros] = useSearchParams()
@@ -34,8 +33,6 @@ function Conexoes() {
     }
   }, [id])
 
-  // Guarda de qual lista é o resultado: ao trocar de aba, mostra o esqueleto
-  // até a lista nova chegar.
   const [carregada, setCarregada] = useState(null)
   useEffect(() => {
     let ativo = true

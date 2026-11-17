@@ -12,10 +12,6 @@ import { completude } from '../../services/perfil'
 import { listarComunidades, participarComunidade } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
-// Coluna ao lado do feed (telas grandes): quem eu sou na rede, o que falta no
-// perfil, assuntos do momento, comunidades e pessoas. Tudo vem da API; cartão
-// sem dados some ou mostra um convite, nunca números inventados.
-
 const cartao = 'rounded-2xl border border-linha bg-branco'
 const tituloCartao = 'font-display text-lg text-tinta'
 
@@ -35,7 +31,6 @@ function Numero({ valor, rotulo, para }) {
   )
 }
 
-// Minicartão do perfil: capa, foto, cargo e os números da rede.
 function MeuPerfil({ nome, perfil }) {
   const [dados, setDados] = useState(null)
   useEffect(() => {
@@ -71,7 +66,6 @@ function MeuPerfil({ nome, perfil }) {
   )
 }
 
-// O que falta no perfil, com atalho para cada item. Some quando está completo.
 function CompletarPerfil({ perfil }) {
   const { percentual, pendentes } = completude(perfil)
   if (percentual >= 100) return null
@@ -102,7 +96,6 @@ function CompletarPerfil({ perfil }) {
   )
 }
 
-// Hashtags mais usadas nas últimas duas semanas.
 function EmAlta() {
   const [assuntos, setAssuntos] = useState(null)
   useEffect(() => {
@@ -146,7 +139,6 @@ function EmAlta() {
   )
 }
 
-// Comunidades em que ainda não participo, as mais movimentadas primeiro.
 function Comunidades() {
   const [lista, setLista] = useState(null)
   const [ocupada, setOcupada] = useState(null)

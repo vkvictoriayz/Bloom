@@ -30,7 +30,6 @@ const SITUACOES = [
 ]
 const CPF = { verificado: ['sucesso', 'CPF verificado'], pendente: ['alerta', 'CPF pendente'], nao_verificado: ['neutro', 'CPF não verificado'] }
 
-// Busca + filtros guardados no endereço (dá para voltar e compartilhar o link).
 function useFiltros() {
   const [p, setP] = useSearchParams()
   const filtros = { busca: p.get('busca') ?? '', situacao: p.get('situacao') ?? '', representante: p.get('representante') ?? '', pagina: Number(p.get('pagina')) || 1 }
@@ -64,8 +63,6 @@ function CampoBusca({ valor, aoMudar, placeholder }) {
 function SeloSituacao({ suspensaEm }) {
   return suspensaEm ? <Selo variante="erro">Suspensa</Selo> : <Selo variante="sucesso">Ativa</Selo>
 }
-
-// ------------------------------------------------------------ Candidatas
 
 export function Candidatas() {
   const [f, definir] = useFiltros()
@@ -115,7 +112,6 @@ export function Candidatas() {
   )
 }
 
-// Suspender / reativar / excluir: compartilhado por candidatas e empresas.
 function AcoesConta({ tipo, conta, aoMudar, voltar }) {
   const navigate = useNavigate()
   const [aviso, setAviso] = useState(null)
@@ -293,8 +289,6 @@ export function DetalheCandidata() {
     </>
   )
 }
-
-// ------------------------------------------------------------ Empresas
 
 export function Empresas() {
   const [f, definir] = useFiltros()

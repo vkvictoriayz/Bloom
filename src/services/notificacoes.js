@@ -2,7 +2,6 @@ import { Op } from "sequelize";
 import { Notificacao } from "../models/Interacao.js";
 import { PreferenciaNotificacao } from "../models/Premium.js";
 
-// Categoria de preferência de cada tipo de notificação.
 const CATEGORIA = {
   vaga: "vagasCompativeis",
   candidatura: "candidaturas",
@@ -15,23 +14,16 @@ const CATEGORIA = {
   plataforma: "plataforma",
 };
 
-// Categorias que fazem sentido para cada tipo de conta.
 export const CATEGORIAS = {
   usuaria: ["vagasCompativeis", "candidaturas", "mensagens", "convites", "comunidade", "plataforma"],
   empresa: ["candidaturas", "mensagens", "plataforma"],
 };
 
-// Preferências salvas (sem linha, tudo ligado).
 export async function preferenciasDe(tipoConta, contaId) {
   const linha = await PreferenciaNotificacao.findOne({ where: { tipoConta, contaId } });
   return Object.fromEntries(CATEGORIAS[tipoConta].map((c) => [c, linha ? linha[c] !== false : true]));
 }
 
-// Cria uma notificação, se a conta não desligou a categoria dela. Com
-// "chave", não repete o aviso enquanto o anterior com a mesma chave não for
-// lido (ex.: várias mensagens da mesma conversa geram um aviso só). Falha
-// aqui nunca derruba a ação principal.
-// Devolve true se o aviso foi criado (false: a pessoa desligou a categoria ou deu erro).
 export async function notificar({ tipoConta, contaId, tipo, texto, link = null, chave = null }) {
   try {
     const categoria = CATEGORIA[tipo];

@@ -1,11 +1,3 @@
--- 011: mais recursos no chat
---  * imagens nas mensagens (conversas com empresas e entre candidatas), guardadas
---    no banco e servidas por /api/imagens/<chave> (chave aleatória de 128 bits);
---  * apagar a própria mensagem também nas conversas com empresas;
---  * bloqueio entre candidatas: quem bloqueia deixa de receber mensagens e
---    pedidos de conversa da outra pessoa.
--- Aplicada automaticamente pelo servidor (src/database/migracoes.js), uma vez.
-
 ALTER TABLE MENSAGEM ADD COLUMN apagada_em DATETIME NULL;
 
 CREATE TABLE IF NOT EXISTS MENSAGEM_IMAGEM (

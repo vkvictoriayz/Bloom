@@ -1,7 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-// Tabela CADASTRO_EMPRESA
 export const Empresa = sequelize.define(
   "Empresa",
   {
@@ -11,10 +10,8 @@ export const Empresa = sequelize.define(
     email: { type: DataTypes.STRING(150), allowNull: false, unique: true },
     telefone: { type: DataTypes.STRING(20) },
     senhaHash: { type: DataTypes.STRING(255), allowNull: false, field: "senha_hash" },
-    // Migration 005: suspensão feita pela administração.
     suspensaEm: { type: DataTypes.DATE, field: "suspensa_em" },
     motivoSuspensao: { type: DataTypes.STRING(300), field: "motivo_suspensao" },
-    // Migration 008: quando o e-mail foi confirmado (vazio = ainda não).
     emailVerificadoEm: { type: DataTypes.DATE, field: "email_verificado_em" },
   },
   { tableName: "CADASTRO_EMPRESA", freezeTableName: true, timestamps: false }

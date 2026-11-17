@@ -7,9 +7,6 @@ import Selo from './ui/Selo'
 import { formatarPublicacao } from '../data/vagas'
 import { cn } from '../lib/cn'
 
-// Vaga em formato de linha de lista (não card): a hierarquia vem da
-// tipografia — cargo, depois empresa, depois metadados.
-// "compacta" é a versão usada no painel inicial.
 function LinhaVaga({ vaga, candidatura, compacta = false, className }) {
   const empresa = vaga.dadosEmpresa
 

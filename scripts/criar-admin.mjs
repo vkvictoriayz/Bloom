@@ -1,7 +1,3 @@
-// npm run admin:criar — cria um administrador da Bloom pelo terminal.
-// Não existe cadastro público de administrador: o primeiro é criado aqui
-// (com acesso total); os demais podem ser criados por ele no painel.
-// A senha é digitada sem aparecer na tela e nunca fica em arquivo ou histórico.
 import bcrypt from "bcrypt";
 import { Op } from "sequelize";
 import { sequelize } from "../src/config/database.js";
@@ -13,7 +9,7 @@ exigirTerminal();
 
 try {
   await sequelize.authenticate();
-  await aplicarMigracoes(); // garante as colunas novas da tabela ADMINS
+  await aplicarMigracoes();
   console.log("\nNovo administrador da Bloom (acesso total)\n");
 
   const nome = await perguntar("Nome: ");

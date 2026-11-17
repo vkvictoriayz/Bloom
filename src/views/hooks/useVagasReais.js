@@ -8,7 +8,6 @@ import {
   listarVagasServidor,
 } from '../services/vagasApi'
 
-// Vagas publicadas pelas empresas (API). Não há mais vagas de exemplo.
 export function useVagas() {
   const [reais, setReais] = useState({ vagas: [], carregando: true, erro: '' })
 
@@ -25,8 +24,6 @@ export function useVagas() {
   return reais
 }
 
-// Uma vaga pelo id do front ("b12" = vaga 12 da API). Ids de vagas de
-// exemplo antigas (só números) não existem mais: dão "não encontrada".
 export function useVaga(id) {
   const real = ehVagaReal(id)
   const inicial = () => (real ? { vaga: null, carregando: true, erro: '' } : { vaga: null, carregando: false, erro: '' })
@@ -51,8 +48,6 @@ export function useVaga(id) {
   return estado
 }
 
-// Candidaturas da candidata, do servidor (com o status dado pela empresa),
-// com os estados de carregamento e erro.
 export function useCandidaturasEstado() {
   const [estado, setEstado] = useState({ lista: [], carregando: true, erro: '' })
   const [versao, setVersao] = useState(0)
@@ -76,7 +71,6 @@ export function useCandidaturasEstado() {
   return estado
 }
 
-// Só a lista (para as telas que não mostram carregamento).
 export function useCandidaturas() {
   return useCandidaturasEstado().lista
 }

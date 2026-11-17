@@ -7,7 +7,6 @@ import { api } from '../../services/api'
 import { obterSessao } from '../../services/auth'
 import { cn } from '../../lib/cn'
 
-// Motivos aceitos pela API (src/models/Denuncia.js).
 const MOTIVOS = [
   ['spam', 'Spam ou propaganda enganosa'],
   ['assedio', 'Assédio, ofensa ou discurso de ódio'],
@@ -19,8 +18,6 @@ const MOTIVOS = [
 
 const enviar = (corpo) => api('/denuncias', { method: 'POST', corpo, token: obterSessao()?.token })
 
-// Formulário de denúncia (motivo + explicação opcional). "alvoTipo":
-// publicacao | publicacao_empresa | comentario | perfil | empresa | vaga | comunidade.
 export function FormularioDenuncia({ alvoTipo, alvoId, aoFechar, className }) {
   const id = useId()
   const [motivo, setMotivo] = useState('')
@@ -82,7 +79,6 @@ export function FormularioDenuncia({ alvoTipo, alvoId, aoFechar, className }) {
   )
 }
 
-// Botão discreto "Denunciar" que abre o formulário logo abaixo.
 function Denunciar({ alvoTipo, alvoId, rotulo = 'Denunciar', className }) {
   const [aberto, setAberto] = useState(false)
   if (aberto) return <FormularioDenuncia alvoTipo={alvoTipo} alvoId={alvoId} aoFechar={() => setAberto(false)} className={cn('mt-2 w-full', className)} />

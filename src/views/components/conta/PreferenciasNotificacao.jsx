@@ -5,7 +5,6 @@ import Esqueleto from '../ui/Esqueleto'
 import Interruptor from '../ui/Interruptor'
 import { lerPreferenciasNotificacao, salvarPreferenciasNotificacao } from '../../services/recursos'
 
-// Rótulos de cada categoria (a API devolve só as que valem para a conta).
 const TEXTOS = {
   vagasCompativeis: ['Novas vagas compatíveis', 'Quando uma empresa publica uma vaga que combina com suas competências ou áreas de interesse.'],
   candidaturas: ['Candidaturas', null],
@@ -19,8 +18,6 @@ const TEXTO_CONTA = {
   empresa: { candidaturas: 'Novas candidaturas nas suas vagas.', mensagens: 'Mensagens recebidas de candidatas.' },
 }
 
-// Preferências de notificação (API /api/notificacoes/preferencias). Cada
-// interruptor salva na hora; se o servidor recusar, volta como estava.
 function PreferenciasNotificacao({ tipoConta = 'usuaria' }) {
   const [estado, setEstado] = useState({ tipo: 'carregando' })
   const [salvando, setSalvando] = useState('')

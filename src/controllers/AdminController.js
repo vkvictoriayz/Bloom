@@ -18,14 +18,10 @@ import { Denuncia, fecharDenunciasDoAlvo, MOTIVOS_DENUNCIA } from "../models/Den
 import { enviarLinkRedefinicao } from "./AuthController.js";
 import { criarLimitador } from "../utils/limitador.js";
 
-// Área de administração (/api/admin). Toda ação que muda algo fica em LOGS_ADMIN.
-
 const erro = (res, status, mensagem, campo) => res.status(status).json({ erro: mensagem, campo });
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
 const POR_PAGINA = 25;
-// Hash de uma senha qualquer: o login confere contra ele quando o usuário não
-// existe, para levar o mesmo tempo e não revelar quais usuários existem.
 const HASH_FICTICIO = bcrypt.hashSync("bloom-admin-tempo-constante", 12);
 const falhasLogin = criarLimitador({ janela: 15 * 60 * 1000, maximo: 5 });
 const paraLike = (s) => `%${s.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
@@ -54,7 +50,6 @@ const adminJson = (a) => ({
 });
 const falhas2fa = criarLimitador({ janela: 15 * 60 * 1000, maximo: 5 });
 
-// Sessão de administração (4 h, mais curta que a das contas).
 async function abrirSessao(admin, res, comoEntrou = "Entrou no painel") {
   await admin.update({ ultimoAcesso: new Date() });
   await registrarAcao(admin.id, comoEntrou, "ADMINS", admin.id);
@@ -65,15 +60,13 @@ async function abrirSessao(admin, res, comoEntrou = "Entrou no painel") {
   });
 }
 
-// Confere um código do app autenticador ou um código de recuperação (uso único).
-// Devolve uma descrição do que foi usado, ou null.
 async function conferirSegundoFator(admin, codigo) {
   if (!admin.totpAtivo || !admin.totpSegredo) return null;
   let segredo;
   try {
     segredo = decifrar(admin.totpSegredo);
   } catch {
-    return null; // JWT_SECRET mudou: o segredo não abre mais (ver docs/administracao.md)
+    return null;
   }
   const passo = conferirCodigo(segredo, codigo, admin.totpUltimoPasso === null ? null : Number(admin.totpUltimoPasso));
   if (passo !== null) {
@@ -88,7 +81,6 @@ async function conferirSegundoFator(admin, codigo) {
   return null;
 }
 
-// Fecha as denúncias abertas sobre algo em que a equipe agiu e avisa quem denunciou.
 async function encerrarDenuncias(alvoTipo, alvoId, adminId, resolucao) {
   const fechadas = await fecharDenunciasDoAlvo(alvoTipo, alvoId, adminId, resolucao);
   for (const d of fechadas) {
@@ -97,7 +89,6 @@ async function encerrarDenuncias(alvoTipo, alvoId, adminId, resolucao) {
   return fechadas.length;
 }
 
-// Motivo obrigatório nas ações que afetam outra pessoa (vai para o registro e para o aviso).
 function lerMotivo(req, res) {
   const motivo = texto(req.body?.motivo);
   if (motivo.length < 5 || motivo.length > 300) {
@@ -107,9 +98,6 @@ function lerMotivo(req, res) {
   return motivo;
 }
 
-// ------------------------------------------------------------ Sessão
-
-// POST /api/admin/login { usuario (nome de usuário ou e-mail), senha }
 export const login = comTratamento(async (req, res) => {
   const usuario = texto(req.body?.usuario).toLowerCase();
   const senha = req.body?.senha;
@@ -124,7 +112,6 @@ export const login = comTratamento(async (req, res) => {
     return erro(res, 401, "Usuário ou senha incorretos.");
   }
   falhasLogin.limpar(chave);
-  // Com verificação em duas etapas: a senha só libera o segundo passo (5 min).
   if (admin.totpAtivo) {
     const desafio = criarToken({ sub: admin.id, tipo: "admin-2fa" }, process.env.JWT_SECRET, 5 * 60);
     return res.json({ precisaCodigo: true, desafio });
@@ -132,7 +119,6 @@ export const login = comTratamento(async (req, res) => {
   return abrirSessao(admin, res);
 });
 
-// POST /api/admin/login/codigo { desafio, codigo } — segundo passo do login.
 export const loginCodigo = comTratamento(async (req, res) => {
   const desafio = verificarToken(String(req.body?.desafio ?? ""), process.env.JWT_SECRET);
   if (!desafio || desafio.tipo !== "admin-2fa") return erro(res, 401, "O tempo para digitar o código acabou. Entre de novo.");
@@ -149,10 +135,8 @@ export const loginCodigo = comTratamento(async (req, res) => {
   return abrirSessao(admin, res, `Entrou no painel (duas etapas: ${usado})`);
 });
 
-// GET /api/admin/me
 export const me = comTratamento(async (req, res) => res.json({ admin: adminJson(req.admin) }));
 
-// PUT /api/admin/senha { senhaAtual, novaSenha, confirmarSenha }
 export const alterarSenha = comTratamento(async (req, res) => {
   const { senhaAtual, novaSenha, confirmarSenha } = req.body ?? {};
   if (typeof senhaAtual !== "string" || !(await bcrypt.compare(senhaAtual, req.admin.senhaHash))) return erro(res, 400, "A senha atual não confere.", "senhaAtual");
@@ -163,8 +147,6 @@ export const alterarSenha = comTratamento(async (req, res) => {
   await registrarAcao(req.admin.id, "Trocou a própria senha", "ADMINS", req.admin.id);
   return res.json({ mensagem: "Senha alterada." });
 });
-
-// ------------------------------------------------------------ Painel
 
 async function totais() {
   const [usuarias, empresas, vagas, vagasAbertas, candidaturas, publicacoes, publicacoesEmpresa, comunidades] = await Promise.all([
@@ -180,12 +162,9 @@ async function totais() {
   return { usuarias, empresas, vagas, vagasAbertas, candidaturas, publicacoes: publicacoes + publicacoesEmpresa, comunidades };
 }
 
-// Grava (ou atualiza) a foto do dia em DASHBOARD_ADMIN. As novidades do dia
-// são a diferença para o último dia anterior registrado.
 export async function registrarFotoDoDia() {
   const t = await totais();
   const agora = new Date();
-  // Data local (horário do servidor), não UTC: depois das 21h em Brasília o UTC já é amanhã.
   const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")}`;
   const anterior = await DashboardAdmin.findOne({ where: { data: { [Op.lt]: hoje } }, order: [["data", "DESC"]] });
   const novos = (atual, campo) => (anterior ? Math.max(0, atual - (anterior[campo] ?? 0)) : 0);
@@ -205,7 +184,6 @@ export async function registrarFotoDoDia() {
   return t;
 }
 
-// GET /api/admin/dashboard
 export const dashboard = comTratamento(async (req, res) => {
   const t = await registrarFotoDoDia();
   const [porStatus, cpfs, pendentes, suspensasU, suspensasE, assinaturasAtivas, receita, historico, recentes, denunciasAbertas] = await Promise.all([
@@ -241,8 +219,6 @@ export const dashboard = comTratamento(async (req, res) => {
   });
 });
 
-// ------------------------------------------------------------ Contas
-
 const mascararCpf = (cpf) => (cpf && cpf.length === 11 ? `***.***.${cpf.slice(6, 9)}-${cpf.slice(9)}` : "");
 const formatarCnpj = (c) => (c && c.length === 14 ? `${c.slice(0, 2)}.${c.slice(2, 5)}.${c.slice(5, 8)}/${c.slice(8, 12)}-${c.slice(12)}` : c ?? "");
 
@@ -255,7 +231,6 @@ function filtroConta(req, campos) {
   return where;
 }
 
-// GET /api/admin/candidatas?busca=&situacao=ativas|suspensas&pagina=
 export const listarCandidatas = comTratamento(async (req, res) => {
   const where = filtroConta(req, ["nome", "email"]);
   const { rows, count } = await Usuaria.findAndCountAll({ where, order: [["id", "DESC"]], limit: POR_PAGINA, offset: (pagina(req) - 1) * POR_PAGINA });
@@ -288,7 +263,6 @@ export const listarCandidatas = comTratamento(async (req, res) => {
   });
 });
 
-// GET /api/admin/candidatas/:id
 export const verCandidata = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const u = id && (await Usuaria.findByPk(id));
@@ -317,7 +291,6 @@ export const verCandidata = comTratamento(async (req, res) => {
   });
 });
 
-// GET /api/admin/empresas?busca=&situacao=&representante=pendente&pagina=
 export const listarEmpresas = comTratamento(async (req, res) => {
   const where = filtroConta(req, ["nome", "email", "cnpj"]);
   if (req.query.representante === "pendente") {
@@ -359,7 +332,6 @@ export const listarEmpresas = comTratamento(async (req, res) => {
   });
 });
 
-// GET /api/admin/empresas/:id
 export const verEmpresa = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const e = id && (await Empresa.findByPk(id));
@@ -402,8 +374,6 @@ export const verEmpresa = comTratamento(async (req, res) => {
 
 const MODELOS = { candidatas: { Model: Usuaria, tabela: "CADASTRO_USUARIA", tipo: "usuaria", rotulo: "candidata" }, empresas: { Model: Empresa, tabela: "CADASTRO_EMPRESA", tipo: "empresa", rotulo: "empresa" } };
 
-// POST /api/admin/:tipo/:id/suspender { motivo } — bloqueia o login e as sessões abertas.
-// Empresa suspensa: as vagas abertas são pausadas (ela pode reabrir quando voltar).
 export const suspender = comTratamento(async (req, res) => {
   const cfg = MODELOS[req.params.tipo];
   const id = idParam(req.params.id);
@@ -426,7 +396,6 @@ export const suspender = comTratamento(async (req, res) => {
   return res.json({ suspensaEm: conta.suspensaEm, motivoSuspensao: motivo, vagasPausadas: pausadas });
 });
 
-// POST /api/admin/:tipo/:id/reativar
 export const reativar = comTratamento(async (req, res) => {
   const cfg = MODELOS[req.params.tipo];
   const id = idParam(req.params.id);
@@ -440,7 +409,6 @@ export const reativar = comTratamento(async (req, res) => {
   return res.json({ suspensaEm: null });
 });
 
-// DELETE /api/admin/:tipo/:id { motivo, confirmacao: "EXCLUIR" } — só "super".
 export const excluirConta = comTratamento(async (req, res) => {
   const cfg = MODELOS[req.params.tipo];
   const id = idParam(req.params.id);
@@ -458,7 +426,6 @@ export const excluirConta = comTratamento(async (req, res) => {
   return res.status(204).end();
 });
 
-// PATCH /api/admin/empresas/:id/representante { status: "verificado" | "pendente" }
 export const definirRepresentante = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const cad = id && (await EmpresaCadastro.findOne({ where: { empresaId: id } }));
@@ -477,9 +444,6 @@ export const definirRepresentante = comTratamento(async (req, res) => {
   return res.json({ representante: status });
 });
 
-// ------------------------------------------------------------ Vagas
-
-// GET /api/admin/vagas?busca=&status=&pagina=
 export const listarVagas = comTratamento(async (req, res) => {
   const where = {};
   const busca = texto(req.query.busca).slice(0, 100);
@@ -506,7 +470,6 @@ export const listarVagas = comTratamento(async (req, res) => {
   });
 });
 
-// PATCH /api/admin/vagas/:id/status { status: "Pausada" | "Encerrada", motivo }
 export const moderarVaga = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const vaga = id && (await Vaga.findByPk(id));
@@ -531,9 +494,6 @@ export const moderarVaga = comTratamento(async (req, res) => {
   return res.json({ vaga: { id, status } });
 });
 
-// ------------------------------------------------------------ Conteúdo
-
-// GET /api/admin/publicacoes?origem=candidatas|empresas&busca=&pagina=
 export const listarPublicacoes = comTratamento(async (req, res) => {
   const busca = texto(req.query.busca).slice(0, 100);
   const where = busca ? { texto: { [Op.like]: paraLike(busca) } } : {};
@@ -577,7 +537,6 @@ export const listarPublicacoes = comTratamento(async (req, res) => {
   });
 });
 
-// GET /api/admin/publicacoes/:id/comentarios
 export const listarComentarios = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   if (!id || !(await Publicacao.findByPk(id))) return erro(res, 404, "Publicação não encontrada.");
@@ -586,7 +545,6 @@ export const listarComentarios = comTratamento(async (req, res) => {
   return res.json({ comentarios: lista.map((c) => ({ id: c.id, texto: c.texto, criadoEm: c.criadoEm, autor: { id: c.usuariaId, nome: nome.get(c.usuariaId) ?? "Conta removida" } })) });
 });
 
-// DELETE /api/admin/publicacoes/:id { motivo } — publicação de candidata.
 export const removerPublicacao = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const pub = id && (await Publicacao.findByPk(id));
@@ -606,7 +564,6 @@ export const removerPublicacao = comTratamento(async (req, res) => {
   return res.status(204).end();
 });
 
-// DELETE /api/admin/publicacoes-empresa/:id { motivo }
 export const removerPublicacaoEmpresa = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const pub = id && (await PublicacaoEmpresa.findByPk(id));
@@ -620,7 +577,6 @@ export const removerPublicacaoEmpresa = comTratamento(async (req, res) => {
   return res.status(204).end();
 });
 
-// DELETE /api/admin/comentarios/:id { motivo }
 export const removerComentario = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const c = id && (await Comentario.findByPk(id));
@@ -634,7 +590,6 @@ export const removerComentario = comTratamento(async (req, res) => {
   return res.json({ comentarios: await Comentario.count({ where: { publicacaoId: c.publicacaoId } }) });
 });
 
-// GET /api/admin/comunidades?busca=
 export const listarComunidades = comTratamento(async (req, res) => {
   const busca = texto(req.query.busca).slice(0, 100);
   const where = busca ? { [Op.or]: [{ nome: { [Op.like]: paraLike(busca) } }, { tema: { [Op.like]: paraLike(busca) } }] } : {};
@@ -653,7 +608,6 @@ export const listarComunidades = comTratamento(async (req, res) => {
   });
 });
 
-// DELETE /api/admin/comunidades/:id { motivo } — as publicações continuam no feed.
 export const removerComunidade = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const c = id && (await Comunidade.findByPk(id));
@@ -672,9 +626,6 @@ export const removerComunidade = comTratamento(async (req, res) => {
   return res.status(204).end();
 });
 
-// ------------------------------------------------------------ Pagamentos (leitura)
-
-// GET /api/admin/pagamentos
 export const pagamentos = comTratamento(async (req, res) => {
   const [assinaturas, lista, planos] = await Promise.all([
     Assinatura.findAll({ order: [["id", "DESC"]], limit: 100 }),
@@ -692,15 +643,11 @@ export const pagamentos = comTratamento(async (req, res) => {
   });
 });
 
-// ------------------------------------------------------------ Administradores (só "super")
-
-// GET /api/admin/admins
 export const listarAdmins = comTratamento(async (req, res) => {
   const lista = await Admin.findAll({ order: [["id", "ASC"]] });
   return res.json({ admins: lista.map(adminJson) });
 });
 
-// POST /api/admin/admins { nome, usuario, email, senha, nivel }
 export const criarAdmin = comTratamento(async (req, res) => {
   const nome = texto(req.body?.nome);
   const usuario = texto(req.body?.usuario).toLowerCase();
@@ -712,14 +659,11 @@ export const criarAdmin = comTratamento(async (req, res) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 150) return erro(res, 400, "Digite um e-mail válido.", "email");
   if (typeof senha !== "string" || senha.length < 10 || Buffer.byteLength(senha) > 72) return erro(res, 400, "A senha inicial precisa ter de 10 a 72 caracteres.", "senha");
   if (await Admin.findOne({ where: { [Op.or]: [{ usuario }, { email }] } })) return erro(res, 409, "Já existe um administrador com esse usuário ou e-mail.", "usuario");
-  // Senha inicial passada por outra pessoa: precisa ser trocada no primeiro acesso.
   const novo = await Admin.create({ nome, usuario, email, nivel, senhaHash: await bcrypt.hash(senha, 12), ativo: true, deveTrocarSenha: true });
   await registrarAcao(req.admin.id, "Criou administrador", "ADMINS", novo.id, `${usuario} (${nivel})`);
   return res.status(201).json({ admin: adminJson(novo) });
 });
 
-// PATCH /api/admin/admins/:id { ativo?, nivel? } — ninguém tira o próprio acesso
-// e sempre fica pelo menos um "super" ativo.
 export const alterarAdmin = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const alvo = id && (await Admin.findByPk(id));
@@ -727,7 +671,6 @@ export const alterarAdmin = comTratamento(async (req, res) => {
   if (alvo.id === req.admin.id) return erro(res, 400, "Você não pode mudar o seu próprio acesso.");
   const mudancas = {};
   if (typeof req.body?.ativo === "boolean") mudancas.ativo = req.body.ativo;
-  // Celular perdido: desliga a verificação em duas etapas para a pessoa configurar de novo.
   if (req.body?.desligarDoisFatores === true) Object.assign(mudancas, { totpAtivo: false, totpSegredo: null, totpUltimoPasso: null, codigosRecuperacao: null });
   if (req.body?.nivel !== undefined) {
     if (!NIVEIS_ADMIN.includes(req.body.nivel)) return erro(res, 400, "Nível inválido.", "nivel");
@@ -740,15 +683,12 @@ export const alterarAdmin = comTratamento(async (req, res) => {
   return res.json({ admin: adminJson(alvo) });
 });
 
-// ------------------------------------------------------------ Registro
-
 async function nomesDosAdmins(ids) {
   const lista = await Admin.findAll({ attributes: ["id", "nome"], where: { id: { [Op.in]: [...new Set(ids)].concat(0) } } });
   return new Map(lista.map((a) => [a.id, a.nome]));
 }
 const logJson = (l, nomes) => ({ id: l.id, admin: nomes.get(l.adminId) ?? "Administrador", acao: l.acao, tabela: l.tabela, registroId: l.registroId, detalhes: l.detalhes ?? "", em: l.em });
 
-// GET /api/admin/registro?pagina=&busca=
 export const registro = comTratamento(async (req, res) => {
   const busca = texto(req.query.busca).slice(0, 100);
   const where = busca ? { [Op.or]: [{ acao: { [Op.like]: paraLike(busca) } }, { detalhes: { [Op.like]: paraLike(busca) } }] } : {};
@@ -757,10 +697,6 @@ export const registro = comTratamento(async (req, res) => {
   return res.json({ total: count, porPagina: 50, registros: rows.map((l) => logJson(l, nomes)) });
 });
 
-// ------------------------------------------------------------ Ajuda com a senha
-
-// POST /api/admin/:tipo/:id/redefinicao-senha — manda para a conta o mesmo
-// link do "esqueci minha senha" (a equipe nunca vê nem define a senha).
 export const enviarRedefinicao = comTratamento(async (req, res) => {
   const cfg = MODELOS[req.params.tipo];
   const id = idParam(req.params.id);
@@ -776,9 +712,6 @@ export const enviarRedefinicao = comTratamento(async (req, res) => {
   });
 });
 
-// ------------------------------------------------------------ Denúncias
-
-// Resumo de cada alvo denunciado, para a equipe decidir sem sair da lista.
 async function resumirAlvos(denuncias) {
   const ids = (tipo) => [...new Set(denuncias.filter((d) => d.alvoTipo === tipo).map((d) => d.alvoId))].concat(0);
   const [pubs, pubsEmpresa, comentarios, perfis, empresas, vagas, comunidades] = await Promise.all([
@@ -813,7 +746,6 @@ async function resumirAlvos(denuncias) {
   return mapa;
 }
 
-// GET /api/admin/denuncias?status=aberta|resolvida|descartada&pagina=
 export const listarDenuncias = comTratamento(async (req, res) => {
   const status = ["aberta", "resolvida", "descartada"].includes(req.query.status) ? req.query.status : "aberta";
   const { rows, count } = await Denuncia.findAndCountAll({
@@ -855,8 +787,6 @@ export const listarDenuncias = comTratamento(async (req, res) => {
   });
 });
 
-// PATCH /api/admin/denuncias/:id { status: "resolvida" | "descartada", resolucao }
-// Fecha todas as denúncias abertas do mesmo alvo e avisa quem denunciou.
 export const decidirDenuncia = comTratamento(async (req, res) => {
   const id = idParam(req.params.id);
   const d = id && (await Denuncia.findByPk(id));
@@ -875,8 +805,6 @@ export const decidirDenuncia = comTratamento(async (req, res) => {
   return res.json({ fechadas: fechadas.length });
 });
 
-// ------------------------------------------------------------ Duas etapas (da própria conta)
-
 async function conferirSenhaAtual(req, res) {
   if (typeof req.body?.senha !== "string" || !(await bcrypt.compare(req.body.senha, req.admin.senhaHash))) {
     erro(res, 400, "A senha não confere.", "senha");
@@ -885,8 +813,6 @@ async function conferirSenhaAtual(req, res) {
   return true;
 }
 
-// POST /api/admin/duas-etapas/iniciar { senha } — gera o segredo para o app.
-// Só passa a valer depois de confirmar um código (ativar).
 export const iniciarDuasEtapas = comTratamento(async (req, res) => {
   if (req.admin.totpAtivo) return erro(res, 409, "A verificação em duas etapas já está ligada.");
   if (!(await conferirSenhaAtual(req, res))) return undefined;
@@ -895,8 +821,6 @@ export const iniciarDuasEtapas = comTratamento(async (req, res) => {
   return res.json({ segredo, endereco: enderecoOtp(segredo, req.admin.usuario) });
 });
 
-// POST /api/admin/duas-etapas/ativar { codigo } — confirma o app e devolve os
-// códigos de recuperação (mostrados uma vez só).
 export const ativarDuasEtapas = comTratamento(async (req, res) => {
   if (req.admin.totpAtivo) return erro(res, 409, "A verificação em duas etapas já está ligada.");
   if (!req.admin.totpSegredo) return erro(res, 400, "Comece a configuração de novo.");
@@ -908,7 +832,6 @@ export const ativarDuasEtapas = comTratamento(async (req, res) => {
   return res.json({ codigosRecuperacao: codigos });
 });
 
-// POST /api/admin/duas-etapas/desativar { senha, codigo }
 export const desativarDuasEtapas = comTratamento(async (req, res) => {
   if (!req.admin.totpAtivo) return erro(res, 409, "A verificação em duas etapas não está ligada.");
   if (!(await conferirSenhaAtual(req, res))) return undefined;
@@ -918,7 +841,6 @@ export const desativarDuasEtapas = comTratamento(async (req, res) => {
   return res.json({ doisFatores: false });
 });
 
-// POST /api/admin/duas-etapas/novos-codigos { senha, codigo } — troca os códigos de recuperação.
 export const novosCodigos = comTratamento(async (req, res) => {
   if (!req.admin.totpAtivo) return erro(res, 409, "A verificação em duas etapas não está ligada.");
   if (!(await conferirSenhaAtual(req, res))) return undefined;
@@ -929,20 +851,14 @@ export const novosCodigos = comTratamento(async (req, res) => {
   return res.json({ codigosRecuperacao: codigos });
 });
 
-// ------------------------------------------------------------ Comunicados (só "super")
-
 const PUBLICOS = { todos: "todas as contas", usuarias: "candidatas", empresas: "empresas" };
 
-// POST /api/admin/comunicados { publico, texto, link? } — aviso "Atualizações da
-// Bloom" nas notificações (respeita quem desligou essa categoria; contas
-// suspensas não recebem).
 export const enviarComunicado = comTratamento(async (req, res) => {
   const publico = texto(req.body?.publico);
   const msg = texto(req.body?.texto);
   const link = texto(req.body?.link);
   if (!PUBLICOS[publico]) return erro(res, 400, "Escolha para quem enviar.", "publico");
   if (msg.length < 10 || msg.length > 300) return erro(res, 400, "O comunicado deve ter de 10 a 300 caracteres.", "texto");
-  // Só caminhos do próprio site ("//outro-site" levaria para fora da Bloom).
   if (link && (link.startsWith("//") || !/^\/[A-Za-z0-9\-._~/?#=&%]*$/.test(link))) return erro(res, 400, "Use um caminho do próprio site, como /candidata/vagas.", "link");
   if (link.length > 200) return erro(res, 400, "O caminho pode ter até 200 caracteres.", "link");
 
@@ -958,7 +874,6 @@ export const enviarComunicado = comTratamento(async (req, res) => {
   return res.status(201).json({ enviados, total: destinos.length });
 });
 
-// GET /api/admin/comunicados
 export const listarComunicados = comTratamento(async (req, res) => {
   const lista = await Comunicado.findAll({ order: [["id", "DESC"]], limit: 100 });
   const nomes = await nomesDosAdmins(lista.map((c) => c.adminId));
@@ -967,9 +882,6 @@ export const listarComunicados = comTratamento(async (req, res) => {
   });
 });
 
-// ------------------------------------------------------------ Relatórios em CSV (só "super")
-
-// Célula de CSV: aspas escapadas e sem fórmulas (=, +, -, @) que o Excel executaria.
 function celula(v) {
   let t = v === null || v === undefined ? "" : v instanceof Date ? v.toISOString().replace("T", " ").slice(0, 19) : String(v);
   if (/^[=+\-@\t\r]/.test(t)) t = `'${t}`;
@@ -1015,7 +927,6 @@ async function dadosRelatorio(recurso) {
   }
 }
 
-// GET /api/admin/relatorios/:recurso — CSV (separado por ";", abre no Excel).
 export const relatorio = comTratamento(async (req, res) => {
   const linhas = await dadosRelatorio(req.params.recurso);
   if (!linhas) return erro(res, 404, "Relatório não encontrado.");
@@ -1027,7 +938,6 @@ export const relatorio = comTratamento(async (req, res) => {
     "Cache-Control": "private, no-store",
     "X-Content-Type-Options": "nosniff",
   });
-  // BOM: faz o Excel reconhecer os acentos.
   return res.send(`\uFEFF${linhas.map(linhaCsv).join("\r\n")}\r\n`);
 });
 

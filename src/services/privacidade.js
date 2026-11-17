@@ -2,8 +2,6 @@ import { Op } from "sequelize";
 import { ConfigUsuaria } from "../models/Candidata.js";
 import { contasSuspensas } from "./suspensao.js";
 
-// Privacidade da candidata (tabela CONFIG_USUARIA, do banco original).
-// Sem linha salva valem os padrões abaixo.
 export const PADRAO = { perfilPublico: true, mostrarExperiencia: false, mostrarContato: false };
 
 const deLinha = (c) =>
@@ -15,7 +13,6 @@ const deLinha = (c) =>
       }
     : { ...PADRAO };
 
-// Map(id -> { perfilPublico, mostrarExperiencia, mostrarContato })
 export async function privacidadeDe(ids) {
   const unicos = [...new Set(ids)].filter(Boolean);
   const mapa = new Map(unicos.map((id) => [id, { ...PADRAO }]));
@@ -25,8 +22,6 @@ export async function privacidadeDe(ids) {
   return mapa;
 }
 
-// Ids de quem escolheu esconder o perfil ou foi suspensa pela administração
-// (não aparecem em buscas, listas, perfis públicos nem conversas novas).
 export async function perfisOcultos() {
   const [linhas, suspensas] = await Promise.all([
     ConfigUsuaria.findAll({ attributes: ["usuariaId"], where: { perfilPublico: false } }),

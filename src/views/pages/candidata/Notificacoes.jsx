@@ -14,9 +14,6 @@ import { cn } from '../../lib/cn'
 
 const ICONES = { mensagem: 'mensagem', curtida: 'coracao', comentario: 'mensagem', publicacao: 'inicio', candidatura: 'candidaturas', vaga: 'maleta', conexao: 'perfil', convite: 'email', plataforma: 'coroa' }
 
-// Notificações da conta (candidata ou empresa: a API sabe pelo token).
-// Clicar num aviso marca como lido e abre a página relacionada.
-
 function Notificacoes({ descricao = 'Mensagens, curtidas, comentários, novas seguidoras e mudanças nas suas candidaturas.' }) {
   const r = useRecurso(DISPONIVEL.notificacoes, listarNotificacoes)
   const [lidas, setLidas] = useState([])

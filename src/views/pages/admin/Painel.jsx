@@ -30,8 +30,6 @@ const diaCurto = (iso) => {
   return `${d}/${m}`
 }
 
-// Contas na plataforma (candidatas + empresas) por dia, a partir das fotos
-// diárias do painel. Uma série só: sem legenda; o título diz o que é.
 function GraficoContas({ historico }) {
   const [foco, setFoco] = useState(null)
   if (historico.length < 2) {

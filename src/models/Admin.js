@@ -1,11 +1,8 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 
-// Tabelas da administração, do "banco bloom.sql" (colunas novas: migration 005).
 const opcoes = (tableName) => ({ tableName, freezeTableName: true, timestamps: false });
 
-// "super": tudo, inclusive excluir contas e gerenciar administradores.
-// "moderador": painel, suspensões e moderação de conteúdo.
 export const NIVEIS_ADMIN = ["super", "moderador"];
 
 export const Admin = sequelize.define(
@@ -20,11 +17,10 @@ export const Admin = sequelize.define(
     criadoEm: { type: DataTypes.DATE, defaultValue: DataTypes.NOW, field: "data_criacao" },
     ativo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     ultimoAcesso: { type: DataTypes.DATE, field: "ultimo_acesso" },
-    // Migration 007: verificação em duas etapas e troca de senha obrigatória.
-    totpSegredo: { type: DataTypes.STRING(200), field: "totp_segredo" }, // cifrado (utils/totp.js)
+    totpSegredo: { type: DataTypes.STRING(200), field: "totp_segredo" },
     totpAtivo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: "totp_ativo" },
     totpUltimoPasso: { type: DataTypes.BIGINT, field: "totp_ultimo_passo" },
-    codigosRecuperacao: { type: DataTypes.TEXT, field: "codigos_recuperacao" }, // JSON de hashes
+    codigosRecuperacao: { type: DataTypes.TEXT, field: "codigos_recuperacao" },
     deveTrocarSenha: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: "deve_trocar_senha" },
   },
   opcoes("ADMINS")
@@ -44,7 +40,6 @@ export const LogAdmin = sequelize.define(
   opcoes("LOGS_ADMIN")
 );
 
-// Uma foto por dia dos totais da plataforma (para o gráfico do painel).
 export const DashboardAdmin = sequelize.define(
   "DashboardAdmin",
   {
@@ -63,7 +58,6 @@ export const DashboardAdmin = sequelize.define(
   opcoes("DASHBOARD_ADMIN")
 );
 
-// Comunicados da equipe para candidatas e/ou empresas (migration 007).
 export const Comunicado = sequelize.define(
   "Comunicado",
   {
@@ -78,7 +72,6 @@ export const Comunicado = sequelize.define(
   opcoes("COMUNICADO")
 );
 
-// Registra uma ação de administrador (quem, o quê, onde e por quê).
 export function registrarAcao(adminId, acao, tabela = null, registroId = null, detalhes = null) {
   return LogAdmin.create({ adminId, acao, tabela, registroId, detalhes: detalhes ? String(detalhes).slice(0, 500) : null });
 }

@@ -6,8 +6,6 @@ import { baixarRelatorio } from '../../services/admin'
 import { AreaTexto, Aviso } from '../ui/Campo'
 import { cn } from '../../lib/cn'
 
-// Ação de moderação com motivo obrigatório: o botão abre um campo para o
-// motivo (que vai para o registro e para o aviso à conta) e uma confirmação.
 export function AcaoComMotivo({ rotulo, rotuloConfirmar, perigo = true, aoConfirmar, aoConcluir, extra, tamanho = 'sm', variante = 'secundario', ajuda }) {
   const [aberto, setAberto] = useState(false)
   const [motivo, setMotivo] = useState('')
@@ -57,7 +55,6 @@ export function AcaoComMotivo({ rotulo, rotuloConfirmar, perigo = true, aoConfir
   )
 }
 
-// Paginação simples (anterior / próxima) para as listas da administração.
 export function Paginacao({ pagina, total, porPagina, aoMudar }) {
   const paginas = Math.max(1, Math.ceil(total / porPagina))
   if (paginas <= 1) return null
@@ -76,7 +73,6 @@ export function Paginacao({ pagina, total, porPagina, aoMudar }) {
   )
 }
 
-// Abas em forma de pílula (filtros de lista).
 export function Filtros({ opcoes, valor, aoMudar, rotulo }) {
   return (
     <div role="group" aria-label={rotulo} className="flex flex-wrap gap-2">
@@ -98,7 +94,6 @@ export function Filtros({ opcoes, valor, aoMudar, rotulo }) {
   )
 }
 
-// Baixa a planilha (CSV) de uma lista. Só para quem tem acesso total.
 export function BotaoRelatorio({ recurso }) {
   const [estado, setEstado] = useState(null)
   async function baixar() {

@@ -1,14 +1,3 @@
-// Envio de e-mails transacionais pelo Resend (https://resend.com/docs/api-reference/emails/send-email),
-// por HTTP, sem dependências novas.
-//
-// Variáveis de ambiente:
-//   RESEND_API_KEY  — chave da conta no Resend
-//   EMAIL_REMETENTE — remetente de um domínio verificado no Resend, ex.: "Bloom <nao-responda@seudominio.com.br>"
-//
-// Sem elas nenhum e-mail sai. Em desenvolvimento (NODE_ENV diferente de
-// "production") o conteúdo do e-mail é mostrado no terminal do servidor, para
-// testar o fluxo; em produção só fica registrado que o envio não está configurado.
-
 export function emailConfigurado() {
   return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_REMETENTE);
 }

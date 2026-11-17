@@ -42,9 +42,8 @@ function AvisoVazio({ children }) {
   return <p className="rounded-xl border border-dashed border-linha-forte bg-branco px-5 py-6 text-sm text-suave">{children}</p>
 }
 
-// Busca nas publicações, feita pela API (texto das publicações).
 function Publicacoes({ busca, limite }) {
-  const [resultado, setResultado] = useState(null) // { chave, lista } | { chave, erro }
+  const [resultado, setResultado] = useState(null)
   const chave = busca.trim()
 
   useEffect(() => {
@@ -76,7 +75,6 @@ function Publicacoes({ busca, limite }) {
   )
 }
 
-// Comunidades temáticas que combinam com a busca (nome, tema ou descrição).
 function ComunidadesBusca({ busca, limite }) {
   const [lista, setLista] = useState(null)
   const [erro, setErro] = useState('')

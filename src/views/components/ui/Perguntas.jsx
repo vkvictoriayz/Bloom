@@ -1,8 +1,6 @@
 import { useId, useState } from 'react'
 import { cn } from '../../lib/cn'
 
-// Acordeão de perguntas (FaqAccordion do VengeanceUI): a barra lateral marca
-// o item aberto e cada resposta é uma região ligada por aria-controls.
 function Perguntas({ itens, className }) {
   const [aberto, setAberto] = useState(null)
   const base = useId()

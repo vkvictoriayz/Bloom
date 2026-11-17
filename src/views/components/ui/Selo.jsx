@@ -1,7 +1,6 @@
 import { cva } from 'class-variance-authority'
 import { cn } from '../../lib/cn'
 
-// Adaptado do Badge do VengeanceUI.
 const seloVariantes = cva(
   'inline-flex w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold [&>svg]:size-3.5',
   {

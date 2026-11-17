@@ -2,19 +2,6 @@ import { Empresa } from "../models/index.js";
 import { PerfilEmpresa } from "../models/Empresarial.js";
 import { EmpresaCadastro } from "../models/Verificacao.js";
 
-// Verificação de quem representa a empresa.
-//
-// A consulta do CNPJ (BrasilAPI) confirma que a empresa existe, não que a
-// pessoa que criou a conta fala por ela. A Bloom aceita dois caminhos:
-//
-//  1. "dominio" — automático: o e-mail da conta está confirmado (link da
-//     migration 008), é de um domínio corporativo (não Gmail, Hotmail etc.) e
-//     é o mesmo domínio do site da empresa informado no perfil, e o CNPJ está
-//     ATIVO. Quem recebe e-mail no domínio da empresa normalmente trabalha lá.
-//  2. "equipe" — manual: a equipe confere por um canal oficial e confirma no
-//     painel da administração (já existia).
-
-// Provedores de e-mail gratuitos: nunca provam vínculo com uma empresa.
 export const PROVEDORES_GRATUITOS = new Set([
   "gmail.com", "googlemail.com", "hotmail.com", "hotmail.com.br", "outlook.com", "outlook.com.br", "live.com", "msn.com",
   "yahoo.com", "yahoo.com.br", "ymail.com", "icloud.com", "me.com", "mac.com", "aol.com", "gmx.com", "gmx.net",
@@ -22,7 +9,6 @@ export const PROVEDORES_GRATUITOS = new Set([
   "zoho.com", "mail.com", "yandex.com", "tutanota.com",
 ]);
 
-// "https://www.Empresa.com.br/vagas" -> "empresa.com.br"
 export function dominioDoSite(site) {
   const valor = String(site ?? "").trim();
   if (!valor) return null;
@@ -36,10 +22,8 @@ export function dominioDoSite(site) {
 
 export const dominioDoEmail = (email) => String(email ?? "").toLowerCase().split("@")[1] || null;
 
-// O e-mail é do site ou de um subdomínio dele (rh.empresa.com.br vale para empresa.com.br).
 export const mesmoDominio = (email, site) => Boolean(email && site && (email === site || email.endsWith(`.${site}`)));
 
-// Situação e o que falta para a verificação automática, item por item.
 export async function situacaoRepresentante(empresaId) {
   const [conta, cadastro, perfil] = await Promise.all([
     Empresa.findByPk(empresaId),
@@ -68,7 +52,6 @@ export async function situacaoRepresentante(empresaId) {
   };
 }
 
-// Empresas verificadas (para o selo nas páginas públicas).
 export async function empresasVerificadas(ids) {
   if (!ids.length) return new Set();
   const linhas = await EmpresaCadastro.findAll({ attributes: ["empresaId"], where: { empresaId: ids, representanteStatus: "verificado" } });

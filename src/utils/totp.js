@@ -1,11 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
-// Verificação em duas etapas (TOTP, RFC 6238): o mesmo código de 6 dígitos que
-// apps como Google Authenticator e Microsoft Authenticator mostram a cada 30 s.
-// Sem biblioteca externa: só node:crypto.
-
 const ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-const PASSO = 30; // segundos
+const PASSO = 30;
 
 function base32(buf) {
   let bits = "";
@@ -38,8 +34,6 @@ function codigoDoPasso(segredo, passo) {
 export const passoAtual = (agora = Date.now()) => Math.floor(agora / 1000 / PASSO);
 export const codigoAtual = (segredo, agora = Date.now()) => codigoDoPasso(segredo, passoAtual(agora));
 
-// Confere o código aceitando 30 s de diferença no relógio do celular.
-// Devolve o passo usado (para não aceitar o mesmo código duas vezes) ou null.
 export function conferirCodigo(segredo, codigo, ultimoPasso = null, agora = Date.now()) {
   const c = String(codigo ?? "").replace(/\s/g, "");
   if (!/^\d{6}$/.test(c)) return null;
@@ -52,12 +46,9 @@ export function conferirCodigo(segredo, codigo, ultimoPasso = null, agora = Date
   return null;
 }
 
-// Endereço que os apps autenticadores entendem (também vira QR code).
 export const enderecoOtp = (segredo, conta) =>
   `otpauth://totp/${encodeURIComponent(`Bloom Admin:${conta}`)}?secret=${segredo}&issuer=${encodeURIComponent("Bloom Admin")}&digits=6&period=${PASSO}`;
 
-// O segredo fica cifrado no banco (AES-256-GCM, chave derivada do JWT_SECRET).
-// Se o JWT_SECRET mudar, é preciso configurar a verificação de novo.
 const chave = () => createHash("sha256").update(`${process.env.JWT_SECRET}:bloom-totp`).digest();
 
 export function cifrar(texto) {
@@ -74,7 +65,6 @@ export function decifrar(guardado) {
   return Buffer.concat([d.update(dados), d.final()]).toString("utf8");
 }
 
-// Códigos de recuperação (uso único) para quando o celular se perde.
 const hashRecuperacao = (c) => createHash("sha256").update(String(c).toUpperCase().replace(/[^A-Z0-9]/g, "")).digest("hex");
 
 export function novosCodigosRecuperacao(qtd = 8) {
@@ -85,7 +75,6 @@ export function novosCodigosRecuperacao(qtd = 8) {
   return { codigos, hashes: codigos.map(hashRecuperacao) };
 }
 
-// Se o código for um de recuperação válido, devolve a lista sem ele; senão null.
 export function usarCodigoRecuperacao(hashesJson, codigo) {
   let hashes;
   try {

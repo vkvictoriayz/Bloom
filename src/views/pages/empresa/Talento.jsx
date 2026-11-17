@@ -14,8 +14,6 @@ import Botao from '../../components/ui/Botao'
 import { AreaTexto, Campo, Selecao } from '../../components/ui/Campo'
 import { convidarTalento, lerTalento, listarVagasEmpresa } from '../../services/empresa'
 
-// Convite para um processo seletivo: escolhe uma vaga aberta e (opcional)
-// escreve uma mensagem. A profissional recebe uma notificação de convite.
 function Convidar({ talento, convidadaPara, aoConvidar }) {
   const vagas = useCarregar(() => listarVagasEmpresa('Aberta'))
   const [vagaId, setVagaId] = useState('')
@@ -89,9 +87,6 @@ function Convidar({ talento, convidadaPara, aoConvidar }) {
   )
 }
 
-// Perfil público de uma profissional, visto pela empresa: foto, capa, nome,
-// área, interesses, apresentação e publicações na comunidade. Sem contato
-// pessoal: e-mail só aparece quando ela se candidata a uma vaga da empresa.
 function Talento() {
   const { id } = useParams()
   const r = useCarregar(() => lerTalento(id), [id])

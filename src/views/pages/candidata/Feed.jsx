@@ -30,9 +30,7 @@ const MODELOS = {
   duvida: 'Qual é a sua dúvida? Outras mulheres da área podem ajudar…',
 }
 
-// A partir desta largura a coluna lateral aparece (pessoas, comunidades etc.).
 const TELA_LARGA = '(min-width: 1024px)'
-// De quanto em quanto tempo o feed confere se há publicações novas.
 const INTERVALO_NOVIDADES = 60 * 1000
 
 function useTelaLarga() {
@@ -46,12 +44,9 @@ function useTelaLarga() {
   return larga
 }
 
-// Depois de quais publicações entram os cartões de sugestão.
 const POSICAO_PESSOAS = 1
 const POSICAO_VAGAS = 3
 
-// Vagas recomendadas pelas competências do perfil; sem competências,
-// mostramos as mais recentes e dizemos isso.
 function CartaoVagas({ tecnicas }) {
   const { vagas } = useVagas()
   const recomendadas = recomendarVagas(vagas, tecnicas)
@@ -59,7 +54,6 @@ function CartaoVagas({ tecnicas }) {
   const itens = porPerfil
     ? recomendadas.map((r) => r.vaga)
     : [...vagas].sort((a, b) => a.publicadaHaDias - b.publicadaHaDias).slice(0, 3)
-  // Sem vagas publicadas, o cartão não aparece.
   if (itens.length === 0) return null
 
   return (
@@ -141,12 +135,9 @@ function Feed() {
   }, [aba, tipoFiltro])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     carregarFeed()
   }, [carregarFeed])
 
-  // Enquanto a página está aberta (e visível), confere se alguém publicou algo
-  // novo e mostra o botão "Novas publicações" em vez de mexer na lista sozinha.
   useEffect(() => {
     if (!publicacoes) return
     const conhecidas = new Set(publicacoes.map((p) => p.id))
@@ -157,7 +148,6 @@ function Feed() {
         const maisRecente = publicacoes.reduce((max, p) => Math.max(max, new Date(p.criadaEm).getTime()), 0)
         setNovas(r.publicacoes.filter((p) => !p.minha && !conhecidas.has(p.id) && new Date(p.criadaEm).getTime() >= maisRecente).length)
       } catch {
-        // sem conexão agora: tenta de novo no próximo intervalo
       }
     }
     const t = setInterval(conferir, INTERVALO_NOVIDADES)
@@ -227,7 +217,6 @@ function Feed() {
     />
   )
   const cartaoVagas = <CartaoVagas tecnicas={perfil.tecnicas} />
-  // Na tela larga, as pessoas ficam na coluna lateral; aqui, entre as publicações.
   const pessoasNoFeed = larga ? null : cartaoPessoas
   const lista = publicacoes ?? []
 
@@ -236,7 +225,6 @@ function Feed() {
     <div ref={topo} className="flex min-w-0 scroll-mt-24 flex-col gap-5">
       <h1 className="sr-only">Feed</h1>
 
-      {/* Nova publicação */}
       <form onSubmit={enviar} className="rounded-2xl border border-linha bg-branco p-5 sm:p-6" aria-label="Nova publicação">
         <p className="mb-3 text-sm font-semibold text-tinta-2">
           {primeiroNome(nome) ? `Olá, ${primeiroNome(nome)}! O que você quer compartilhar hoje?` : 'O que você quer compartilhar hoje?'}
@@ -315,7 +303,6 @@ function Feed() {
         )}
       </form>
 
-      {/* Filtros */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div role="group" aria-label="Quais publicações mostrar" className="flex rounded-full border border-linha bg-branco p-1">
           {[
@@ -346,7 +333,6 @@ function Feed() {
         </Selecao>
       </div>
 
-      {/* Aviso de publicações novas (fica preso no topo ao rolar) */}
       {novas > 0 && (
         <div className="sticky top-20 z-10 flex justify-center">
           <button
@@ -360,7 +346,6 @@ function Feed() {
         </div>
       )}
 
-      {/* Publicações, com sugestões entre elas */}
       <div className="flex flex-col gap-5">
         {erroFeed && (
           <Aviso tipo="erro">

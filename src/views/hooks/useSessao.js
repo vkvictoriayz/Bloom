@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { obterSessao } from '../services/auth'
 
-// Sessão atual, atualizada quando a pessoa entra ou sai (nesta ou em outra aba).
 export function useSessao() {
   const [sessao, setSessao] = useState(obterSessao)
 

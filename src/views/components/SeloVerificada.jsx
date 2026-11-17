@@ -1,8 +1,6 @@
 import Icone from './Icone'
 import { cn } from '../lib/cn'
 
-// Selo "Verificada": o vínculo de quem administra a conta com a empresa foi
-// confirmado (pelo domínio do e-mail ou pela equipe da Bloom).
 function SeloVerificada({ className, compacto = false }) {
   return (
     <span

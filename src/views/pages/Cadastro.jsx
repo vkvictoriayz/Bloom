@@ -9,7 +9,6 @@ import imgAcesso from "../assets/ilustracoes/acesso-candidata.webp";
 import Botao from "../components/ui/Botao";
 import { Aviso, Campo, Entrada } from "../components/ui/Campo";
 
-// Data de hoje (AAAA-MM-DD), limite do campo de nascimento.
 const HOJE = new Date().toISOString().slice(0, 10);
 
 function Cadastro() {
@@ -31,7 +30,6 @@ function Cadastro() {
     setTipoMensagem("erro");
   }
 
-  // As mesmas regras são conferidas de novo no servidor.
   async function cadastrar() {
     if (!nome.trim() || !email.trim() || !cpf || !nascimento || !senha || !confirmarSenha) {
       return falhar("Preencha todos os campos obrigatórios.");

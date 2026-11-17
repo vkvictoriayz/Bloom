@@ -7,8 +7,6 @@ import { Aviso, Campo, Entrada } from '../ui/Campo'
 import { sair } from '../../services/auth'
 import { excluirConta } from '../../services/recursos'
 
-// Exclusão definitiva da conta (candidata ou empresa). Pede a senha e que a
-// pessoa digite EXCLUIR; o servidor confere as duas coisas de novo.
 function ExcluirConta({ itens }) {
   const navigate = useNavigate()
   const [aberto, setAberto] = useState(false)

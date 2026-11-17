@@ -6,8 +6,6 @@ import { Aviso, Campo, Entrada } from '../ui/Campo'
 import { obterSessao, salvarSessao } from '../../services/auth'
 import { alterarEmail } from '../../services/recursos'
 
-// Troca do e-mail de login (candidata ou empresa), pela API PUT /api/auth/email,
-// que confere a senha. A sessão salva passa a mostrar o e-mail novo.
 function FormularioEmail({ emailAtual }) {
   const [aberto, setAberto] = useState(false)
   const [email, setEmail] = useState('')

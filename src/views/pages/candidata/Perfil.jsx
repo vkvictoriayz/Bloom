@@ -16,7 +16,6 @@ import { lerFeed, lerMeuPerfil } from '../../services/comunidade'
 import { completude, EVENTO_PERFIL, lerPerfil } from '../../services/perfil'
 import { lerProjetos } from '../../services/projetos'
 
-// Uma seção do perfil, com estado vazio que leva à edição do trecho certo.
 function Secao({ titulo, icone, vazio, ancoraEdicao, children }) {
   return (
     <section className="rounded-xl border border-linha bg-branco p-6 sm:p-7">
@@ -57,7 +56,6 @@ function Perfil() {
     lerMeuPerfil()
       .then((r) => ativo && setComunidade(r))
       .catch((e) => ativo && setErroComunidade(e.message))
-    // Filtramos por "minha" também no cliente, por segurança.
     lerFeed({ autora: 'eu' })
       .then((r) => ativo && setPublicacoes(r.publicacoes.filter((p) => p.minha)))
       .catch(() => ativo && setPublicacoes([]))
@@ -73,7 +71,6 @@ function Perfil() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Cabeçalho do perfil */}
       <section className="overflow-hidden rounded-xl border border-linha bg-branco">
         <Capa imagem={perfil.capa} className="rounded-none" />
         <div className="px-6 pb-7 sm:px-8">

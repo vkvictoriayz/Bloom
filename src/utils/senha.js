@@ -3,10 +3,9 @@ import { promisify } from "node:util";
 
 const scryptAsync = promisify(scrypt);
 
-const N = 16384; // custo do scrypt
+const N = 16384;
 const TAMANHO_CHAVE = 64;
 
-// Formato salvo em senha_hash: scrypt$<N>$<salt em hex>$<hash em hex>
 export async function gerarHash(senha) {
   const salt = randomBytes(16);
   const chave = await scryptAsync(senha, salt, TAMANHO_CHAVE, { N });

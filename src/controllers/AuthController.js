@@ -17,24 +17,18 @@ import { criarToken } from "../utils/jwt.js";
 const SALT_ROUNDS = 10;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SENHA_MINIMA = 8;
-const VALIDADE_REDEFINICAO = 30 * 60 * 1000; // 30 minutos
-const VALIDADE_CONFIRMACAO = 24 * 60 * 60 * 1000; // 24 horas
+const VALIDADE_REDEFINICAO = 30 * 60 * 1000;
+const VALIDADE_CONFIRMACAO = 24 * 60 * 60 * 1000;
 
 const soDigitos = (v) => String(v ?? "").replace(/\D/g, "");
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
 
-// Hash qualquer, usado quando o e-mail não existe: o login leva o mesmo tempo
-// com ou sem conta, e o tempo de resposta não revela quais e-mails existem.
 const HASH_FICTICIO = bcrypt.hashSync("senha-que-nao-existe", SALT_ROUNDS);
 
-// 5 tentativas erradas por e-mail e IP a cada 15 minutos.
 const falhasLogin = criarLimitador({ janela: 15 * 60 * 1000, maximo: 5 });
-// Pedidos de redefinição: 3 por e-mail por hora.
 const pedidosRedefinicao = criarLimitador({ janela: 60 * 60 * 1000, maximo: 3 });
-// Reenvio do link de confirmação de e-mail: até 3 por hora por conta.
 const pedidosConfirmacao = criarLimitador({ janela: 60 * 60 * 1000, maximo: 3 });
 
-// Monta a resposta de sucesso: token + dados básicos (nunca a senha).
 function gerarSessao(conta, tipo) {
   const horas = Number(process.env.JWT_EXPIRES_HOURS ?? 8);
   const token = criarToken({ sub: conta.id, tipo, nome: conta.nome }, process.env.JWT_SECRET, horas * 3600);
@@ -45,7 +39,6 @@ function erro(res, status, mensagem, campo) {
   return res.status(status).json({ erro: mensagem, campo });
 }
 
-// Senha: 8 caracteres ou mais e até 72 bytes (limite do bcrypt).
 function validarSenha(senha, confirmarSenha) {
   if (typeof senha !== "string" || senha.length < SENHA_MINIMA) return [`A senha deve ter pelo menos ${SENHA_MINIMA} caracteres.`, "senha"];
   if (Buffer.byteLength(senha) > 72) return ["A senha pode ter até 72 caracteres.", "senha"];
@@ -64,7 +57,6 @@ function validarTelefone(telefone) {
   return null;
 }
 
-// "AAAA-MM-DD" de uma data real, no passado e depois de 1900.
 function validarNascimento(valor) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return ["Informe a data de nascimento.", "nascimento"];
   const data = new Date(`${valor}T00:00:00Z`);
@@ -73,9 +65,6 @@ function validarNascimento(valor) {
   return null;
 }
 
-// ---------------- Usuária ----------------
-
-// POST /api/auth/cadastro { nome, cpf, nascimento, email, telefone?, senha, confirmarSenha }
 export async function cadastrarUsuaria(req, res) {
   try {
     const nome = texto(req.body.nome);
@@ -97,8 +86,6 @@ export async function cadastrarUsuaria(req, res) {
         : erro(res, 409, "Este CPF já está cadastrado.", "cpf");
     }
 
-    // Consulta oficial do CPF, quando configurada. Dados que não conferem
-    // impedem o cadastro; serviço fora do ar deixa a verificação pendente.
     let verificacao = { cpfStatus: "nao_verificado", cpfFonte: null, cpfVerificadoEm: null };
     if (consultaCpfAtiva()) {
       try {
@@ -129,14 +116,11 @@ export async function loginUsuaria(req, res) {
   return login(req, res, Usuaria, "usuaria");
 }
 
-// ---------------- Empresa ----------------
-
 function erroCnpj(res, e) {
   const status = { invalido: 400, nao_encontrado: 404, incompleto: 422, indisponivel: 503 }[e.tipo] ?? 503;
   return erro(res, status, e.message, "cnpj");
 }
 
-// GET /api/auth/empresa/cnpj/:cnpj — dados públicos para pré-preencher o cadastro.
 export async function consultarEmpresaPorCnpj(req, res) {
   const cnpj = soDigitos(req.params.cnpj);
   if (!validarCNPJ(cnpj)) return erro(res, 400, "CNPJ inválido. Confira os números.", "cnpj");
@@ -148,9 +132,6 @@ export async function consultarEmpresaPorCnpj(req, res) {
   }
 }
 
-// POST /api/auth/empresa/cadastro
-// { cnpj, nomeExibicao?, responsavelNome, responsavelCargo?, email, telefone?,
-//   senha, confirmarSenha, declaraRepresentacao: true }
 export async function cadastrarEmpresa(req, res) {
   try {
     const cnpj = soDigitos(req.body.cnpj);
@@ -178,7 +159,6 @@ export async function cadastrarEmpresa(req, res) {
         : erro(res, 409, "Já existe uma conta para este CNPJ. Fale com a pessoa responsável por ela na sua empresa.", "cnpj");
     }
 
-    // Os dados cadastrais vêm sempre da consulta feita aqui, nunca do navegador.
     let dados;
     try {
       dados = await consultarCnpj(cnpj);
@@ -231,8 +211,6 @@ export async function loginEmpresa(req, res) {
   return login(req, res, Empresa, "empresa");
 }
 
-// ---------------- Compartilhado ----------------
-
 async function login(req, res, Model, tipo) {
   try {
     const email = texto(req.body.email).toLowerCase();
@@ -253,7 +231,6 @@ async function login(req, res, Model, tipo) {
     }
 
     falhasLogin.limpar(chave);
-    // Só depois da senha certa, para não revelar quais contas estão suspensas.
     if (conta.suspensaEm) return erro(res, 403, MENSAGEM_SUSPENSA);
     return res.json(gerarSessao(conta, tipo));
   } catch (e) {
@@ -263,12 +240,7 @@ async function login(req, res, Model, tipo) {
 
 const hashToken = (token) => createHash("sha256").update(token).digest("hex");
 
-// Cria um link de uso único (30 min) para a conta criar uma senha nova e envia
-// por e-mail. Usado pelo "esqueci minha senha" e pela administração. Devolve
-// true se o e-mail saiu; sem serviço de e-mail configurado, devolve false (em
-// desenvolvimento o link aparece no terminal da API).
 export async function enviarLinkRedefinicao(tipo, conta) {
-  // Um link novo invalida os anteriores ainda não usados.
   await RedefinicaoSenha.update({ usadoEm: new Date() }, { where: { tipoConta: tipo, contaId: conta.id, usadoEm: null } });
   const token = randomBytes(32).toString("hex");
   await RedefinicaoSenha.create({
@@ -288,8 +260,6 @@ export async function enviarLinkRedefinicao(tipo, conta) {
   });
 }
 
-// POST /api/auth/senha/esqueci { email, tipo: "usuaria" | "empresa" }
-// Responde sempre a mesma coisa, exista ou não a conta.
 export async function esqueciSenha(req, res) {
   const RESPOSTA = { mensagem: "Se houver uma conta com esse e-mail, enviamos um link para redefinir a senha. Ele vale por 30 minutos." };
   try {
@@ -313,7 +283,6 @@ export async function esqueciSenha(req, res) {
   }
 }
 
-// POST /api/auth/senha/redefinir { token, senha, confirmarSenha }
 export async function redefinirSenha(req, res) {
   try {
     const token = texto(req.body.token);
@@ -341,9 +310,6 @@ export async function redefinirSenha(req, res) {
   }
 }
 
-// Cria um link de uso único (24 h) para confirmar o e-mail da conta e envia.
-// Um link novo invalida os anteriores. Nunca derruba quem chamou: se algo
-// falhar, devolve false e a pessoa pode pedir outro link depois.
 async function enviarConfirmacaoEmail(tipo, conta) {
   try {
     await VerificacaoEmail.update({ usadoEm: new Date() }, { where: { tipoConta: tipo, contaId: conta.id, usadoEm: null } });
@@ -369,8 +335,6 @@ async function enviarConfirmacaoEmail(tipo, conta) {
   }
 }
 
-// POST /api/auth/email/confirmar { token } — aberto pelo link do e-mail; não
-// precisa estar logada.
 export async function confirmarEmail(req, res) {
   try {
     const token = texto(req.body.token);
@@ -382,7 +346,6 @@ export async function confirmarEmail(req, res) {
 
     const Model = pedido.tipoConta === "empresa" ? Empresa : Usuaria;
     const conta = await Model.findByPk(pedido.contaId);
-    // Link de um e-mail que a conta já trocou não confirma o e-mail atual.
     if (!conta || conta.email !== pedido.email) return invalido();
 
     await sequelize.transaction(async (transaction) => {
@@ -395,7 +358,6 @@ export async function confirmarEmail(req, res) {
   }
 }
 
-// POST /api/auth/email/reenviar — manda outro link para o e-mail da conta logada.
 export async function reenviarConfirmacao(req, res) {
   try {
     const Model = req.auth.tipo === "empresa" ? Empresa : Usuaria;
@@ -421,8 +383,6 @@ function escaparHtml(valor) {
   return String(valor).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
 
-// PUT /api/auth/senha { senhaAtual, novaSenha, confirmarSenha } — troca a
-// senha de quem está logada (candidata ou empresa), conferindo a atual.
 export async function alterarSenha(req, res) {
   try {
     const Model = req.auth.tipo === "empresa" ? Empresa : Usuaria;
@@ -447,9 +407,6 @@ export async function alterarSenha(req, res) {
   }
 }
 
-// PUT /api/auth/email { email, senha } — troca o e-mail de login de quem está
-// logada (candidata ou empresa), conferindo a senha. O e-mail precisa estar
-// livre no mesmo tipo de conta.
 export async function alterarEmail(req, res) {
   try {
     const Model = req.auth.tipo === "empresa" ? Empresa : Usuaria;
@@ -468,9 +425,7 @@ export async function alterarEmail(req, res) {
     if (await Model.findOne({ where: { email } })) return erro(res, 409, "Este e-mail já está cadastrado.", "email");
 
     falhasLogin.limpar(chave);
-    // O e-mail novo precisa ser confirmado de novo.
     await conta.update({ email, emailVerificadoEm: null });
-    // Verificação da empresa feita pelo domínio do e-mail antigo deixa de valer.
     if (req.auth.tipo === "empresa") {
       await EmpresaCadastro.update(
         { representanteStatus: "pendente", representanteMetodo: null, representanteVerificadoEm: null },
@@ -488,8 +443,6 @@ export async function alterarEmail(req, res) {
   }
 }
 
-// DELETE /api/auth/conta { senha, confirmacao: "EXCLUIR" } — exclui a conta
-// de quem está logada (candidata ou empresa) e todos os dados dela.
 export async function excluirConta(req, res) {
   try {
     const Model = req.auth.tipo === "empresa" ? Empresa : Usuaria;
@@ -504,8 +457,6 @@ export async function excluirConta(req, res) {
       return erro(res, 400, "A senha não confere.", "senha");
     }
 
-    // Assinatura ativa ou aguardando pagamento: precisa ser cancelada antes,
-    // senão o Mercado Pago continuaria cobrando.
     const assinatura = await Assinatura.findOne({ where: { tipoConta: req.auth.tipo, contaId: conta.id, status: ["ativa", "pendente", "pausada"] } });
     if (assinatura) return erro(res, 409, "Cancele sua assinatura Premium (em Premium) antes de excluir a conta.");
 
@@ -516,7 +467,6 @@ export async function excluirConta(req, res) {
   }
 }
 
-// Quem está logada (usa o token validado pelo middleware).
 export async function me(req, res) {
   try {
     const Model = req.auth.tipo === "empresa" ? Empresa : Usuaria;
@@ -532,11 +482,9 @@ export async function me(req, res) {
 }
 
 function tratarErro(res, e) {
-  // Duas requisições ao mesmo tempo com o mesmo e-mail/CPF/CNPJ
   if (e.name === "SequelizeUniqueConstraintError") {
     return erro(res, 409, "Já existe um cadastro com esses dados.");
   }
-  // Sem dados pessoais no log: só o tipo e a mensagem do erro.
   console.error(e.name, e.message);
   return erro(res, 500, "Erro interno. Tente novamente mais tarde.");
 }

@@ -1,7 +1,6 @@
 import { forwardRef, useId } from 'react'
 import { cn } from '../../lib/cn'
 
-// Campos de formulário (Input/Label/Field do VengeanceUI) no padrão Bloom.
 export const estiloControle =
   'w-full rounded-md border border-linha-forte bg-branco px-3.5 text-sm text-tinta placeholder:text-suave transition-colors hover:border-suave focus:border-vinho focus:ring-[3px] focus:ring-vinho/30 focus:outline-none focus-visible:outline-none disabled:cursor-not-allowed disabled:bg-papel-2 disabled:text-suave aria-invalid:border-erro'
 
@@ -21,8 +20,6 @@ export const Selecao = forwardRef(function Selecao({ className, children, ...pro
   )
 })
 
-// Rótulo + controle + ajuda/erro. "children" é uma função que recebe
-// as props de acessibilidade (id, aria-describedby, aria-invalid).
 export function Campo({ rotulo, opcional, ajuda, erro, acessorio, className, children }) {
   const id = useId()
   const idAjuda = `${id}-ajuda`

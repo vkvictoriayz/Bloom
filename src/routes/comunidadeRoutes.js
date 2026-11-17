@@ -4,11 +4,8 @@ import { exigirLogin } from "../middlewares/autenticacao.js";
 
 const router = Router();
 
-// Toda a comunidade exige login de usuária.
 router.use(exigirLogin(["usuaria"]));
 
-// Publicar e editar aceitam uma imagem (até 2 MB, em base64): limite próprio.
-// app.js monta esta rota antes do limite geral de 20 kB.
 export const corpoComImagem = express.json({ limit: "3mb" });
 
 router.get("/feed", C.feed);

@@ -2,8 +2,6 @@ import Icone from './Icone'
 import { ETAPAS, situacao } from '../services/candidaturas'
 import { cn } from '../lib/cn'
 
-// Etapas de uma candidatura. Só marcamos como concluída a etapa que tem
-// confirmação nos dados; as demais aparecem como "aguardando".
 function LinhaDoTempo({ candidatura, compacta = false }) {
   const { etapasConcluidas, etapaAtual, grupo, rotulo, detalheAtual } = situacao(candidatura)
   const final = grupo === 'aprovada' || grupo === 'recusada'

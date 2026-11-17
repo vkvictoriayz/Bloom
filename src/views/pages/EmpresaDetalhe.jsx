@@ -14,7 +14,6 @@ import { useSessao } from '../hooks/useSessao'
 import { urlImagem } from '../services/api'
 import { lerPerfilPublicoEmpresa, textoVagas } from '../services/publico'
 
-// Endereço com https:// (o perfil pode ter sido salvo sem ele).
 function linkExterno(valor) {
   if (!valor) return null
   try {
@@ -42,7 +41,6 @@ function NaoEncontrada({ texto }) {
   )
 }
 
-// Perfil público de uma empresa cadastrada (/empresas/:id), visível sem login.
 function EmpresaDetalhe() {
   const { slug: id } = useParams()
   const sessao = useSessao()

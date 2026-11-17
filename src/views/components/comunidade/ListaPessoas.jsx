@@ -6,10 +6,6 @@ import Avatar from './Avatar'
 import BotaoSeguir from './BotaoSeguir'
 import { definirSeguindo, lerPerfis } from '../../services/comunidade'
 
-// Descobrir e acompanhar outras integrantes (networking).
-// "limite" mostra só as primeiras N pessoas (versão compacta do feed);
-// "comBusca" esconde o campo de busca quando a página já tem um.
-// "busca" vinda de fora (página Explorar) substitui o campo interno.
 function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: buscaExterna, titulo = 'Pessoas para conhecer', grade = false }) {
   const [buscaInterna, setBusca] = useState('')
   const busca = buscaExterna ?? buscaInterna

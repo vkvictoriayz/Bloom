@@ -2,15 +2,11 @@ import { api } from "./api.js";
 import { converterVaga } from "./vagasApi";
 import { iniciais } from "../hooks/useSessao";
 
-// Páginas públicas (sem login): diretório e perfil das empresas cadastradas na
-// Bloom e os números da plataforma (/api/publico). Tudo vem do banco.
-
 const consulta = (params) => {
   const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString();
   return q ? `?${q}` : "";
 };
 
-// Sigla e cores para a marca quando a empresa ainda não enviou foto ou logo.
 function comMarca(empresa) {
   return { ...empresa, sigla: iniciais(empresa.nome) || "E", cor: "#f4e4e9", corTexto: "#85243d" };
 }

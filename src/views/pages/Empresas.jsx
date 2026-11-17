@@ -14,7 +14,6 @@ import { listarEmpresasPublicas, textoVagas } from '../services/publico'
 import { cn } from '../lib/cn'
 import imgEmpresas from '../assets/ilustracoes/para-empresas.webp'
 
-// Ilustração do cabeçalho (um único arquivo serve às duas larguras).
 const ilustracao = {
   pequena: imgEmpresas,
   grande: imgEmpresas,
@@ -23,8 +22,6 @@ const ilustracao = {
 
 const detalhe = (e) => [e.areaAtuacao, e.localizacao].filter(Boolean).join(' · ') || 'Empresa na Bloom'
 
-// Cartão de empresa em destaque: marca, nome, descrição curta e as vagas
-// abertas mais recentes.
 function CartaoEmpresa({ empresa }) {
   return (
     <Link to={`/empresas/${empresa.id}`} className="group flex h-full flex-col border border-linha bg-branco p-6 transition-colors hover:border-linha-forte">
