@@ -7,7 +7,6 @@ import TituloPagina from '../../components/candidata/TituloPagina'
 import Botao from '../../components/ui/Botao'
 import { Selecao, estiloControle } from '../../components/ui/Campo'
 import { Vazio, VazioAcoes, VazioDescricao, VazioIcone, VazioTitulo } from '../../components/ui/Vazio'
-import { buscarEmpresa } from '../../data/empresas'
 import { correspondeBusca, ehIniciante } from '../../data/vagas'
 import { candidaturaDaVaga } from '../../services/candidaturas'
 import { cn } from '../../lib/cn'
@@ -62,11 +61,11 @@ function Vagas() {
 
   const busca = parametros.get('busca') ?? ''
   const local = parametros.get('local') ?? ''
-  const empresaSlug = parametros.get('empresa') ?? ''
+  // ?empresa=<id> (vem do perfil público da empresa).
+  const empresaId = parametros.get('empresa') ?? ''
   const iniciante = parametros.get('iniciante') === '1'
   const ordem = ORDENACOES[parametros.get('ordem')] ? parametros.get('ordem') : 'recentes'
   const selecionados = Object.fromEntries(GRUPOS.map((g) => [g.chave, parametros.getAll(g.chave)]))
-  const empresaFiltro = empresaSlug ? buscarEmpresa(empresaSlug) : null
 
   function atualizar(alterar) {
     const proximos = new URLSearchParams(parametros)
@@ -98,12 +97,13 @@ function Vagas() {
   // Opções dos filtros a partir das vagas carregadas (nunca inventadas).
   const grupos = GRUPOS.map((g) => ({ ...g, opcoes: unicos(todas.map(g.campo)) }))
   const locais = unicos(todas.map((v) => v.local))
+  const empresaFiltro = empresaId ? (todas.find((v) => String(v.dadosEmpresa?.id) === empresaId)?.dadosEmpresa ?? { nome: 'Empresa' }) : null
   const resultado = useMemo(
     () =>
       todas
         .filter((vaga) => correspondeBusca(vaga, busca))
         .filter((vaga) => !local || vaga.local === local)
-        .filter((vaga) => !empresaSlug || vaga.empresa === empresaSlug)
+        .filter((vaga) => !empresaId || String(vaga.dadosEmpresa?.id) === empresaId)
         .filter((vaga) => !iniciante || ehIniciante(vaga))
         .filter((vaga) => grupos.every((g) => !selecionados[g.chave].length || selecionados[g.chave].includes(g.campo(vaga))))
         .sort(ORDENACOES[ordem].comparar),

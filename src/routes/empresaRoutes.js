@@ -1,6 +1,7 @@
 import { Router } from "express";
 import * as E from "../controllers/EmpresaController.js";
 import * as V from "../controllers/VagaController.js";
+import * as R from "../controllers/RepresentanteController.js";
 import { exigirLogin } from "../middlewares/autenticacao.js";
 
 // /api/empresa — área privada da empresa (só contas do tipo "empresa").
@@ -9,6 +10,8 @@ empresaRoutes.use(exigirLogin(["empresa"]));
 
 empresaRoutes.get("/perfil", E.perfil);
 empresaRoutes.put("/perfil", E.atualizarPerfil);
+empresaRoutes.get("/verificacao", R.ver);
+empresaRoutes.post("/verificacao", R.verificar);
 
 empresaRoutes.get("/vagas", E.listarVagas);
 empresaRoutes.post("/vagas", E.criarVaga);

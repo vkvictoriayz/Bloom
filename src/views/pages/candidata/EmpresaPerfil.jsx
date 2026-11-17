@@ -3,6 +3,7 @@ import Denunciar from '../../components/conta/Denunciar'
 
 import Icone from '../../components/Icone'
 import MarcaEmpresa from '../../components/MarcaEmpresa'
+import SeloVerificada from '../../components/SeloVerificada'
 import Capa from '../../components/candidata/Capa'
 import CartaoVaga from '../../components/candidata/CartaoVaga'
 import TituloPagina from '../../components/candidata/TituloPagina'
@@ -54,6 +55,7 @@ function EmpresaPerfil() {
           <MarcaEmpresa empresa={marca} tamanho="xl" className="relative z-10 -mt-14 ring-4 ring-branco" />
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <h2 className="font-display text-3xl text-tinta">{empresa.nome}</h2>
+            {empresa.verificada && <SeloVerificada />}
             {empresa.premium && (
               <Selo variante="vinho">
                 <Icone nome="coroa" /> Premium

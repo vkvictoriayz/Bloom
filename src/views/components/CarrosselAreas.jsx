@@ -8,7 +8,7 @@ import FaixaMarcas from './ui/FaixaMarcas'
 function CarrosselAreas({ areas, estaAutenticada = false }) {
   function urlArea(area) {
     if (!estaAutenticada) return '/login'
-    return area.filtro ? `/vagas?area=${encodeURIComponent(area.filtro)}` : '/vagas'
+    return `/vagas?area=${encodeURIComponent(area.nome)}`
   }
 
   const cartoes = areas.map((area, i) => (

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import CarrosselAreas from '../components/CarrosselAreas'
@@ -10,7 +11,7 @@ import FaixaMarcas from '../components/ui/FaixaMarcas'
 import Perguntas from '../components/ui/Perguntas'
 import TextoEscalonado from '../components/ui/TextoEscalonado'
 import { areasTI } from '../data/areas'
-import { empresas } from '../data/empresas'
+import { listarEmpresasPublicas } from '../services/publico'
 import { cn } from '../lib/cn'
 
 import imgAbertura from '../assets/ilustracoes/home-abertura.webp'
@@ -82,7 +83,24 @@ function TituloSecao({ id, titulo, descricao, acao }) {
   )
 }
 
+// Empresas cadastradas na Bloom (as que têm mais vagas primeiro). Vazio
+// enquanto nenhuma empresa se cadastrou: a seção some.
+function useEmpresas() {
+  const [empresas, setEmpresas] = useState([])
+  useEffect(() => {
+    let ativo = true
+    listarEmpresasPublicas()
+      .then((r) => ativo && setEmpresas(r.empresas.slice(0, 12)))
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+  }, [])
+  return empresas
+}
+
 function HomePublica() {
+  const empresas = useEmpresas()
   return (
     <Pagina titulo="Carreiras em tecnologia" className="bg-papel">
       <div className="mx-auto flex max-w-7xl flex-col gap-16 px-4 py-8 sm:px-6 lg:gap-24 lg:px-8 lg:py-12">
@@ -202,11 +220,12 @@ function HomePublica() {
         </section>
 
         {/* ── Empresas ─────────────────────────────────────────── */}
+        {empresas.length > 0 && (
         <section aria-labelledby="titulo-empresas">
           <TituloSecao
             id="titulo-empresas"
             titulo="Conheça quem está contratando"
-            descricao="Veja o segmento, a sede e as vagas abertas de cada empresa antes de se candidatar."
+            descricao="Veja a área, a cidade e as vagas abertas de cada empresa antes de se candidatar."
             acao={
               <Botao as={Link} to="/empresas" variante="secundario" className="rounded-full">
                 Explorar empresas <Icone nome="seta" />
@@ -218,19 +237,20 @@ function HomePublica() {
             duracao={45}
             itens={empresas.map((empresa) => (
               <Link
-                key={empresa.slug}
-                to={`/empresas/${empresa.slug}`}
+                key={empresa.id}
+                to={`/empresas/${empresa.id}`}
                 className="flex items-center gap-4 rounded-2xl border border-linha bg-branco py-3 pr-6 pl-3 transition-colors hover:border-linha-forte"
               >
                 <MarcaEmpresa empresa={empresa} tamanho="md" />
                 <span>
                   <span className="block font-semibold text-tinta">{empresa.nome}</span>
-                  <span className="block text-sm text-suave">{empresa.segmento}</span>
+                  <span className="block text-sm text-suave">{empresa.areaAtuacao || (empresa.vagasAbertas ? `${empresa.vagasAbertas} vagas abertas` : 'Empresa na Bloom')}</span>
                 </span>
               </Link>
             ))}
           />
         </section>
+        )}
 
         {/* ── Para empresas + perguntas ────────────────────────── */}
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">

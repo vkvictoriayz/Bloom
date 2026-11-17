@@ -470,6 +470,13 @@ export async function alterarEmail(req, res) {
     falhasLogin.limpar(chave);
     // O e-mail novo precisa ser confirmado de novo.
     await conta.update({ email, emailVerificadoEm: null });
+    // Verificação da empresa feita pelo domínio do e-mail antigo deixa de valer.
+    if (req.auth.tipo === "empresa") {
+      await EmpresaCadastro.update(
+        { representanteStatus: "pendente", representanteMetodo: null, representanteVerificadoEm: null },
+        { where: { empresaId: conta.id, representanteMetodo: "dominio" } }
+      );
+    }
     const emailEnviado = await enviarConfirmacaoEmail(req.auth.tipo, conta);
     return res.json({
       mensagem: "E-mail alterado. Enviamos um link para confirmar o novo endereço.",

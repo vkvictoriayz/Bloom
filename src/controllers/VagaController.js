@@ -8,6 +8,7 @@ import { Conversa, Mensagem } from "../models/Interacao.js";
 import { contasPremium } from "../models/Premium.js";
 import { Usuaria } from "../models/Usuaria.js";
 import { notificar } from "../services/notificacoes.js";
+import { empresasVerificadas } from "../services/representante.js";
 
 // Vagas publicadas pelas empresas, vistas pela candidata, e as candidaturas
 // dela. Rotas exigem login de usuária (exigirLogin(["usuaria"])).
@@ -53,7 +54,7 @@ async function empresasDas(vagas) {
   );
 }
 
-const vagaPublica = (v, empresa) => ({
+export const vagaPublica = (v, empresa) => ({
   id: v.id,
   titulo: v.titulo,
   descricao: v.descricao,
@@ -88,8 +89,9 @@ export const empresaPublica = comTratamento(async (req, res) => {
   if (!conta || conta.suspensaEm) return erro(res, 404, "Empresa não encontrada.");
   const p = await PerfilEmpresa.findOne({ where: { empresaId: id } });
   const vagas = p ? await Vaga.findAll({ where: { perfilEmpresaId: p.id, status: "Aberta" }, order: [["dataPublicacao", "DESC"], ["id", "DESC"]] }) : [];
-  const [imagens, premium] = await Promise.all([imagensDe("empresa", [id]), contasPremium("empresa", [id])]);
+  const [imagens, premium, verificadas] = await Promise.all([imagensDe("empresa", [id]), contasPremium("empresa", [id]), empresasVerificadas([id])]);
   const empresa = {
+    verificada: verificadas.has(id),
     id,
     nome: conta.nome,
     foto: imagens.get(id).foto,

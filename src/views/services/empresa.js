@@ -54,6 +54,10 @@ export const ACOES_VAGA = {
 export const lerPerfilEmpresa = () => chamar('/perfil')
 export const salvarPerfilEmpresa = (corpo) => chamar('/perfil', { method: 'PUT', corpo })
 
+// Verificação de quem representa a empresa (domínio do e-mail = domínio do site).
+export const lerVerificacaoEmpresa = () => chamar('/verificacao')
+export const verificarEmpresa = () => chamar('/verificacao', { method: 'POST' })
+
 // Vagas
 export const listarVagasEmpresa = (status) => chamar(`/vagas${consulta({ status })}`)
 export const criarVaga = (corpo) => chamar('/vagas', { method: 'POST', corpo })

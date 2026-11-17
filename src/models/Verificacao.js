@@ -64,6 +64,9 @@ export const EmpresaCadastro = sequelize.define(
       field: "representante_status",
     },
     declarouRepresentacaoEm: { type: DataTypes.DATE, allowNull: false, field: "declarou_representacao_em" },
+    // Migration 010: como e quando o vínculo foi confirmado ("dominio" | "equipe").
+    representanteMetodo: { type: DataTypes.STRING(20), field: "representante_metodo" },
+    representanteVerificadoEm: { type: DataTypes.DATE, field: "representante_verificado_em" },
   },
   opcoes("EMPRESA_DADOS_CADASTRAIS")
 );

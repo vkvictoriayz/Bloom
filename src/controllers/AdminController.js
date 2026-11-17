@@ -465,7 +465,11 @@ export const definirRepresentante = comTratamento(async (req, res) => {
   if (!cad) return erro(res, 404, "Esta empresa não tem dados de cadastro da Receita.");
   const status = texto(req.body?.status);
   if (!["verificado", "pendente"].includes(status)) return erro(res, 400, "Situação inválida.", "status");
-  await cad.update({ representanteStatus: status });
+  await cad.update(
+    status === "verificado"
+      ? { representanteStatus: status, representanteMetodo: "equipe", representanteVerificadoEm: new Date() }
+      : { representanteStatus: status, representanteMetodo: null, representanteVerificadoEm: null }
+  );
   await registrarAcao(req.admin.id, status === "verificado" ? "Confirmou o representante da empresa" : "Voltou o representante para pendente", "EMPRESA_DADOS_CADASTRAIS", id, `${cad.razaoSocial} · ${cad.responsavelNome}`);
   if (status === "verificado") {
     await notificar({ tipoConta: "empresa", contaId: id, tipo: "plataforma", texto: "A equipe da Bloom confirmou o vínculo de quem administra a conta da empresa." });

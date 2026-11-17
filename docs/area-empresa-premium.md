@@ -80,3 +80,24 @@ exclusão da conta (registro financeiro).
    `MP_WEBHOOK_SECRET` e o endereço da API para `API_PUBLIC_URL`.
 3. Conferir `FRONTEND_URL` (página de volta depois do pagamento).
 4. Reiniciar a API (`npm run server`): as migrations rodam na inicialização.
+
+## Verificação da empresa (`/api/empresa/verificacao`, migration 010)
+
+| Rota | O que faz |
+| --- | --- |
+| `GET /verificacao` | Situação (`pendente`/`verificado`), como e quando foi confirmada (`dominio`/`equipe`) e os requisitos da verificação automática, item por item. |
+| `POST /verificacao` | Confere os requisitos e, se todos batem, marca como verificada (`dominio`) e avisa a empresa. Se falta algo: 400 com `faltando`. |
+
+Regras e o caminho manual (equipe) em [autenticacao.md](autenticacao.md). A tela fica em Configurações → Verificação da empresa.
+
+## Páginas públicas (`/api/publico`, sem login)
+
+Limite de 60 pedidos por minuto por IP. Só dados que a empresa publicou no perfil e a cidade/UF do CNPJ; nunca o e-mail de login, o CNPJ ou o nome de quem administra a conta. Empresas suspensas não aparecem.
+
+| Rota | O que faz |
+| --- | --- |
+| `GET /empresas?busca=&area=&comVagas=1` | Diretório: nome, foto, capa, área, localização, descrição, vagas abertas (e as duas mais recentes), `verificada`, `premium`. Também `areas` (para o filtro) e `total`. |
+| `GET /empresas/:id` | Perfil público e vagas abertas. |
+| `GET /resumo` | Números reais: empresas, vagas abertas, integrantes. |
+
+Telas: `/empresas` (diretório) e `/empresas/:id` (perfil), e a faixa de empresas da home. A lista fixa de empresas e as vagas de exemplo foram removidas do front.

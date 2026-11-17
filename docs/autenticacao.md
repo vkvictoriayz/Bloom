@@ -86,9 +86,20 @@ quem criou a conta. Os sócios (QSA) que a BrasilAPI devolve não são guardados
 
 **Representação:** a consulta confirma a empresa, não a pessoa. Quem cadastra
 declara que pode representar a empresa (data registrada) e a conta fica com
-`representante_status = "pendente"` até uma verificação adicional, que ainda
-precisa ser definida (por exemplo, e-mail no domínio do site da empresa ou
-envio de documento).
+`representante_status = "pendente"` até confirmar o vínculo por um destes
+caminhos (migration 010 guarda o caminho e a data):
+
+- **Domínio do e-mail** (automático, em Configurações → Verificação da empresa,
+  `POST /api/empresa/verificacao`): CNPJ ATIVO, e-mail da conta confirmado pelo
+  link, e-mail corporativo (não Gmail, Hotmail, Outlook, Yahoo, iCloud, UOL e
+  outros provedores gratuitos) e no mesmo domínio do site informado no perfil
+  (subdomínios valem: `rh.empresa.com.br` para `empresa.com.br`). Trocar o
+  e-mail da conta desfaz essa verificação.
+- **Equipe da Bloom** (manual, no painel da administração): a equipe confere
+  por um canal oficial e confirma.
+
+Empresas verificadas ganham o selo "Verificada" nas páginas públicas e no
+perfil visto pelas candidatas. A regra está em `src/services/representante.js`.
 
 ## Recuperação de senha
 
@@ -160,4 +171,3 @@ Veja `.env.example`. Nunca coloque os valores no código nem no frontend.
   "não verificado".
 - **E-mails (redefinição de senha e confirmação de e-mail):** criar conta no
   Resend, verificar um domínio e preencher `RESEND_API_KEY` e `EMAIL_REMETENTE`.
-- **Verificação de quem representa a empresa:** definir a regra e o processo.

@@ -21,7 +21,8 @@ arquivos de `docs/`.
 | Área | Telas | Backend | Falta (código) | Depende de configuração |
 | --- | --- | --- | --- | --- |
 | Candidata | 23 (+ confirmar e-mail) | completo | nada | CPF (Serpro), e-mails (Resend), Premium (Mercado Pago) |
-| Empresa | 18 | completo | processo de verificar quem representa a empresa | e-mails (Resend), Premium (Mercado Pago) |
+| Empresa | 18 | completo | nada | e-mails (Resend), Premium (Mercado Pago) |
+| Páginas públicas | home, empresas, perfil da empresa | completo (`/api/publico`) | nada | — |
 | Administrador | 7 (+ subtelas) | completo | nada | e-mails dos links de senha (Resend) |
 
 ---
@@ -112,6 +113,8 @@ Documentação: [area-empresa-premium.md](area-empresa-premium.md).
 - [x] Download do currículo enviado na candidatura
 - [x] Aviso "Confirme seu e-mail" e situação do e-mail em Configurações
 - [x] Notificação quando uma candidata retira a candidatura
+- [x] "Verificação da empresa" em Configurações (requisitos item por item e "Verificar agora") e troca de e-mail da conta
+- [x] Selo "Verificada" no perfil público, no perfil visto pelas candidatas e no diretório
 
 ### Backend
 
@@ -119,6 +122,7 @@ Documentação: [area-empresa-premium.md](area-empresa-premium.md).
 - [x] Consulta do CNPJ na BrasilAPI no cadastro
 - [x] Bloom Premium (`/api/premium`) com Mercado Pago e webhook
 - [x] Notificações e preferências
+- [x] Verificação do representante (`/api/empresa/verificacao`): automática pelo domínio do e-mail (mesmo domínio do site, e-mail confirmado, CNPJ ativo) ou pela equipe no painel (migration 010)
 
 ### APIs externas
 
@@ -128,9 +132,19 @@ Documentação: [area-empresa-premium.md](area-empresa-premium.md).
 
 ### O que falta
 
-- [ ] Definir o processo de verificar **quem representa** a empresa (por
-  exemplo, e-mail no domínio do site da empresa ou envio de documento). Hoje a
-  equipe confirma manualmente no painel do administrador, em Empresas.
+- Nada de código. Para usar:
+  - [ ] Reiniciar a API para aplicar a migration 010
+  - [~] Configurar o Resend: sem ele, o link de confirmação de e-mail (um dos requisitos da verificação) só aparece no terminal da API
+
+---
+
+## Páginas públicas (sem login)
+
+- [x] Home: faixa "Conheça quem está contratando" com as empresas cadastradas (some enquanto não houver nenhuma)
+- [x] `/empresas`: diretório com busca, filtro por área, "só com vagas" e destaque para quem está contratando
+- [x] `/empresas/:id`: perfil público da empresa, vagas abertas, site e LinkedIn, selo de verificada
+- [x] Backend `/api/publico` (empresas, perfil, resumo), com limite por IP e só dados públicos
+- [x] Removidos os dados de exemplo (lista fixa de empresas e vagas de exemplo)
 
 ---
 
@@ -185,5 +199,5 @@ http://localhost:3006/admin.
 - [ ] Contratar o Serpro (CPF) e configurar
 - [ ] Criar conta no Resend, verificar o domínio e configurar
 - [ ] Trocar o token de teste do Mercado Pago pelo de produção e cadastrar o webhook
-- [ ] Definir a verificação de representante de empresa
+- [x] Definir a verificação de representante de empresa (domínio do e-mail ou equipe)
 - [x] Implementar a verificação de e-mail no cadastro (falta só o Resend, acima)

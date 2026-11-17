@@ -88,11 +88,7 @@ function DetalhesVaga() {
       <header className="flex flex-col gap-5 rounded-xl border border-linha bg-branco p-6 sm:flex-row sm:items-start sm:p-8">
         <MarcaEmpresa empresa={empresa} tamanho="lg" />
         <div className="min-w-0 flex-1">
-          {empresa.slug ? (
-            <Link to={`/empresas/${empresa.slug}`} className="font-semibold text-vinho hover:underline">
-              {empresa.nome}
-            </Link>
-          ) : empresa.id ? (
+          {empresa.id ? (
             <Link to={`/candidata/empresas/${empresa.id}`} className="font-semibold text-vinho hover:underline">
               {empresa.nome}
             </Link>

@@ -2,16 +2,18 @@ import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 
 import { SituacaoEmail } from '../../components/conta/ConfirmacaoEmail'
 import ExcluirConta from '../../components/conta/ExcluirConta'
+import FormularioEmail from '../../components/conta/FormularioEmail'
 import FormularioSenha from '../../components/conta/FormularioSenha'
 import PreferenciasNotificacao from '../../components/conta/PreferenciasNotificacao'
 import Icone from '../../components/Icone'
+import VerificacaoEmpresa from '../../components/empresa/VerificacaoEmpresa'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Botao from '../../components/ui/Botao'
 import { sair } from '../../services/auth'
 
-function Secao({ icone, titulo, descricao, children }) {
+function Secao({ id, icone, titulo, descricao, children }) {
   return (
-    <section className="grid gap-4 border-b border-linha py-7 last:border-b-0 md:grid-cols-[260px_minmax(0,1fr)] md:gap-10">
+    <section id={id} className="scroll-mt-24 grid gap-4 border-b border-linha py-7 last:border-b-0 md:grid-cols-[260px_minmax(0,1fr)] md:gap-10">
       <div className="flex gap-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-blush text-vinho" aria-hidden="true">
           <Icone nome={icone} tamanho={18} />
@@ -26,7 +28,7 @@ function Secao({ icone, titulo, descricao, children }) {
   )
 }
 
-function EmBreve({ children }) {
+function Observacao({ children }) {
   return (
     <p className="flex items-start gap-2 rounded-lg bg-papel-2 px-4 py-3 text-sm text-tinta-2">
       <Icone nome="info" tamanho={16} className="mt-0.5 shrink-0 text-suave" />
@@ -49,7 +51,7 @@ function Configuracoes() {
     <>
       <TituloPagina titulo="Configurações" descricao="Conta, segurança, privacidade e sessão da empresa." />
       <div className="cartao px-6 sm:px-8">
-        <Secao icone="predio" titulo="Dados da conta" descricao="Informados no cadastro da empresa.">
+        <Secao id="dados-da-conta" icone="predio" titulo="Dados da conta" descricao="Informados no cadastro da empresa.">
           <dl className="grid gap-4 text-sm sm:grid-cols-2">
             <div>
               <dt className="text-suave">Empresa</dt>
@@ -68,8 +70,15 @@ function Configuracoes() {
             </Botao>
           </div>
           <div className="mt-4">
-            <EmBreve>Nome, CNPJ e e-mail da conta não podem ser alterados pela plataforma: falta uma API de conta.</EmBreve>
+            <FormularioEmail emailAtual={dados?.empresa.email} />
           </div>
+          <div className="mt-4">
+            <Observacao>O nome e o CNPJ vêm da consulta à Receita no cadastro e não mudam pela plataforma. Para corrigir, fale com a equipe da Bloom.</Observacao>
+          </div>
+        </Secao>
+
+        <Secao icone="escudo" titulo="Verificação da empresa" descricao="Confirma que quem administra a conta fala pela empresa.">
+          <VerificacaoEmpresa />
         </Secao>
 
         <Secao icone="cadeado" titulo="Segurança" descricao="Senha de acesso.">
@@ -82,8 +91,8 @@ function Configuracoes() {
 
         <Secao icone="olho" titulo="Privacidade" descricao="O que as candidatas veem.">
           <p className="text-sm text-tinta-2">
-            Candidatas autenticadas veem o nome da empresa e as vagas abertas. O perfil (foto, capa, descrição, localização e site) aparece no
-            perfil da empresa. A empresa vê os dados públicos das profissionais e o que cada uma permitir mostrar e, nas candidaturas, o que a candidata enviou e o perfil profissional dela.
+            Qualquer pessoa vê o perfil público da empresa em Empresas (nome, foto, capa, área, localização, descrição, site e as vagas
+            abertas), mesmo sem conta. Candidatas autenticadas se candidatam e conversam com a empresa pelas candidaturas. A empresa vê os dados públicos das profissionais e o que cada uma permitir mostrar e, nas candidaturas, o que a candidata enviou e o perfil profissional dela.
           </p>
         </Secao>
 
