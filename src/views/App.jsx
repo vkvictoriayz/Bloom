@@ -54,18 +54,13 @@ import FeedEmpresa from './pages/empresa/Feed'
 import ExplorarTalentos from './pages/empresa/ExplorarTalentos'
 import PerfilEmpresa from './pages/empresa/Perfil'
 import EditarPerfilEmpresa from './pages/empresa/EditarPerfil'
-import PublicacoesEmpresa from './pages/empresa/Publicacoes'
-import CriarPublicacao from './pages/empresa/CriarPublicacao'
 import VagasEmpresa from './pages/empresa/Vagas'
 import FormularioVaga from './pages/empresa/FormularioVaga'
 import DetalheVagaEmpresa from './pages/empresa/DetalheVaga'
 import CandidaturasEmpresa from './pages/empresa/Candidaturas'
 import DetalheCandidaturaEmpresa from './pages/empresa/DetalheCandidatura'
-import BancoTalentos from './pages/empresa/BancoTalentos'
 import Talento from './pages/empresa/Talento'
 import {
-  Comunidades as ComunidadesEmpresa,
-  DetalheComunidade as DetalheComunidadeEmpresa,
   Mensagens as MensagensEmpresa,
   Conversa as ConversaEmpresa,
 } from './pages/empresa/Complementares'
@@ -162,18 +157,16 @@ function App() {
           <Route path="/empresa/explorar" element={<ExplorarTalentos />} />
           <Route path="/empresa/perfil" element={<PerfilEmpresa />} />
           <Route path="/empresa/perfil/editar" element={<EditarPerfilEmpresa />} />
-          <Route path="/empresa/publicacoes" element={<PublicacoesEmpresa />} />
-          <Route path="/empresa/publicacoes/criar" element={<CriarPublicacao />} />
+          <Route path="/empresa/publicacoes/*" element={<Navigate to="/empresa/feed" replace />} />
           <Route path="/empresa/vagas" element={<VagasEmpresa />} />
           <Route path="/empresa/vagas/criar" element={<FormularioVaga key="criar" />} />
           <Route path="/empresa/vagas/:id" element={<DetalheVagaEmpresa />} />
           <Route path="/empresa/vagas/:id/editar" element={<FormularioVaga key="editar" />} />
           <Route path="/empresa/candidaturas" element={<CandidaturasEmpresa />} />
           <Route path="/empresa/candidaturas/:id" element={<DetalheCandidaturaEmpresa />} />
-          <Route path="/empresa/talentos" element={<BancoTalentos />} />
+          <Route path="/empresa/talentos" element={<Navigate to="/empresa/explorar?visao=areas" replace />} />
           <Route path="/empresa/talentos/:id" element={<Talento />} />
-          <Route path="/empresa/comunidades" element={<ComunidadesEmpresa />} />
-          <Route path="/empresa/comunidades/:id" element={<DetalheComunidadeEmpresa />} />
+          <Route path="/empresa/comunidades/*" element={<Navigate to="/empresa/feed" replace />} />
           <Route path="/empresa/mensagens" element={<MensagensEmpresa />} />
           <Route path="/empresa/mensagens/:id" element={<ConversaEmpresa />} />
           <Route path="/empresa/notificacoes" element={<NotificacoesEmpresa />} />

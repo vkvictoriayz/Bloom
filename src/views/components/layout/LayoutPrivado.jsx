@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import Icone from '../Icone'
 import Logo, { Borboleta } from '../Logo'
 import Avatar from '../comunidade/Avatar'
+import SeloPremium from '../conta/SeloPremium'
 import { sair } from '../../services/auth'
 import { contarMensagensNaoLidas, contarNaoLidas, EVENTO_MENSAGENS, EVENTO_NOTIFICACOES } from '../../services/recursos'
 import { cn } from '../../lib/cn'
@@ -56,6 +57,18 @@ function ItemMenu({ item, recolhido, sub = false, aoNavegar }) {
     <>
       <Icone nome={item.icone} tamanho={sub && !recolhido ? 18 : 20} className={cn('shrink-0', sub && !recolhido && 'absolute left-4')} />
       <Rotulo recolhido={recolhido}>{item.rotulo}</Rotulo>
+      {item.contador > 0 && (
+        <span
+          className={cn(
+            'grid min-w-5 place-items-center rounded-full bg-vinho px-1.5 text-[11px] leading-5 font-bold text-white tabular-nums',
+            recolhido ? 'absolute top-1 right-1 min-w-4 px-1 text-[10px] leading-4' : 'ml-auto',
+            'group-[.bg-vinho]:bg-white group-[.bg-vinho]:text-vinho'
+          )}
+          aria-label={`${item.contador} pendentes`}
+        >
+          {item.contador > 99 ? '99+' : item.contador}
+        </span>
+      )}
     </>
   )
 
@@ -166,7 +179,7 @@ function ConteudoMenu({ config, recolhido, aoNavegar, aoSair }) {
   )
 }
 
-function MenuConta({ usuario, foto, config, aoSair }) {
+function MenuConta({ usuario, foto, config, aoSair, premium }) {
   const [aberto, setAberto] = useState(false)
   const caixa = useRef(null)
 
@@ -193,7 +206,10 @@ function MenuConta({ usuario, foto, config, aoSair }) {
         onClick={() => setAberto((v) => !v)}
         className="flex items-center gap-1.5 rounded-full p-1 transition-colors hover:bg-papel-2 sm:pr-2"
       >
-        <Avatar nome={usuario?.nome} foto={foto} tamanho="sm" />
+        <span className="relative">
+          <Avatar nome={usuario?.nome} foto={foto} tamanho="sm" />
+          {premium && <SeloPremium compacto className="absolute -right-1 -bottom-1 size-4 ring-2 ring-branco" />}
+        </span>
         <svg viewBox="0 0 12 12" className={cn('hidden size-3 text-suave transition-transform sm:block', aberto && 'rotate-180')} aria-hidden="true">
           <path d="m2.5 4.5 3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
         </svg>
@@ -202,7 +218,10 @@ function MenuConta({ usuario, foto, config, aoSair }) {
       {aberto && (
         <div role="menu" className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-xl border border-linha bg-branco py-1 shadow-menu">
           <div className="border-b border-linha px-4 py-3">
-            <p className="truncate text-sm font-semibold text-tinta">{usuario?.nome}</p>
+            <p className="flex items-center gap-2 text-sm font-semibold text-tinta">
+              <span className="truncate">{usuario?.nome}</span>
+              {premium && <SeloPremium />}
+            </p>
             <p className="truncate text-xs text-suave">{usuario?.email}</p>
           </div>
           <Link role="menuitem" to={config.perfil.para} className={item} onClick={() => setAberto(false)}>
@@ -273,7 +292,7 @@ function useNaoLidas(ativo = true, contar = contarNaoLidas, evento = EVENTO_NOTI
   return total
 }
 
-function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
+function LayoutPrivado({ config, usuario, foto, contexto, faixa, premium = false }) {
   const naoLidas = useNaoLidas(Boolean(config.notificacoes))
   const mensagensNaoLidas = useNaoLidas(Boolean(config.mensagens), contarMensagensNaoLidas, EVENTO_MENSAGENS)
   const navigate = useNavigate()
@@ -409,7 +428,7 @@ function LayoutPrivado({ config, usuario, foto, contexto, faixa }) {
               )}
             </NavLink>
             )}
-            <MenuConta usuario={usuario} foto={foto} config={config} aoSair={handleSair} />
+            <MenuConta usuario={usuario} foto={foto} config={config} aoSair={handleSair} premium={premium} />
           </div>
         </header>
 

@@ -5,7 +5,7 @@ import { imagensDe } from "../models/Imagem.js";
 import { contasPremium } from "../models/Premium.js";
 import { EmpresaCadastro } from "../models/Verificacao.js";
 import { empresasVerificadas } from "../services/representante.js";
-import { vagaPublica } from "./VagaController.js";
+import { totaisCandidaturas, vagaPublica } from "./VagaController.js";
 
 const erro = (res, status, mensagem) => res.status(status).json({ erro: mensagem });
 const idParam = (v) => (/^\d+$/.test(String(v)) ? Number(v) : null);
@@ -81,10 +81,11 @@ export const empresa = comTratamento(async (req, res) => {
   const [cartao] = await cartoes([conta]);
   const p = await PerfilEmpresa.findOne({ where: { empresaId: id } });
   const vagas = p ? await Vaga.findAll({ where: { perfilEmpresaId: p.id, status: "Aberta" }, order: [["dataPublicacao", "DESC"], ["id", "DESC"]] }) : [];
+  const totais = await totaisCandidaturas(vagas);
   const dadosEmpresa = { id, nome: conta.nome, logo: cartao.logo, foto: cartao.foto, capa: cartao.capa, site: cartao.site, localizacao: cartao.localizacao, premium: cartao.premium };
   return res.json({
     empresa: { ...cartao, linkedin: p?.linkedin ?? "", emailContato: p?.emailContato ?? "", informacoes: p?.informacoes ?? "" },
-    vagas: vagas.map((v) => vagaPublica(v, dadosEmpresa)),
+    vagas: vagas.map((v) => vagaPublica(v, dadosEmpresa, totais.get(v.id))),
   });
 });
 

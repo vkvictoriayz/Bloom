@@ -15,16 +15,8 @@ const CONFIG = {
     {
       itens: [
         { rotulo: 'Feed', para: '/empresa/feed', icone: 'inicio' },
-        { rotulo: 'Explorar talentos', para: '/empresa/explorar', icone: 'busca' },
+        { rotulo: 'Explorar talentos', para: '/empresa/explorar', icone: 'busca', tambem: ['/empresa/talentos'] },
         { rotulo: 'Perfil da empresa', para: '/empresa/perfil', icone: 'predio' },
-      ],
-    },
-    {
-      grupo: 'Conteúdo',
-      icone: 'documento',
-      itens: [
-        { rotulo: 'Publicações', para: '/empresa/publicacoes', icone: 'documento', fim: true },
-        { rotulo: 'Criar publicação', para: '/empresa/publicacoes/criar', icone: 'mais' },
       ],
     },
     {
@@ -34,13 +26,11 @@ const CONFIG = {
         { rotulo: 'Painel de recrutamento', para: '/empresa/dashboard', icone: 'grafico' },
         { rotulo: 'Gerenciar vagas', para: '/empresa/vagas', icone: 'maleta' },
         { rotulo: 'Candidaturas recebidas', para: '/empresa/candidaturas', icone: 'candidaturas' },
-        { rotulo: 'Banco de talentos', para: '/empresa/talentos', icone: 'estrela' },
       ],
     },
     { divisor: true },
     {
       itens: [
-        { rotulo: 'Comunidades', para: '/empresa/comunidades', icone: 'grupo' },
         { rotulo: 'Mensagens', para: '/empresa/mensagens', icone: 'mensagem' },
         { rotulo: 'Notificações', para: '/empresa/notificacoes', icone: 'sino' },
         { rotulo: 'Premium', para: '/empresa/premium', icone: 'coroa' },
@@ -75,6 +65,7 @@ function LayoutEmpresa() {
       config={CONFIG}
       usuario={dados ? { nome: dados.empresa.nome, email: dados.empresa.email } : sessao?.usuario}
       foto={fotoEmpresa(dados)}
+      premium={Boolean(dados?.empresa.premium)}
       faixa={<AvisoConfirmarEmail />}
       contexto={{ perfil: dados, erroPerfil: perfil.tipo === 'erro' ? perfil.erro : '', recarregarPerfil: perfil.recarregar }}
     />

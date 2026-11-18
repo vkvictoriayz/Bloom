@@ -119,6 +119,35 @@ function Balao({ m, primeira, ultima, visto, podeApagar, aoApagar }) {
   )
 }
 
+const EMOJIS = ['😊', '👋', '🙏', '👏', '🎉', '💜', '🌸', '✨', '👍', '🚀', '💡', '📅']
+
+function ajustarAltura(el) {
+  el.style.height = 'auto'
+  el.style.height = `${Math.min(el.scrollHeight + 2, 160)}px`
+  el.style.overflowY = el.scrollHeight > 160 ? 'auto' : 'hidden'
+}
+
+function respostasRapidas({ entreCandidatas, naEmpresa, nome }) {
+  if (entreCandidatas) return ['Oi! Tudo bem? 😊', 'Adorei sua publicação!', 'Quer trocar uma ideia sobre a área?', 'Obrigada pela ajuda! 💜']
+  if (naEmpresa)
+    return [
+      `Olá, ${nome}! Obrigada pela sua candidatura.`,
+      'Podemos agendar uma conversa esta semana?',
+      'Você poderia enviar seu portfólio ou GitHub?',
+      'Você avançou para a próxima etapa! 🎉',
+      'Qual a sua disponibilidade de horário?',
+    ]
+  return ['Olá! Obrigada pelo retorno.', 'Tenho disponibilidade esta semana.', 'Segue o link do meu portfólio:', 'Fico à disposição para qualquer dúvida.']
+}
+
+const COR_ETAPA = {
+  Recebida: 'bg-papel-2 text-tinta-2',
+  'Em análise': 'bg-alerta-claro text-alerta',
+  'Em entrevista': 'bg-blush text-vinho',
+  Aprovada: 'bg-sucesso-claro text-sucesso',
+  Reprovada: 'bg-erro-claro text-erro',
+}
+
 export function Chat({ tipo, id, base, aoMudar, className }) {
   const entreCandidatas = tipo === 'candidatas'
   const [estado, setEstado] = useState({ tipo: 'carregando' })
@@ -129,6 +158,7 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
   const [anexo, setAnexo] = useState(null)
   const [menu, setMenu] = useState(false)
   const [denunciando, setDenunciando] = useState(false)
+  const [emojis, setEmojis] = useState(false)
   const rolagem = useRef(null)
   const campo = useRef(null)
   const arquivo = useRef(null)
@@ -216,6 +246,7 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
       colado.current = true
       setEstado((s) => ({ ...s, mensagens: [...s.mensagens.filter((m) => m.id !== r.mensagem.id), r.mensagem] }))
       setTexto('')
+      if (campo.current) campo.current.style.height = ''
       setAnexo(null)
       aoMudar?.()
       campo.current?.focus()
@@ -262,6 +293,21 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
     }
   }
 
+  function inserir(trecho, substituir = false) {
+    const el = campo.current
+    const inicio = el?.selectionStart ?? texto.length
+    const fim = el?.selectionEnd ?? texto.length
+    const novo = substituir ? trecho : texto.slice(0, inicio) + trecho + texto.slice(fim)
+    setTexto(novo.slice(0, LIMITE))
+    requestAnimationFrame(() => {
+      if (!el) return
+      el.focus()
+      const pos = substituir ? novo.length : inicio + trecho.length
+      el.setSelectionRange(pos, pos)
+      ajustarAltura(el)
+    })
+  }
+
   function teclas(e) {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
@@ -296,6 +342,12 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
       ? conversa.candidaturaId && `/empresa/candidaturas/${conversa.candidaturaId}`
       : `/candidata/empresas/${pessoa.id}`
   const subtitulo = entreCandidatas ? pessoa.area || 'Integrante da Bloom' : conversa.vaga ? `Sobre a vaga ${conversa.vaga}` : 'Processo seletivo'
+  const sugestoes = respostasRapidas({ entreCandidatas, naEmpresa, nome: pessoa.nome.split(' ')[0] })
+  const etapa = !entreCandidatas && conversa.etapa ? (
+    <span className={cn('hidden shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold sm:inline-flex', COR_ETAPA[conversa.etapa] ?? 'bg-papel-2 text-tinta-2')} title="Etapa da candidatura">
+      {conversa.etapa}
+    </span>
+  ) : null
 
   return (
     <div className={cn('flex min-h-0 flex-col', className)}>
@@ -320,6 +372,7 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
             </span>
           </span>
         )}
+        {etapa}
         {linkPerfil && (
           <Link to={linkPerfil} className="hidden shrink-0 rounded-full border border-linha-forte px-3 py-1.5 text-xs font-semibold text-tinta-2 hover:border-vinho hover:text-vinho sm:inline-flex">
             {entreCandidatas ? 'Ver perfil' : naEmpresa ? 'Ver candidatura' : 'Ver empresa'}
@@ -379,9 +432,12 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
         )}
         {mensagens.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 py-10 text-center">
-            <Avatar nome={pessoa.nome} foto={pessoa.foto} tamanho="lg" />
-            <p className="font-semibold text-tinta">{pessoa.nome}</p>
-            <p className="max-w-xs text-sm text-suave">{entreCandidatas ? 'Diga oi! Conversas entre integrantes ficam só entre vocês duas.' : 'Nenhuma mensagem ainda. Escreva a primeira.'}</p>
+            <span className="relative">
+              <span aria-hidden="true" className="absolute -inset-3 rounded-full bg-blush" />
+              <Avatar nome={pessoa.nome} foto={pessoa.foto} tamanho="lg" className="relative ring-4 ring-branco" />
+            </span>
+            <p className="mt-2 font-display text-xl text-tinta">{pessoa.nome}</p>
+            <p className="max-w-xs text-sm text-suave">{entreCandidatas ? 'Diga oi! Conversas entre integrantes ficam só entre vocês duas.' : 'Nenhuma mensagem ainda. Comece com uma das sugestões abaixo ou escreva a sua.'}</p>
           </div>
         ) : (
           <ol className="flex flex-col">
@@ -442,7 +498,40 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
               </button>
             </div>
           )}
+          {!texto && !anexo && (
+            <div className="-mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]" aria-label="Respostas rápidas">
+              {sugestoes.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => inserir(s, true)}
+                  className="shrink-0 rounded-full border border-linha bg-papel px-3 py-1.5 text-xs font-semibold text-tinta-2 transition-colors hover:border-vinho/40 hover:bg-blush hover:text-vinho"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+          {emojis && (
+            <div className="mb-2 flex flex-wrap gap-1 rounded-xl border border-linha bg-papel p-2" role="group" aria-label="Emojis">
+              {EMOJIS.map((em) => (
+                <button key={em} type="button" onClick={() => inserir(em)} className="grid size-9 place-items-center rounded-lg text-lg hover:bg-blush" aria-label={`Inserir ${em}`}>
+                  {em}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex items-end gap-2">
+            <button
+              type="button"
+              onClick={() => setEmojis((v) => !v)}
+              aria-pressed={emojis}
+              className={cn('grid size-11 shrink-0 place-items-center rounded-full text-lg transition-colors hover:bg-papel-2', emojis && 'bg-blush')}
+              aria-label="Emojis"
+              title="Emojis"
+            >
+              <span aria-hidden="true">😊</span>
+            </button>
             <input ref={arquivo} type="file" accept={ACEITAR_IMAGEM} hidden onChange={escolherImagem} />
             <button
               type="button"
@@ -465,12 +554,11 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
               value={texto}
               onChange={(e) => {
                 setTexto(e.target.value)
-                e.target.style.height = 'auto'
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`
+                ajustarAltura(e.target)
               }}
               onKeyDown={teclas}
               placeholder="Escreva uma mensagem…"
-              className="max-h-40 min-h-11 flex-1 resize-none rounded-2xl border border-transparent bg-papel-2 px-4 py-2.5 text-[15px] text-tinta placeholder:text-suave focus:border-vinho focus:bg-branco focus:ring-[3px] focus:ring-vinho/20 focus:outline-none"
+              className="max-h-40 min-h-11 flex-1 resize-none overflow-y-hidden rounded-2xl border border-transparent bg-papel-2 px-4 py-2.5 text-[15px] text-tinta placeholder:text-suave focus:border-vinho focus:bg-branco focus:ring-[3px] focus:ring-vinho/20 focus:outline-none"
             />
             <button
               type="submit"

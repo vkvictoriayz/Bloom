@@ -16,7 +16,12 @@ function CartaoVaga({ vaga, candidatura }) {
         <MarcaEmpresa empresa={empresa} tamanho="md" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-tinta-2">{empresa.nomeCurto}</p>
-          <p className="text-xs text-suave">{formatarPublicacao(vaga.publicadaHaDias)}</p>
+          <p className="text-xs text-suave">
+            {formatarPublicacao(vaga.publicadaHaDias)}
+            {vaga.vagasRestantes !== null && vaga.vagasRestantes !== undefined && vaga.vagasRestantes <= 20 && (
+              <span className="ml-1.5 font-semibold text-alerta">· {vaga.vagasRestantes === 1 ? 'Resta 1 vaga' : `Restam ${vaga.vagasRestantes} vagas`}</span>
+            )}
+          </p>
         </div>
         <BotaoSalvar vaga={vaga} className="-mt-1 -mr-2" />
       </div>

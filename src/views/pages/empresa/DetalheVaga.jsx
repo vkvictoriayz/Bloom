@@ -113,9 +113,27 @@ function DetalheVaga() {
         <aside className="flex flex-col gap-4">
           <Link to={`/empresa/candidaturas?vaga=${v.id}`} className="cartao group flex items-center gap-4 p-6 hover:border-vinho/40">
             <span className="font-display text-4xl text-vinho tabular-nums">{v.candidaturas}</span>
-            <span className="flex-1 text-sm text-tinta-2">{v.candidaturas === 1 ? 'candidatura recebida' : 'candidaturas recebidas'}</span>
+            <span className="flex-1 text-sm text-tinta-2">
+              {v.limiteCandidaturas ? `de ${v.limiteCandidaturas} candidaturas permitidas` : v.candidaturas === 1 ? 'candidatura recebida' : 'candidaturas recebidas'}
+            </span>
             <Icone nome="seta" className="text-suave transition-transform group-hover:translate-x-1" />
           </Link>
+          {v.limiteCandidaturas ? (
+            <div className="cartao p-5">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="font-semibold text-tinta">Limite de candidatas</span>
+                <span className="text-suave tabular-nums">{Math.min(100, Math.round((v.candidaturas / v.limiteCandidaturas) * 100))}%</span>
+              </div>
+              <div className="mt-2 h-2 rounded-full bg-papel-2" aria-hidden="true">
+                <div className="h-full rounded-full bg-vinho" style={{ width: `${Math.min(100, (v.candidaturas / v.limiteCandidaturas) * 100)}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-suave">
+                {v.candidaturas >= v.limiteCandidaturas
+                  ? 'Limite atingido: a vaga foi pausada. Aumente o limite em Editar para reabrir.'
+                  : `Restam ${v.limiteCandidaturas - v.candidaturas} ${v.limiteCandidaturas - v.candidaturas === 1 ? 'vaga' : 'vagas'} para candidaturas.`}
+              </p>
+            </div>
+          ) : null}
           {v.candidaturas > 0 && (
             <ul className="cartao divide-y divide-linha px-6 py-2" aria-label="Candidaturas por etapa">
               {STATUS_CANDIDATURA.map((s) => (

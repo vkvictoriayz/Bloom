@@ -1,0 +1,1 @@
+ALTER TABLE VAGAS ADD COLUMN limite_candidaturas INT NULL;

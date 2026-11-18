@@ -37,7 +37,8 @@ export const baixarRelatorio = (recurso) => baixarArquivo(`/admin/relatorios/${e
 
 export const ehSuper = () => obterSessao()?.usuario?.nivel === 'super'
 
-export const lerPainel = () => chamar('/dashboard')
+export const lerPainel = (dias = 30) => chamar(`/dashboard?dias=${encodeURIComponent(dias)}`)
+export const lerResumoMenu = () => chamar('/resumo-menu')
 export const listarCandidatasAdmin = (filtros = {}) => chamar(`/candidatas${consulta(filtros)}`)
 export const lerCandidataAdmin = (id) => chamar(`/candidatas/${encodeURIComponent(id)}`)
 export const listarEmpresasAdmin = (filtros = {}) => chamar(`/empresas${consulta(filtros)}`)

@@ -5,7 +5,7 @@ import { exigirLogin } from "../middlewares/autenticacao.js";
 const router = Router();
 const soCandidata = exigirLogin(["usuaria"]);
 const corpo = express.json({ limit: "20kb" });
-router.use(exigirLogin(["usuaria", "empresa"]));
+router.use(exigirLogin(["usuaria"]));
 router.get("/", G.listar);
 router.post("/", soCandidata, corpo, G.criar);
 router.get("/:id", G.ver);

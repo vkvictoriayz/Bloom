@@ -48,6 +48,7 @@ export const Vaga = sequelize.define(
     nivel: { type: DataTypes.STRING(30) },
     beneficios: { type: DataTypes.STRING(500) },
     salarioMax: { type: DataTypes.DECIMAL(10, 2), field: "salario_max" },
+    limiteCandidaturas: { type: DataTypes.INTEGER, field: "limite_candidaturas" },
   },
   opcoes("VAGAS")
 );

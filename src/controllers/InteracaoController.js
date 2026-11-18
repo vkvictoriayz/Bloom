@@ -83,12 +83,13 @@ async function detalhesConversas(conversas, tipo) {
   const fotos = tipo === "empresa" ? await imagensDe("usuaria", ids("usuariaId")) : await imagensDe("empresa", ids("empresaId"));
   const nomeU = new Map(usuarias.map((u) => [u.id, u.nome]));
   const nomeE = new Map(empresas.map((e) => [e.id, e.nome]));
+  const etapaDaCandidatura = new Map(candidaturas.map((c) => [c.id, c.status]));
   const vagaDaCandidatura = new Map(candidaturas.map((c) => [c.id, vagas.find((v) => v.id === c.vagaId)?.titulo ?? "Vaga"]));
   return new Map(
     conversas.map((c) => {
       const outroId = tipo === "empresa" ? c.usuariaId : c.empresaId;
       const nome = tipo === "empresa" ? nomeU.get(c.usuariaId) : nomeE.get(c.empresaId);
-      return [c.id, { participante: { id: outroId, nome: nome ?? "Conta removida", foto: fotos.get(outroId)?.foto ?? null }, vaga: vagaDaCandidatura.get(c.candidaturaId), candidaturaId: c.candidaturaId }];
+      return [c.id, { participante: { id: outroId, nome: nome ?? "Conta removida", foto: fotos.get(outroId)?.foto ?? null }, vaga: vagaDaCandidatura.get(c.candidaturaId), etapa: etapaDaCandidatura.get(c.candidaturaId) ?? null, candidaturaId: c.candidaturaId }];
     })
   );
 }

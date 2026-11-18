@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
+import SeloPremium from '../../components/conta/SeloPremium'
+import Avatar from '../../components/comunidade/Avatar'
 import { AcaoComMotivo, BotaoRelatorio, Filtros, Paginacao } from '../../components/admin/Comuns'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
@@ -60,6 +62,29 @@ function CampoBusca({ valor, aoMudar, placeholder }) {
   )
 }
 
+function Tabela({ colunas, resumo, children }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-linha bg-branco">
+      <div className="flex items-center justify-between gap-3 border-b border-linha bg-papel px-5 py-3 text-sm">
+        <span className="font-semibold text-tinta">{resumo}</span>
+      </div>
+      <div role="table" className="text-sm">
+        <div role="row" className="hidden border-b border-linha px-5 py-2.5 text-xs font-bold tracking-wide text-suave uppercase lg:grid lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1.6fr)_20px] lg:gap-4">
+          {colunas.map((c) => (
+            <span key={c} role="columnheader">
+              {c}
+            </span>
+          ))}
+          <span aria-hidden="true" />
+        </div>
+        <ul className="divide-y divide-linha">{children}</ul>
+      </div>
+    </div>
+  )
+}
+
+const linhaTabela = 'grid grid-cols-1 items-center gap-x-4 gap-y-2 px-5 py-3.5 transition-colors hover:bg-papel lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1.6fr)_20px]'
+
 function SeloSituacao({ suspensaEm }) {
   return suspensaEm ? <Selo variante="erro">Suspensa</Selo> : <Selo variante="sucesso">Ativa</Selo>
 }
@@ -82,28 +107,39 @@ export function Candidatas() {
           {r.dados.candidatas.length === 0 ? (
             <p className="rounded-xl border border-dashed border-linha-forte bg-branco px-5 py-6 text-sm text-suave">Nenhuma candidata encontrada.</p>
           ) : (
-            <ul className="divide-y divide-linha rounded-xl border border-linha bg-branco">
+            <Tabela colunas={['Candidata', 'Atividade', 'Situação']} resumo={`${r.dados.total} ${r.dados.total === 1 ? 'candidata' : 'candidatas'}`}>
               {r.dados.candidatas.map((c) => (
-                <li key={c.id}>
-                  <Link to={`/admin/candidatas/${c.id}`} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5 hover:bg-papel sm:px-5">
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold text-tinta">{c.nome}</span>
-                      <span className="block truncate text-sm text-suave">
-                        {c.email} · {c.cpf}
+                <li key={c.id} role="row">
+                  <Link to={`/admin/candidatas/${c.id}`} className={linhaTabela}>
+                    <span className="flex min-w-0 items-center gap-3">
+                      <Avatar nome={c.nome} tamanho="sm" />
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-1.5 font-semibold text-tinta">
+                          <span className="truncate">{c.nome}</span>
+                          {c.premium && <SeloPremium compacto />}
+                        </span>
+                        <span className="block truncate text-xs text-suave">
+                          {c.email} · {c.cpf}
+                        </span>
                       </span>
                     </span>
-                    <span className="text-xs text-tinta-2 tabular-nums">
-                      {c.candidaturas} candidatura{c.candidaturas === 1 ? '' : 's'} · {c.publicacoes} publicaç{c.publicacoes === 1 ? 'ão' : 'ões'}
+                    <span className="flex gap-4 text-xs text-tinta-2 tabular-nums lg:flex-col lg:gap-0.5">
+                      <span>
+                        <strong className="text-tinta">{c.candidaturas}</strong> candidatura{c.candidaturas === 1 ? '' : 's'}
+                      </span>
+                      <span>
+                        <strong className="text-tinta">{c.publicacoes}</strong> publicaç{c.publicacoes === 1 ? 'ão' : 'ões'}
+                      </span>
                     </span>
                     <span className="flex flex-wrap gap-1.5">
-                      {c.premium && <Selo variante="vinho">Premium</Selo>}
                       <Selo variante={CPF[c.cpfStatus]?.[0] ?? 'neutro'}>{CPF[c.cpfStatus]?.[1] ?? c.cpfStatus}</Selo>
                       <SeloSituacao suspensaEm={c.suspensaEm} />
                     </span>
+                    <Icone nome="seta" tamanho={16} className="hidden text-suave lg:block" />
                   </Link>
                 </li>
               ))}
-            </ul>
+            </Tabela>
           )}
           <Paginacao pagina={f.pagina} total={r.dados.total} porPagina={r.dados.porPagina} aoMudar={(p) => definir('pagina', String(p))} />
         </>
@@ -309,29 +345,37 @@ export function Empresas() {
           {r.dados.empresas.length === 0 ? (
             <p className="rounded-xl border border-dashed border-linha-forte bg-branco px-5 py-6 text-sm text-suave">Nenhuma empresa encontrada.</p>
           ) : (
-            <ul className="divide-y divide-linha rounded-xl border border-linha bg-branco">
+            <Tabela colunas={['Empresa', 'Vagas e Receita', 'Situação']} resumo={`${r.dados.total} ${r.dados.total === 1 ? 'empresa' : 'empresas'}`}>
               {r.dados.empresas.map((e) => (
-                <li key={e.id}>
-                  <Link to={`/admin/empresas/${e.id}`} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5 hover:bg-papel sm:px-5">
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold text-tinta">{e.nome}</span>
-                      <span className="block truncate text-sm text-suave">
-                        {e.cnpj} · {e.email}
+                <li key={e.id} role="row">
+                  <Link to={`/admin/empresas/${e.id}`} className={linhaTabela}>
+                    <span className="flex min-w-0 items-center gap-3">
+                      <Avatar nome={e.nome} tamanho="sm" className="rounded-lg" />
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-1.5 font-semibold text-tinta">
+                          <span className="truncate">{e.nome}</span>
+                          {e.premium && <SeloPremium compacto />}
+                        </span>
+                        <span className="block truncate text-xs text-suave">
+                          {e.cnpj} · {e.email}
+                        </span>
                       </span>
                     </span>
-                    <span className="text-xs text-tinta-2 tabular-nums">
-                      {e.vagas} vaga{e.vagas === 1 ? '' : 's'}
-                      {e.situacaoCadastral && ` · Receita: ${e.situacaoCadastral}`}
+                    <span className="flex gap-4 text-xs text-tinta-2 tabular-nums lg:flex-col lg:gap-0.5">
+                      <span>
+                        <strong className="text-tinta">{e.vagas}</strong> vaga{e.vagas === 1 ? '' : 's'}
+                      </span>
+                      {e.situacaoCadastral && <span>Receita: {e.situacaoCadastral}</span>}
                     </span>
                     <span className="flex flex-wrap gap-1.5">
-                      {e.premium && <Selo variante="vinho">Premium</Selo>}
                       {e.representante === 'verificado' ? <Selo variante="sucesso">Representante confirmado</Selo> : <Selo variante="alerta">Representante pendente</Selo>}
                       <SeloSituacao suspensaEm={e.suspensaEm} />
                     </span>
+                    <Icone nome="seta" tamanho={16} className="hidden text-suave lg:block" />
                   </Link>
                 </li>
               ))}
-            </ul>
+            </Tabela>
           )}
           <Paginacao pagina={f.pagina} total={r.dados.total} porPagina={r.dados.porPagina} aoMudar={(p) => definir('pagina', String(p))} />
         </>

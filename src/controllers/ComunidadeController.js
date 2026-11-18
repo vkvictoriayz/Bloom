@@ -4,6 +4,7 @@ import { Comentario, Conexao, Curtida, PerfilComunidade, Publicacao } from "../m
 import { imagensDe } from "../models/Imagem.js";
 import { Usuaria } from "../models/index.js";
 import { PublicacaoImagem } from "../models/RedeSocial.js";
+import { contasPremium } from "../models/Premium.js";
 import { Projeto } from "../models/Candidata.js";
 import { notificar } from "../services/notificacoes.js";
 import { perfisOcultos } from "../services/privacidade.js";
@@ -27,17 +28,18 @@ function eu(req) {
 export async function perfisPor(ids) {
   const unicos = [...new Set(ids)];
   if (!unicos.length) return new Map();
-  const [contas, perfis, imagens] = await Promise.all([
+  const [contas, perfis, imagens, premium] = await Promise.all([
     Usuaria.findAll({ where: { id: { [Op.in]: unicos } } }),
     PerfilComunidade.findAll({ where: { usuariaId: { [Op.in]: unicos } } }),
     imagensDe("usuaria", unicos),
+    contasPremium("usuaria", unicos),
   ]);
   const porId = new Map(perfis.map((p) => [p.usuariaId, p]));
   return new Map(
     contas.map((c) => {
       const p = porId.get(c.id);
       const { foto, capa } = imagens.get(c.id);
-      return [c.id, { id: c.id, nome: c.nome, area: p?.area ?? "", interesses: listaInteresses(p?.interesses), bio: p?.bio ?? "", foto, capa }];
+      return [c.id, { id: c.id, nome: c.nome, area: p?.area ?? "", interesses: listaInteresses(p?.interesses), bio: p?.bio ?? "", foto, capa, premium: premium.has(c.id) }];
     })
   );
 }

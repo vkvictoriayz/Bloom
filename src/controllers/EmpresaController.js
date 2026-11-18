@@ -2,6 +2,7 @@ import { Op } from "sequelize";
 import { Empresa, Usuaria } from "../models/index.js";
 import { PerfilComunidade, Publicacao, Comentario, Curtida } from "../models/Comunidade.js";
 import { imagensDe } from "../models/Imagem.js";
+import { PublicacaoImagem } from "../models/RedeSocial.js";
 import { notificar } from "../services/notificacoes.js";
 import { perfilCompleto } from "./CandidataController.js";
 import { perfisOcultos, privacidadeDe } from "../services/privacidade.js";
@@ -83,6 +84,7 @@ function vagaJson(v, extras = {}) {
     salarioMax: numero(v.salarioMax),
     dataPublicacao: v.dataPublicacao,
     status: v.status ?? "Aberta",
+    limiteCandidaturas: v.limiteCandidaturas ?? null,
     ...extras,
   };
 }
@@ -125,6 +127,14 @@ function lerVaga(body) {
   if (salario !== null && salarioMax !== null && salarioMax < salario) return [null, ["O máximo da faixa não pode ser menor que o mínimo.", "salarioMax"]];
   if (salario === null && salarioMax !== null) return [null, ["Informe o mínimo da faixa salarial.", "salario"]];
 
+  let limiteCandidaturas = null;
+  if (body.limiteCandidaturas !== undefined && body.limiteCandidaturas !== null && String(body.limiteCandidaturas).trim() !== "") {
+    limiteCandidaturas = Number(body.limiteCandidaturas);
+    if (!Number.isInteger(limiteCandidaturas) || limiteCandidaturas < 1 || limiteCandidaturas > 10000) {
+      return [null, ["O limite de candidaturas deve ser um número inteiro de 1 a 10000.", "limiteCandidaturas"]];
+    }
+  }
+  dados.limiteCandidaturas = limiteCandidaturas;
   for (const campo of ["requisitos", "beneficios", "area", "nivel", "localizacao", "tipoContrato"]) dados[campo] ||= null;
   return [{ ...dados, salario, salarioMax }];
 }
@@ -133,7 +143,7 @@ async function numerosDasVagas(vagas) {
   const ids = vagas.map((v) => v.id);
   if (!ids.length) return { candidaturas: [], salvas: [] };
   const [candidaturas, salvas] = await Promise.all([
-    Candidatura.findAll({ attributes: ["vagaId", "status"], where: { vagaId: { [Op.in]: ids } } }),
+    Candidatura.findAll({ attributes: ["vagaId", "status", "data"], where: { vagaId: { [Op.in]: ids } } }),
     Favorito.findAll({ attributes: ["vagaId"], where: { vagaId: { [Op.in]: ids } } }),
   ]);
   return { candidaturas, salvas };
@@ -282,6 +292,9 @@ export const mudarStatusVaga = comTratamento(async (req, res) => {
   if (status === "Rascunho" && vaga.status !== "Rascunho" && (await Candidatura.count({ where: { vagaId: vaga.id } }))) {
     return erro(res, 400, "Uma vaga com candidaturas não volta a ser rascunho. Pause ou encerre a vaga.");
   }
+  if (status === "Aberta" && vaga.limiteCandidaturas && (await Candidatura.count({ where: { vagaId: vaga.id } })) >= vaga.limiteCandidaturas) {
+    return erro(res, 400, "Esta vaga já atingiu o limite de candidaturas. Aumente o limite na edição da vaga para reabri-la.", "limiteCandidaturas");
+  }
   const primeiraPublicacao = status === "Aberta" && !vaga.dataPublicacao;
   await vaga.update({ status, ...(primeiraPublicacao ? { dataPublicacao: hoje() } : {}) });
   if (primeiraPublicacao) await publicada(vaga, req);
@@ -309,7 +322,23 @@ export const dashboard = comTratamento(async (req, res) => {
     Convite.count({ where: { empresaId: eu(req) } }),
   ]);
   const conta = (status) => candidaturas.filter((c) => c.status === status).length;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dias = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(hoje);
+    d.setDate(d.getDate() - (29 - i));
+    return d.toLocaleDateString("sv-SE");
+  });
+  const porDia = new Map();
+  for (const c of candidaturas) {
+    const dia = typeof c.data === "string" ? c.data.slice(0, 10) : c.data ? new Date(c.data).toLocaleDateString("sv-SE") : null;
+    if (dia) porDia.set(dia, (porDia.get(dia) ?? 0) + 1);
+  }
+  const modalidades = new Map();
+  for (const v of vagas.filter((x) => x.status === "Aberta")) modalidades.set(v.modalidade || "Não informada", (modalidades.get(v.modalidade || "Não informada") ?? 0) + 1);
   return res.json({
+    serie: { dias, candidaturas: dias.map((d) => porDia.get(d) ?? 0) },
+    modalidades: [...modalidades.entries()].map(([rotulo, total]) => ({ rotulo, total })),
     totais: {
       vagasPublicadas: vagas.filter((v) => v.status !== "Rascunho").length,
       vagasAtivas: vagas.filter((v) => v.status === "Aberta").length,
@@ -334,6 +363,9 @@ export const dashboard = comTratamento(async (req, res) => {
         candidaturas: candidaturas.filter((c) => c.vagaId === v.id).length,
         aprovadas: candidaturas.filter((c) => c.vagaId === v.id && c.status === "Aprovada").length,
         interessadas: salvas.filter((f) => f.vagaId === v.id).length,
+        modalidade: v.modalidade ?? "",
+        limiteCandidaturas: v.limiteCandidaturas ?? null,
+        emProcesso: candidaturas.filter((c) => c.vagaId === v.id && ["Em análise", "Em entrevista"].includes(c.status)).length,
       })),
   });
 });
@@ -341,17 +373,18 @@ export const dashboard = comTratamento(async (req, res) => {
 async function perfisPublicos(ids) {
   const unicos = [...new Set(ids)];
   if (!unicos.length) return new Map();
-  const [contas, perfis, imagens] = await Promise.all([
+  const [contas, perfis, imagens, premium] = await Promise.all([
     Usuaria.findAll({ where: { id: { [Op.in]: unicos } } }),
     PerfilComunidade.findAll({ where: { usuariaId: { [Op.in]: unicos } } }),
     imagensDe("usuaria", unicos),
+    contasPremium("usuaria", unicos),
   ]);
   const porId = new Map(perfis.map((p) => [p.usuariaId, p]));
   return new Map(
     contas.map((c) => {
       const p = porId.get(c.id);
       const { foto, capa } = imagens.get(c.id);
-      return [c.id, { id: c.id, nome: c.nome, area: p?.area ?? "", interesses: lista(p?.interesses), bio: p?.bio ?? "", foto, capa }];
+      return [c.id, { id: c.id, nome: c.nome, area: p?.area ?? "", interesses: lista(p?.interesses), bio: p?.bio ?? "", foto, capa, premium: premium.has(c.id) }];
     })
   );
 }
@@ -539,12 +572,14 @@ export const feed = comTratamento(async (req, res) => {
   ]);
   const nomeEmpresa = new Map(empresas.map((e) => [e.id, e.nome]));
   const ids = dasIntegrantes.map((p) => p.id);
-  const [curtidas, comentarios] = ids.length
+  const [curtidas, comentarios, imagens] = ids.length
     ? await Promise.all([
         Curtida.findAll({ where: { publicacaoId: { [Op.in]: ids } } }),
         Comentario.findAll({ where: { publicacaoId: { [Op.in]: ids } } }),
+        PublicacaoImagem.findAll({ attributes: ["publicacaoId", "chave", "largura", "altura"], where: { publicacaoId: { [Op.in]: ids } } }),
       ])
-    : [[], []];
+    : [[], [], []];
+  const imagemDa = new Map(imagens.map((i) => [i.publicacaoId, { url: `/imagens/${i.chave}`, largura: i.largura, altura: i.altura }]));
 
   const itens = [
     ...dasIntegrantes.map((p) => {
@@ -554,8 +589,9 @@ export const feed = comTratamento(async (req, res) => {
         origem: "integrante",
         tipo: p.tipo,
         texto: p.texto,
+        imagem: imagemDa.get(p.id) ?? null,
         criadaEm: p.criadaEm,
-        autor: { id: p.usuariaId, nome: a?.nome ?? "Integrante", detalhe: a?.area ?? "", foto: a?.foto ?? null },
+        autor: { id: p.usuariaId, nome: a?.nome ?? "Integrante", detalhe: a?.area ?? "", foto: a?.foto ?? null, premium: Boolean(a?.premium) },
         curtidas: curtidas.filter((c) => c.publicacaoId === p.id).length,
         comentarios: comentarios.filter((c) => c.publicacaoId === p.id).length,
         minha: false,

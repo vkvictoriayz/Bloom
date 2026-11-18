@@ -30,7 +30,7 @@ const NAV_EMPRESA = [
   { rotulo: 'Feed', para: '/empresa/feed' },
   { rotulo: 'Vagas', para: '/empresa/vagas' },
   { rotulo: 'Candidaturas', para: '/empresa/candidaturas' },
-  { rotulo: 'Talentos', para: '/empresa/talentos' },
+  { rotulo: 'Talentos', para: '/empresa/explorar' },
   { rotulo: 'Empresas', para: '/empresas' },
 ]
 

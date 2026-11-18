@@ -22,6 +22,7 @@ router.post("/duas-etapas/ativar", admin, A.ativarDuasEtapas);
 router.post("/duas-etapas/desativar", admin, A.desativarDuasEtapas);
 router.post("/duas-etapas/novos-codigos", admin, A.novosCodigos);
 router.get("/dashboard", admin, A.dashboard);
+router.get("/resumo-menu", admin, A.resumoMenu);
 
 router.get("/candidatas", admin, A.listarCandidatas);
 router.get("/candidatas/:id", admin, A.verCandidata);

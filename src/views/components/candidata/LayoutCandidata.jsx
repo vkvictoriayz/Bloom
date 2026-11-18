@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import LayoutPrivado from '../layout/LayoutPrivado'
 import { AvisoConfirmarEmail } from '../conta/ConfirmacaoEmail'
@@ -7,6 +7,7 @@ import { useSessao } from '../../hooks/useSessao'
 import { sincronizarAreaCandidata } from '../../services/candidataApi'
 import { lerMinhasImagens, sincronizarImagensLocais } from '../../services/imagens'
 import { EVENTO_PERFIL, lerPerfil } from '../../services/perfil'
+import { lerPremium } from '../../services/premium'
 
 const CONFIG = {
   rotuloNav: 'Área da candidata',
@@ -63,6 +64,17 @@ function LayoutCandidata() {
   const sessao = useSessao()
   const usuario = sessao?.usuario
   const perfil = useDadosLocais(() => lerPerfil(usuario), [EVENTO_PERFIL])
+  const [premium, setPremium] = useState(false)
+
+  useEffect(() => {
+    let ativo = true
+    lerPremium()
+      .then((r) => ativo && setPremium(Boolean(r.premium)))
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+  }, [usuario?.id])
 
   useEffect(() => {
     lerMinhasImagens()
@@ -70,7 +82,7 @@ function LayoutCandidata() {
       .catch(() => {})
     sincronizarAreaCandidata(usuario).catch(() => {})
   }, [usuario])
-  return <LayoutPrivado config={CONFIG} usuario={usuario} foto={perfil.foto} faixa={<AvisoConfirmarEmail />} />
+  return <LayoutPrivado config={CONFIG} usuario={usuario} foto={perfil.foto} faixa={<AvisoConfirmarEmail />} premium={premium} contexto={{ premium }} />
 }
 
 export default LayoutCandidata

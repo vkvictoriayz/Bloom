@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { fn, col, Op } from "sequelize";
+import { fn, col, Op, QueryTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 import { Admin, Comunicado, DashboardAdmin, LogAdmin, NIVEIS_ADMIN, registrarAcao } from "../models/Admin.js";
 import { Comentario, Curtida, Publicacao } from "../models/Comunidade.js";
@@ -184,7 +184,119 @@ export async function registrarFotoDoDia() {
   return t;
 }
 
+const PERIODOS = [7, 14, 30, 90];
+
+async function graficosDoPainel(dias) {
+  const q = async (sql, replacements = {}) => (await sequelize.query(sql, { replacements, type: QueryTypes.SELECT }));
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const desde = new Date(hoje);
+  desde.setDate(desde.getDate() - (dias - 1));
+  const antes = new Date(desde);
+  antes.setDate(antes.getDate() - dias);
+  const fuso = -new Date().getTimezoneOffset();
+  const dia = (d) => d.toLocaleDateString("sv-SE");
+  const desdeDia = dia(antes);
+  const r = { desde: antes, desdeDia, fuso };
+  const local = (coluna) => `DATE(DATE_ADD(${coluna}, INTERVAL :fuso MINUTE))`;
+  const [publicacoes, publicacoesEmpresa, comentarios, mensagensDiretas, mensagensEmpresas, candidaturas, vagasPublicadas, convites, vagasStatus, vagasArea, vagasModalidade, candidaturasArea, tiposPublicacao, denunciasMotivo, denunciasSituacao, comunidades, emailUsuarias, emailEmpresas, representantes, premiumPorTipo, contas] = await Promise.all([
+    q(`SELECT ${local("criada_em")} dia, COUNT(*) n FROM PUBLICACAO WHERE criada_em >= :desde GROUP BY dia`, r),
+    q(`SELECT ${local("criada_em")} dia, COUNT(*) n FROM PUBLICACAO_EMPRESA WHERE criada_em >= :desde GROUP BY dia`, r),
+    q(`SELECT ${local("criado_em")} dia, COUNT(*) n FROM COMENTARIO WHERE criado_em >= :desde GROUP BY dia`, r),
+    q(`SELECT ${local("enviada_em")} dia, COUNT(*) n FROM MENSAGEM_DIRETA WHERE enviada_em >= :desde GROUP BY dia`, r),
+    q(`SELECT ${local("enviada_em")} dia, autor_tipo autor, COUNT(*) n FROM MENSAGEM WHERE enviada_em >= :desde GROUP BY dia, autor`, r),
+    q("SELECT DATE(data_candidatura) dia, COUNT(*) n FROM CANDIDATURAS WHERE data_candidatura >= :desdeDia GROUP BY dia", r),
+    q("SELECT DATE(data_publicacao) dia, COUNT(*) n FROM VAGAS WHERE data_publicacao >= :desdeDia GROUP BY dia", r),
+    q(`SELECT ${local("criado_em")} dia, COUNT(*) n FROM CONVITE WHERE criado_em >= :desde GROUP BY dia`, r),
+    q("SELECT COALESCE(status, 'Aberta') rotulo, COUNT(*) n FROM VAGAS GROUP BY rotulo"),
+    q("SELECT COALESCE(NULLIF(area, ''), 'Não informada') rotulo, COUNT(*) n FROM VAGAS WHERE status = 'Aberta' GROUP BY rotulo ORDER BY n DESC LIMIT 6"),
+    q("SELECT COALESCE(NULLIF(modalidade, ''), 'Não informada') rotulo, COUNT(*) n FROM VAGAS WHERE status = 'Aberta' GROUP BY rotulo ORDER BY n DESC"),
+    q("SELECT COALESCE(NULLIF(v.area, ''), 'Não informada') rotulo, COUNT(*) n FROM CANDIDATURAS c JOIN VAGAS v ON v.id_vaga = c.id_vaga GROUP BY rotulo ORDER BY n DESC LIMIT 6"),
+    q("SELECT tipo rotulo, COUNT(*) n FROM PUBLICACAO GROUP BY tipo ORDER BY n DESC"),
+    q("SELECT motivo rotulo, COUNT(*) n FROM DENUNCIA GROUP BY motivo ORDER BY n DESC"),
+    q("SELECT status rotulo, COUNT(*) n FROM DENUNCIA GROUP BY status"),
+    q("SELECT c.nome rotulo, COUNT(m.id_membro) n FROM COMUNIDADE c LEFT JOIN COMUNIDADE_MEMBRO m ON m.id_comunidade = c.id_comunidade GROUP BY c.id_comunidade, c.nome ORDER BY n DESC, c.nome LIMIT 5"),
+    q("SELECT SUM(email_verificado_em IS NOT NULL) confirmados, SUM(email_verificado_em IS NULL) pendentes FROM CADASTRO_USUARIA"),
+    q("SELECT SUM(email_verificado_em IS NOT NULL) confirmados, SUM(email_verificado_em IS NULL) pendentes FROM CADASTRO_EMPRESA"),
+    q("SELECT representante_status rotulo, COUNT(*) n FROM EMPRESA_DADOS_CADASTRAIS GROUP BY representante_status"),
+    q("SELECT tipo_conta tipo, COUNT(DISTINCT id_conta) n FROM ASSINATURA WHERE status = 'ativa' GROUP BY tipo_conta"),
+    q("SELECT (SELECT COUNT(*) FROM CADASTRO_USUARIA) usuarias, (SELECT COUNT(*) FROM CADASTRO_EMPRESA) empresas"),
+  ]);
+
+  const todosDias = Array.from({ length: dias * 2 }, (_, i) => {
+    const d = new Date(antes);
+    d.setDate(d.getDate() + i);
+    return dia(d);
+  });
+  const chave = (v) => (typeof v === "string" ? v.slice(0, 10) : dia(new Date(v)));
+  const serie = (linhas) => {
+    const mapa = new Map();
+    for (const l of linhas) mapa.set(chave(l.dia), (mapa.get(chave(l.dia)) ?? 0) + Number(l.n));
+    return todosDias.map((d) => mapa.get(d) ?? 0);
+  };
+  const soma = (...listas) => todosDias.map((_, i) => listas.reduce((a, l) => a + l[i], 0));
+  const atual = (s) => s.slice(dias);
+  const total = (s) => s.reduce((a, b) => a + b, 0);
+  const comparar = (s) => ({ atual: total(s.slice(dias)), anterior: total(s.slice(0, dias)) });
+
+  const sPub = serie(publicacoes);
+  const sPubE = serie(publicacoesEmpresa);
+  const sCom = serie(comentarios);
+  const sDir = serie(mensagensDiretas);
+  const sMsgU = serie(mensagensEmpresas.filter((m) => m.autor !== "empresa"));
+  const sMsgE = serie(mensagensEmpresas.filter((m) => m.autor === "empresa"));
+  const sCand = serie(candidaturas);
+  const sVagas = serie(vagasPublicadas);
+  const sConv = serie(convites);
+  const sMensagens = soma(sDir, sMsgU, sMsgE);
+  const lista = (linhas) => linhas.map((l) => ({ rotulo: l.rotulo, total: Number(l.n) }));
+  const premium = Object.fromEntries(premiumPorTipo.map((p) => [p.tipo, Number(p.n)]));
+  const totalUsuarias = Number(contas[0]?.usuarias ?? 0);
+  const totalEmpresas = Number(contas[0]?.empresas ?? 0);
+
+  return {
+    periodo: { dias, desde: dia(desde), ate: dia(hoje), anteriorDesde: dia(antes) },
+    atividade: {
+      dias: todosDias.slice(dias),
+      publicacoes: atual(soma(sPub, sPubE)),
+      comentarios: atual(sCom),
+      mensagens: atual(sMensagens),
+      candidaturas: atual(sCand),
+    },
+    vagasECandidaturas: { dias: todosDias.slice(dias), vagas: atual(sVagas), candidaturas: atual(sCand) },
+    atividadePorConta: {
+      dias: todosDias.slice(dias),
+      candidatas: atual(soma(sPub, sCom, sDir, sMsgU, sCand)),
+      empresas: atual(soma(sPubE, sMsgE, sVagas, sConv)),
+    },
+    comparativo: {
+      candidaturas: comparar(sCand),
+      vagas: comparar(sVagas),
+      publicacoes: comparar(soma(sPub, sPubE)),
+      mensagens: comparar(sMensagens),
+    },
+    contas: {
+      usuarias: { premium: premium.usuaria ?? 0, gratuitas: Math.max(0, totalUsuarias - (premium.usuaria ?? 0)) },
+      empresas: { premium: premium.empresa ?? 0, gratuitas: Math.max(0, totalEmpresas - (premium.empresa ?? 0)) },
+    },
+    vagasPorStatus: lista(vagasStatus),
+    vagasPorArea: lista(vagasArea),
+    vagasPorModalidade: lista(vagasModalidade),
+    candidaturasPorArea: lista(candidaturasArea),
+    publicacoesPorTipo: lista(tiposPublicacao),
+    denunciasPorMotivo: lista(denunciasMotivo),
+    denunciasPorSituacao: lista(denunciasSituacao),
+    comunidadesMaisAtivas: lista(comunidades),
+    emails: {
+      usuarias: { confirmados: Number(emailUsuarias[0]?.confirmados ?? 0), pendentes: Number(emailUsuarias[0]?.pendentes ?? 0) },
+      empresas: { confirmados: Number(emailEmpresas[0]?.confirmados ?? 0), pendentes: Number(emailEmpresas[0]?.pendentes ?? 0) },
+    },
+    representantes: lista(representantes),
+  };
+}
+
 export const dashboard = comTratamento(async (req, res) => {
+  const dias = PERIODOS.includes(Number(req.query.dias)) ? Number(req.query.dias) : 30;
   const t = await registrarFotoDoDia();
   const [porStatus, cpfs, pendentes, suspensasU, suspensasE, assinaturasAtivas, receita, historico, recentes, denunciasAbertas] = await Promise.all([
     Candidatura.findAll({ attributes: ["status", [fn("COUNT", col("id_candidatura")), "total"]], group: ["status"], raw: true }),
@@ -194,7 +306,7 @@ export const dashboard = comTratamento(async (req, res) => {
     Empresa.count({ where: { suspensaEm: { [Op.ne]: null } } }),
     Assinatura.count({ where: { status: "ativa" } }),
     Pagamento.sum("valor", { where: { status: "approved" } }),
-    DashboardAdmin.findAll({ order: [["data", "DESC"]], limit: 30 }),
+    DashboardAdmin.findAll({ order: [["data", "DESC"]], limit: 90 }),
     LogAdmin.findAll({ order: [["id", "DESC"]], limit: 8 }),
     Denuncia.count({ where: { status: "aberta" } }),
   ]);
@@ -216,6 +328,7 @@ export const dashboard = comTratamento(async (req, res) => {
       novasEmpresas: h.novasEmpresas,
     })),
     acoesRecentes: recentes.map((l) => logJson(l, nomes)),
+    graficos: await graficosDoPainel(dias),
   });
 });
 
@@ -941,3 +1054,8 @@ export const relatorio = comTratamento(async (req, res) => {
   return res.send(`\uFEFF${linhas.map(linhaCsv).join("\r\n")}\r\n`);
 });
 
+
+export const resumoMenu = comTratamento(async (req, res) => {
+  const [denuncias, representantes] = await Promise.all([Denuncia.count({ where: { status: "aberta" } }), EmpresaCadastro.count({ where: { representanteStatus: "pendente" } })]);
+  return res.json({ denuncias, representantes });
+});

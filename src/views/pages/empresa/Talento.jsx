@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import Capa from '../../components/candidata/Capa'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Avatar from '../../components/comunidade/Avatar'
+import SeloPremium from '../../components/conta/SeloPremium'
 import { ICONE_TIPO } from '../../components/comunidade/tipos'
 import Icone from '../../components/Icone'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
@@ -95,7 +96,7 @@ function Talento() {
   if (r.tipo === 'erro') {
     return (
       <>
-        <TituloPagina titulo="Perfil" voltar={{ para: '/empresa/talentos', rotulo: 'Banco de talentos' }} />
+        <TituloPagina titulo="Perfil" voltar={{ para: '/empresa/explorar', rotulo: 'Explorar talentos' }} />
         <ErroAoCarregar erro={r.erro} />
       </>
     )
@@ -104,13 +105,16 @@ function Talento() {
   const { talento, publicacoes, profissional, convidadaPara = [] } = r.dados
   return (
     <>
-      <TituloPagina titulo={talento.nome} voltar={{ para: '/empresa/talentos', rotulo: 'Banco de talentos' }} />
+      <TituloPagina titulo={talento.nome} voltar={{ para: '/empresa/explorar', rotulo: 'Explorar talentos' }} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
         <section className="cartao overflow-hidden lg:self-start">
           <Capa imagem={talento.capa} className="h-28 rounded-none sm:h-28" />
           <div className="px-6 pb-6">
             <Avatar nome={talento.nome} foto={talento.foto} tamanho="xl" className="relative z-10 -mt-14 ring-4 ring-branco" />
-            <h2 className="mt-4 font-display text-2xl text-tinta">{talento.nome}</h2>
+            <h2 className="mt-4 flex flex-wrap items-center gap-2 font-display text-2xl text-tinta">
+              {talento.nome}
+              {talento.premium && <SeloPremium />}
+            </h2>
             <p className="text-vinho">{talento.area || 'Área não informada'}</p>
             <p className="mt-4 text-sm leading-relaxed text-tinta-2">{talento.bio || 'Sem apresentação publicada.'}</p>
             {talento.interesses.length > 0 && (

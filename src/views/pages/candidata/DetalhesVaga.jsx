@@ -160,10 +160,19 @@ function DetalhesVaga() {
               <p className="rounded-xl bg-papel-2 px-4 py-3 text-sm font-semibold text-tinta-2">
                 Esta vaga está {vaga.status?.toLowerCase()} e não recebe novas candidaturas.
               </p>
+            ) : vaga.vagasRestantes === 0 ? (
+              <p className="rounded-xl bg-papel-2 px-4 py-3 text-sm font-semibold text-tinta-2">Esta vaga atingiu o limite de candidaturas.</p>
             ) : (
-              <Botao as={Link} to={`/vagas/${vaga.id}/candidatar`} tamanho="lg" className="w-full">
-                Candidatar-se
-              </Botao>
+              <>
+                {vaga.vagasRestantes !== null && vaga.vagasRestantes !== undefined && (
+                  <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-alerta-claro px-3 py-1 text-xs font-semibold text-alerta">
+                    <Icone nome="relogio" tamanho={14} /> {vaga.vagasRestantes === 1 ? 'Resta 1 vaga para candidatura' : `Restam ${vaga.vagasRestantes} vagas para candidatura`}
+                  </p>
+                )}
+                <Botao as={Link} to={`/vagas/${vaga.id}/candidatar`} tamanho="lg" className="w-full">
+                  Candidatar-se
+                </Botao>
+              </>
             )}
             <BotaoSalvar vaga={vaga} comTexto className="mt-2 w-full" />
             {vaga.real && (

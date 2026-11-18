@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
+import Icone from '../../components/Icone'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
 import { useCarregar } from '../../components/empresa/useCarregar'
@@ -9,7 +10,7 @@ import { AreaTexto, Aviso, Campo, Entrada, Selecao } from '../../components/ui/C
 import { opcoesFiltro } from '../../data/vagas'
 import { CONTRATOS, criarVaga, editarVaga, lerVagaEmpresa, MODALIDADES, NIVEIS } from '../../services/empresa'
 
-const VAZIA = { titulo: '', descricao: '', requisitos: '', beneficios: '', area: '', nivel: '', localizacao: '', modalidade: '', tipoContrato: '', salario: '', salarioMax: '' }
+const VAZIA = { titulo: '', descricao: '', requisitos: '', beneficios: '', area: '', nivel: '', localizacao: '', modalidade: '', tipoContrato: '', salario: '', salarioMax: '', limiteCandidaturas: '' }
 
 function valor(texto) {
   const t = String(texto ?? '').trim()
@@ -23,6 +24,7 @@ function Formulario({ inicial, editando, idVaga, rascunhoAtual }) {
   const [dados, setDados] = useState(inicial)
   const [erros, setErros] = useState({})
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
+  const [limitar, setLimitar] = useState(Boolean(inicial.limiteCandidaturas))
   const campo = (nome) => (e) => setDados((d) => ({ ...d, [nome]: e.target.value }))
 
   async function enviar(e, rascunho = false) {
@@ -37,12 +39,14 @@ function Formulario({ inicial, editando, idVaga, rascunhoAtual }) {
     if (Number.isNaN(maximo)) novos.salarioMax = 'Use um valor como 6000 ou 6.000,00'
     if (minimo === null && maximo !== null && !Number.isNaN(maximo)) novos.salario = 'Informe o mínimo da faixa.'
     if (minimo !== null && maximo !== null && maximo < minimo) novos.salarioMax = 'O máximo não pode ser menor que o mínimo.'
+    const limite = limitar ? Number(dados.limiteCandidaturas) : null
+    if (limitar && (!Number.isInteger(limite) || limite < 1 || limite > 10000)) novos.limiteCandidaturas = 'Informe um número inteiro de 1 a 10000.'
     setErros(novos)
     if (Object.keys(novos).length) return setEstado({ tipo: 'erro', texto: 'Corrija os campos destacados.' })
 
     setEstado({ tipo: 'salvando' })
     try {
-      const corpo = { ...dados, salario: minimo, salarioMax: maximo, ...(editando ? {} : { rascunho }) }
+      const corpo = { ...dados, salario: minimo, salarioMax: maximo, limiteCandidaturas: limite, ...(editando ? {} : { rascunho }) }
       const r = editando ? await editarVaga(idVaga, corpo) : await criarVaga(corpo)
       const aviso = editando ? 'Vaga atualizada.' : rascunho ? 'Rascunho salvo. Publique quando estiver pronta.' : 'Vaga publicada.'
       navigate(`/empresa/vagas/${r.vaga.id}`, { state: { aviso } })
@@ -118,6 +122,48 @@ function Formulario({ inicial, editando, idVaga, rascunhoAtual }) {
           {(p) => <Entrada {...p} inputMode="decimal" placeholder="Ex.: 6.000,00" value={dados.salarioMax ?? ''} onChange={campo('salarioMax')} />}
         </Campo>
       </div>
+      <section className="rounded-2xl border border-linha bg-papel p-5" aria-labelledby="titulo-limite">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h3 id="titulo-limite" className="flex items-center gap-2 font-semibold text-tinta">
+              <Icone nome="candidaturas" tamanho={18} className="text-vinho" /> Limite de candidatas
+            </h3>
+            <p className="mt-1 text-sm text-suave">Ao atingir o limite, a vaga é pausada automaticamente e você recebe uma notificação.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={limitar}
+            aria-labelledby="titulo-limite"
+            onClick={() => {
+              setLimitar((v) => !v)
+              setErros((e) => ({ ...e, limiteCandidaturas: undefined }))
+            }}
+            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${limitar ? 'bg-vinho' : 'bg-linha-forte'}`}
+          >
+            <span className={`inline-block size-5 rounded-full bg-branco shadow transition-transform ${limitar ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+        {limitar && (
+          <div className="mt-4 max-w-xs">
+            <Campo rotulo="Número máximo de candidaturas" erro={erros.limiteCandidaturas}>
+              {(p) => <Entrada {...p} type="number" min={1} max={10000} inputMode="numeric" placeholder="Ex.: 50" value={dados.limiteCandidaturas ?? ''} onChange={campo('limiteCandidaturas')} />}
+            </Campo>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {[20, 50, 100, 200].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setDados((d) => ({ ...d, limiteCandidaturas: String(n) }))}
+                  className={`h-8 rounded-full px-3 text-xs font-semibold transition-colors ${String(dados.limiteCandidaturas) === String(n) ? 'bg-vinho text-branco' : 'bg-branco text-tinta-2 ring-1 ring-linha hover:bg-blush'}`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
       {estado.tipo === 'erro' && <Aviso tipo="erro">{estado.texto}</Aviso>}
       <div className="flex flex-wrap gap-2 border-t border-linha pt-5">
         <Botao type="submit" disabled={estado.tipo === 'salvando'}>
@@ -156,7 +202,7 @@ function FormularioVaga() {
           editando
           idVaga={id}
           rascunhoAtual={r.dados.vaga.status === 'Rascunho'}
-          inicial={{ ...VAZIA, ...r.dados.vaga, salario: r.dados.vaga.salario ?? '', salarioMax: r.dados.vaga.salarioMax ?? '' }}
+          inicial={{ ...VAZIA, ...r.dados.vaga, salario: r.dados.vaga.salario ?? '', salarioMax: r.dados.vaga.salarioMax ?? '', limiteCandidaturas: r.dados.vaga.limiteCandidaturas ?? '' }}
         />
       )}
     </>

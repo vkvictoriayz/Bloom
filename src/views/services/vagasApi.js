@@ -74,6 +74,8 @@ export function converterVaga(v) {
     beneficios: linhas(v.beneficios),
     competencias: [],
     status: v.status,
+    limiteCandidaturas: v.limiteCandidaturas ?? null,
+    vagasRestantes: v.vagasRestantes ?? null,
   }
 }
 

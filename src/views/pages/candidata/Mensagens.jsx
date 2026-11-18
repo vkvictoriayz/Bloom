@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
@@ -7,7 +7,8 @@ import Chat from '../../components/mensagens/Chat'
 import { Aviso, Entrada } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { lerPerfis, tempoRelativo } from '../../services/comunidade'
-import { abrirConversaCandidata, EVENTO_MENSAGENS, listarConversas, listarConversasCandidatas } from '../../services/recursos'
+import { abrirConversa, abrirConversaCandidata, EVENTO_MENSAGENS, listarConversas, listarConversasCandidatas } from '../../services/recursos'
+import { listarCandidaturasEmpresa } from '../../services/empresa'
 import { cn } from '../../lib/cn'
 
 const INTERVALO_LISTA = 15000
@@ -128,6 +129,107 @@ function NovaConversa({ aoFechar }) {
   )
 }
 
+function usePessoasNaBusca(busca, daCandidata) {
+  const [estado, setEstado] = useState({ termo: '', pessoas: [], carregando: false, erro: '' })
+  const [candidaturas, setCandidaturas] = useState(null)
+  const termo = busca.trim()
+
+  useEffect(() => {
+    if (daCandidata || !termo || candidaturas) return undefined
+    let ativo = true
+    listarCandidaturasEmpresa()
+      .then((r) => ativo && setCandidaturas(r.candidaturas ?? []))
+      .catch((e) => ativo && setEstado((s) => ({ ...s, erro: e.message })))
+    return () => {
+      ativo = false
+    }
+  }, [daCandidata, termo, candidaturas])
+
+  useEffect(() => {
+    if (!daCandidata || termo.length < 2) return undefined
+    let ativo = true
+    const espera = setTimeout(() => {
+      setEstado((s) => ({ ...s, carregando: true }))
+      lerPerfis({ busca: termo })
+        .then((r) => ativo && setEstado({ termo, carregando: false, erro: '', pessoas: (r.perfis ?? []).slice(0, 8).map((p) => ({ chave: `u${p.id}`, id: p.id, nome: p.nome, foto: p.foto, detalhe: p.area || 'Integrante da Bloom' })) }))
+        .catch((e) => ativo && setEstado({ termo, carregando: false, erro: e.message, pessoas: [] }))
+    }, 300)
+    return () => {
+      ativo = false
+      clearTimeout(espera)
+    }
+  }, [daCandidata, termo])
+
+  if (!termo || (daCandidata && termo.length < 2)) return { pessoas: [], carregando: false, erro: '' }
+  if (daCandidata) return { ...estado, carregando: estado.carregando || estado.termo !== termo }
+  const alvo = termo.toLowerCase()
+  const pessoas = (candidaturas ?? [])
+    .filter((c) => c.candidata.nome.toLowerCase().includes(alvo) || c.vaga.titulo.toLowerCase().includes(alvo))
+    .slice(0, 8)
+    .map((c) => ({ chave: `c${c.id}`, candidaturaId: c.id, nome: c.candidata.nome, foto: c.candidata.foto, detalhe: `${c.vaga.titulo} · ${c.status}` }))
+  return { pessoas, carregando: candidaturas === null && !estado.erro, erro: estado.erro }
+}
+
+function ResultadosPessoas({ termo, daCandidata, base, conversas }) {
+  const navigate = useNavigate()
+  const { pessoas, carregando, erro } = usePessoasNaBusca(termo, daCandidata)
+  const [abrindo, setAbrindo] = useState(null)
+  const [falha, setFalha] = useState('')
+  if (!termo.trim()) return null
+  if (daCandidata && termo.trim().length < 2) return null
+
+  async function abrir(p) {
+    setAbrindo(p.chave)
+    setFalha('')
+    try {
+      if (p.candidaturaId) {
+        const r = await abrirConversa(p.candidaturaId)
+        navigate(`${base}/${r.conversa.id}`)
+      } else {
+        const r = await abrirConversaCandidata(p.id)
+        navigate(`${base}/candidatas/${r.conversa.id}`)
+      }
+    } catch (e) {
+      setFalha(e.message)
+    } finally {
+      setAbrindo(null)
+    }
+  }
+
+  const jaConversa = (p) => (p.candidaturaId ? conversas.empresas?.some((c) => c.candidaturaId === p.candidaturaId) : conversas.candidatas?.some((c) => c.participante.id === p.id))
+
+  return (
+    <div className="border-t border-linha">
+      <p className="px-4 pt-3 pb-1 text-[11px] font-bold tracking-[0.12em] text-suave uppercase">{daCandidata ? 'Pessoas na Bloom' : 'Candidatas das suas vagas'}</p>
+      {(erro || falha) && (
+        <Aviso tipo="erro" className="mx-3 my-2">
+          {falha || erro}
+        </Aviso>
+      )}
+      {carregando ? (
+        <p className="px-4 py-3 text-sm text-suave">Buscando…</p>
+      ) : pessoas.length === 0 ? (
+        <p className="px-4 py-3 text-sm text-suave">{daCandidata ? 'Nenhuma integrante encontrada.' : 'Nenhuma candidata das suas vagas com esse nome.'}</p>
+      ) : (
+        <ul>
+          {pessoas.map((p) => (
+            <li key={p.chave}>
+              <button type="button" disabled={abrindo !== null} onClick={() => abrir(p)} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-papel disabled:opacity-60">
+                <Avatar nome={p.nome} foto={p.foto} tamanho="md" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-tinta">{p.nome}</span>
+                  <span className="block truncate text-xs text-suave">{p.detalhe}</span>
+                </span>
+                <span className="shrink-0 rounded-full bg-blush px-2.5 py-1 text-xs font-semibold text-vinho">{abrindo === p.chave ? 'Abrindo…' : jaConversa(p) ? 'Abrir' : 'Conversar'}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function SemConversa({ podeIniciar, aoIniciar }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 bg-papel p-8 text-center">
@@ -149,6 +251,28 @@ function SemConversa({ podeIniciar, aoIniciar }) {
   )
 }
 
+function useAlturaDisponivel() {
+  const ref = useRef(null)
+  const [altura, setAltura] = useState(null)
+  useLayoutEffect(() => {
+    const medir = () => {
+      if (!ref.current) return
+      const topo = ref.current.getBoundingClientRect().top + window.scrollY
+      const folga = parseFloat(getComputedStyle(ref.current.parentElement).paddingBottom) || 0
+      setAltura(Math.max(420, Math.floor(window.innerHeight - topo - folga)))
+    }
+    medir()
+    window.addEventListener('resize', medir)
+    const observador = new ResizeObserver(medir)
+    if (ref.current?.parentElement) observador.observe(ref.current.parentElement)
+    return () => {
+      window.removeEventListener('resize', medir)
+      observador.disconnect()
+    }
+  }, [])
+  return [ref, altura]
+}
+
 export function Mensagens({ base = '/candidata/mensagens', selecionada = null }) {
   const { id } = useParams()
   const [parametros, setParametros] = useSearchParams()
@@ -159,6 +283,7 @@ export function Mensagens({ base = '/candidata/mensagens', selecionada = null })
   const [erro, setErro] = useState('')
   const [busca, setBusca] = useState('')
   const [novaConversa, setNovaConversa] = useState(false)
+  const [caixa, altura] = useAlturaDisponivel()
 
   const recarregar = useCallback(async () => {
     try {
@@ -199,7 +324,11 @@ export function Mensagens({ base = '/candidata/mensagens', selecionada = null })
   ]
 
   return (
-    <div className="-mx-4 -my-8 flex h-[calc(100dvh-4rem)] min-h-[480px] overflow-hidden border-linha bg-branco sm:-mx-6 lg:mx-0 lg:my-0 lg:h-[calc(100dvh-9rem)] lg:rounded-2xl lg:border">
+    <div
+      ref={caixa}
+      style={altura ? { height: altura } : undefined}
+      className="-mx-4 flex h-[calc(100dvh-9rem)] overflow-hidden border-y border-linha bg-branco sm:-mx-6 lg:mx-0 lg:rounded-2xl lg:border"
+    >
       <h1 className="sr-only">Mensagens</h1>
 
       <section className={cn('flex min-h-0 w-full flex-col border-linha lg:w-[340px] lg:shrink-0 lg:border-r', aberta && 'max-lg:hidden')} aria-label="Conversas">
@@ -222,7 +351,7 @@ export function Mensagens({ base = '/candidata/mensagens', selecionada = null })
               )}
             </div>
             <div className="px-3 pt-3">
-              <Entrada type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar conversa" aria-label="Buscar conversa" className="h-10 rounded-full" />
+              <Entrada type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder={daCandidata ? 'Buscar conversa ou pessoa' : 'Buscar conversa ou candidata'} aria-label="Buscar conversa ou pessoa" className="h-10 rounded-full" />
             </div>
             {daCandidata && (
               <div role="tablist" aria-label="Tipo de conversa" className="mt-3 flex border-b border-linha px-2">
@@ -257,7 +386,7 @@ export function Mensagens({ base = '/candidata/mensagens', selecionada = null })
                   ))}
                 </div>
               ) : filtradas.length === 0 ? (
-                <p className="px-5 py-6 text-center text-sm text-suave">
+                <p className={cn('px-5 text-center text-sm text-suave', busca ? 'py-3' : 'py-6')}>
                   {busca
                     ? 'Nenhuma conversa com esse nome.'
                     : aba === 'candidatas'
@@ -273,6 +402,7 @@ export function Mensagens({ base = '/candidata/mensagens', selecionada = null })
                   ))}
                 </ul>
               )}
+              {conversas !== null && <ResultadosPessoas termo={busca} daCandidata={daCandidata} base={base} conversas={listas} />}
             </div>
           </>
         )}

@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { col, fn, Op } from "sequelize";
 import { sequelize } from "../config/database.js";
 import { Empresa } from "../models/index.js";
 import { Candidatura, CandidaturaEnvio, PerfilEmpresa, Vaga } from "../models/Empresarial.js";
@@ -51,7 +51,14 @@ async function empresasDas(vagas) {
   );
 }
 
-export const vagaPublica = (v, empresa) => ({
+export async function totaisCandidaturas(vagas) {
+  const ids = vagas.filter((v) => v.limiteCandidaturas).map((v) => v.id);
+  if (!ids.length) return new Map();
+  const linhas = await Candidatura.findAll({ attributes: ["vagaId", [fn("COUNT", col("id_candidatura")), "total"]], where: { vagaId: { [Op.in]: ids } }, group: ["vagaId"], raw: true });
+  return new Map(linhas.map((l) => [l.vagaId, Number(l.total)]));
+}
+
+export const vagaPublica = (v, empresa, total = 0) => ({
   id: v.id,
   titulo: v.titulo,
   descricao: v.descricao,
@@ -66,13 +73,16 @@ export const vagaPublica = (v, empresa) => ({
   salarioMax: v.salarioMax === null || v.salarioMax === undefined ? null : Number(v.salarioMax),
   dataPublicacao: v.dataPublicacao,
   status: v.status ?? "Aberta",
+  limiteCandidaturas: v.limiteCandidaturas ?? null,
+  vagasRestantes: v.limiteCandidaturas ? Math.max(0, v.limiteCandidaturas - total) : null,
   empresa,
 });
 
 export const listar = comTratamento(async (req, res) => {
   const vagas = await Vaga.findAll({ where: { status: "Aberta" }, order: [["dataPublicacao", "DESC"], ["id", "DESC"]], limit: 200 });
   const empresas = await empresasDas(vagas);
-  const lista = vagas.map((v) => vagaPublica(v, empresas.get(v.perfilEmpresaId)));
+  const totais = await totaisCandidaturas(vagas);
+  const lista = vagas.map((v) => vagaPublica(v, empresas.get(v.perfilEmpresaId), totais.get(v.id)));
   lista.sort((a, b) => Number(Boolean(b.empresa?.premium)) - Number(Boolean(a.empresa?.premium)));
   return res.json({ vagas: lista });
 });
@@ -101,7 +111,8 @@ export const empresaPublica = comTratamento(async (req, res) => {
     premium: premium.has(id),
   };
   const dadosEmpresa = { id, nome: conta.nome, logo: empresa.logo, foto: empresa.foto, capa: empresa.capa, site: empresa.site, localizacao: empresa.localizacao, premium: empresa.premium };
-  return res.json({ empresa, vagas: vagas.map((v) => vagaPublica(v, dadosEmpresa)) });
+  const totais = await totaisCandidaturas(vagas);
+  return res.json({ empresa, vagas: vagas.map((v) => vagaPublica(v, dadosEmpresa, totais.get(v.id))) });
 });
 
 export const ver = comTratamento(async (req, res) => {
@@ -109,7 +120,8 @@ export const ver = comTratamento(async (req, res) => {
   const vaga = id && (await Vaga.findByPk(id));
   if (!vaga || vaga.status === "Rascunho") return erro(res, 404, "Vaga não encontrada.");
   const empresas = await empresasDas([vaga]);
-  return res.json({ vaga: vagaPublica(vaga, empresas.get(vaga.perfilEmpresaId)) });
+  const totais = await totaisCandidaturas([vaga]);
+  return res.json({ vaga: vagaPublica(vaga, empresas.get(vaga.perfilEmpresaId), totais.get(vaga.id)) });
 });
 
 export const candidatar = comTratamento(async (req, res) => {
@@ -134,6 +146,9 @@ export const candidatar = comTratamento(async (req, res) => {
 
   const existente = await Candidatura.findOne({ where: { usuariaId: eu(req), vagaId } });
   if (existente) return erro(res, 409, "Você já se candidatou a esta vaga.");
+  if (vaga.limiteCandidaturas && (await Candidatura.count({ where: { vagaId } })) >= vaga.limiteCandidaturas) {
+    return erro(res, 400, "Esta vaga atingiu o limite de candidaturas e não está recebendo novas.");
+  }
   const curriculo = req.body.incluirCurriculo === true ? await CurriculoCandidata.findOne({ where: { usuariaId: eu(req) } }) : null;
   if (req.body.incluirCurriculo === true && !curriculo) return erro(res, 400, "Envie um currículo no seu perfil antes de anexá-lo.", "curriculo");
 
@@ -149,6 +164,9 @@ export const candidatar = comTratamento(async (req, res) => {
     await CandidaturaCurriculo.create({ candidaturaId: cand.id, nomeArquivo: curriculo.nomeArquivo, mime: curriculo.mime, tamanho: curriculo.tamanho, dados: curriculo.dados });
   }
   const [perfilEmpresa, candidata] = await Promise.all([PerfilEmpresa.findByPk(vaga.perfilEmpresaId), Usuaria.findByPk(eu(req))]);
+  const total = vaga.limiteCandidaturas ? await Candidatura.count({ where: { vagaId } }) : 0;
+  const lotou = Boolean(vaga.limiteCandidaturas) && total >= vaga.limiteCandidaturas;
+  if (lotou) await vaga.update({ status: "Pausada" });
   if (perfilEmpresa) {
     await notificar({
       tipoConta: "empresa",
@@ -157,6 +175,15 @@ export const candidatar = comTratamento(async (req, res) => {
       texto: `Nova candidatura de ${candidata?.nome ?? "uma candidata"} para ${vaga.titulo}.`,
       link: `/empresa/candidaturas/${cand.id}`,
     });
+    if (lotou) {
+      await notificar({
+        tipoConta: "empresa",
+        contaId: perfilEmpresa.empresaId,
+        tipo: "candidatura",
+        texto: `A vaga ${vaga.titulo} atingiu o limite de ${vaga.limiteCandidaturas} candidaturas e foi pausada.`,
+        link: `/empresa/vagas/${vaga.id}`,
+      });
+    }
   }
   return res.status(201).json({ candidatura: { id: cand.id, vagaId, data: cand.data, status: cand.status, comCurriculo: Boolean(curriculo) } });
 });
