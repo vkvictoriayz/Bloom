@@ -9,6 +9,7 @@ import { prepararCandidata } from "./models/Candidata.js";
 import { prepararInteracao } from "./models/Interacao.js";
 import { prepararGrupos } from "./models/Grupos.js";
 import { aplicarMigracoes } from "./database/migracoes.js";
+import { padronizarNomesTabelas } from "./database/nomesTabelas.js";
 import { registrarFotoDoDia } from "./controllers/AdminController.js";
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16) {
@@ -41,6 +42,7 @@ if (!portaLivre) await avisarPortaOcupada();
 try {
   await sequelize.authenticate();
   console.log("Conectado ao MySQL.");
+  await padronizarNomesTabelas();
   await prepararComunidade();
   await prepararEmpresarial();
   await prepararImagens();
