@@ -5,11 +5,11 @@ import CarrosselAreas from '../components/CarrosselAreas'
 import BorboletaHero from '../components/borboleta/BorboletaHero'
 import PreviaJornada from '../components/PreviaJornada'
 import BotaoBrilho from '../components/movimento/BotaoBrilho'
-import CartaoBrilho from '../components/movimento/CartaoBrilho'
 import ContadorAnimado from '../components/movimento/ContadorAnimado'
 import PalavrasAlternadas from '../components/movimento/PalavrasAlternadas'
 import TextoRevelado from '../components/movimento/TextoRevelado'
 import Icone from '../components/Icone'
+import { Borboleta } from '../components/Logo'
 import { PreviaEtapas, PreviaFiltros, PreviaPerfil, PreviaPublicacao } from '../components/PreviasRecursos'
 import MarcaEmpresa from '../components/MarcaEmpresa'
 import Pagina from '../components/layout/Pagina'
@@ -56,20 +56,34 @@ const passos = [
 
 const perguntas = [
   {
+    icone: 'maleta',
     pergunta: 'Como me candidato a uma vaga?',
     resposta: 'Crie sua conta, abra a vaga e clique em “Candidatar-se”. A candidatura passa a aparecer em Minhas candidaturas, com a data de envio.',
   },
   {
+    icone: 'candidaturas',
     pergunta: 'Posso me candidatar duas vezes à mesma vaga?',
     resposta: 'Não. A Bloom reconhece que você já se candidatou e mostra o status da candidatura no lugar do botão.',
   },
   {
+    icone: 'grafico',
     pergunta: 'Como sei em que etapa está meu processo?',
     resposta: 'Cada candidatura mostra as etapas: envio, análise da empresa e resultado. Nenhuma etapa é marcada como concluída sem uma atualização registrada.',
   },
   {
+    icone: 'predio',
     pergunta: 'Sou de uma empresa. Como participo?',
     resposta: 'Pela Área da empresa você cria a conta da sua organização, edita o perfil, publica vagas e acompanha as candidaturas recebidas.',
+  },
+  {
+    icone: 'borboleta',
+    pergunta: 'A Bloom é gratuita para candidatas?',
+    resposta: 'Sim. Criar a conta, montar o perfil, participar das comunidades e se candidatar às vagas não tem custo para candidatas.',
+  },
+  {
+    icone: 'escudo',
+    pergunta: 'Como meus dados são protegidos?',
+    resposta: 'O CPF e a data de nascimento servem só para confirmar sua identidade e não aparecem no perfil. Nas configurações de privacidade você escolhe se o perfil é público e se mostra seus contatos.',
   },
 ]
 
@@ -104,21 +118,16 @@ function useResumo() {
 function FaixaNumeros({ resumo }) {
   if (!resumo) return null
   const itens = [
-    { valor: resumo.integrantes, rotulo: resumo.integrantes === 1 ? 'mulher na comunidade' : 'mulheres na comunidade', icone: 'grupo' },
-    { valor: resumo.vagasAbertas, rotulo: resumo.vagasAbertas === 1 ? 'vaga aberta agora' : 'vagas abertas agora', icone: 'maleta' },
-    { valor: resumo.empresas, rotulo: resumo.empresas === 1 ? 'empresa contratando' : 'empresas contratando', icone: 'predio' },
+    { valor: resumo.integrantes, rotulo: resumo.integrantes === 1 ? 'mulher na comunidade' : 'mulheres na comunidade' },
+    { valor: resumo.vagasAbertas, rotulo: resumo.vagasAbertas === 1 ? 'vaga aberta agora' : 'vagas abertas agora' },
+    { valor: resumo.empresas, rotulo: resumo.empresas === 1 ? 'empresa contratando' : 'empresas contratando' },
   ]
   return (
-    <section aria-label="A Bloom em números" className="grid grid-cols-1 divide-y divide-linha rounded-2xl border border-linha bg-branco sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+    <section aria-label="A Bloom em números" className="grid grid-cols-1 gap-8 border-y border-linha-forte/40 py-8 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-linha">
       {itens.map((item) => (
-        <div key={item.rotulo} className="flex items-center gap-4 px-6 py-6 sm:px-8">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-blush text-vinho" aria-hidden="true">
-            <Icone nome={item.icone} tamanho={22} />
-          </span>
-          <span>
-            <ContadorAnimado valor={item.valor} className="block font-display text-4xl leading-none text-tinta" />
-            <span className="mt-1 block text-sm text-tinta-2">{item.rotulo}</span>
-          </span>
+        <div key={item.rotulo} className="sm:px-8 sm:first:pl-0">
+          <ContadorAnimado valor={item.valor} className="block font-display text-6xl leading-none text-vinho" />
+          <span className="mt-3 block text-sm font-semibold tracking-wide text-tinta-2">{item.rotulo}</span>
         </div>
       ))}
     </section>
@@ -227,10 +236,10 @@ function HomePublica() {
             <h2 id="titulo-passos" className="font-display text-3xl leading-tight text-tinta sm:text-4xl">
               Como funciona
             </h2>
-            <ol className="mt-8 flex flex-col gap-6">
+            <ol className="mt-8 flex flex-col">
               {passos.map((p, i) => (
-                <li key={p.titulo} className="flex gap-4">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-vinho font-bold text-white">{i + 1}</span>
+                <li key={p.titulo} className="flex gap-5 border-t border-linha py-5 first:border-t-0 first:pt-0">
+                  <span className="w-10 shrink-0 font-display text-3xl leading-none text-vinho" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
                   <div>
                     <h3 className="font-bold text-tinta">{p.titulo}</h3>
                     <p className="mt-1 text-sm leading-relaxed text-tinta-2">{p.texto}</p>
@@ -276,16 +285,49 @@ function HomePublica() {
         </section>
         )}
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <CartaoBrilho duracao={8} conteudoClassName="bg-vinho">
-          <section aria-labelledby="titulo-para-empresas" className="flex h-full flex-col rounded-[calc(1rem-1.5px)] bg-vinho p-8 text-white sm:p-10">
-            <span className="grid size-11 place-items-center rounded-full bg-white/15" aria-hidden="true">
-              <Icone nome="predio" tamanho={20} />
+        <section aria-labelledby="titulo-perguntas" id="perguntas" className="grid scroll-mt-24 gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+          <div className="relative overflow-hidden rounded-3xl bg-blush p-7 sm:p-9 lg:sticky lg:top-24 lg:self-start">
+            <Borboleta tamanho={220} className="pointer-events-none absolute -right-14 -bottom-12 rotate-[-14deg] text-vinho/[0.08]" />
+            <span className="grid size-12 place-items-center rounded-2xl bg-branco text-vinho" aria-hidden="true">
+              <Icone nome="info" tamanho={22} />
             </span>
-            <h2 id="titulo-para-empresas" className="mt-6 font-display text-3xl leading-tight">
+            <h2 id="titulo-perguntas" className="mt-6 font-display text-4xl leading-tight text-vinho-escuro sm:text-[2.75rem]">
+              Perguntas frequentes
+            </h2>
+            <p className="mt-3 max-w-sm leading-relaxed text-tinta-2">O que mais perguntam antes de começar na Bloom.</p>
+            <ul className="relative mt-6 flex flex-wrap gap-2">
+              {[
+                ['check', 'Gratuito para candidatas'],
+                ['escudo', 'Dados protegidos'],
+                ['maleta', 'Vagas em T.I.'],
+              ].map(([icone, rotulo]) => (
+                <li key={rotulo} className="inline-flex items-center gap-1.5 rounded-full bg-branco px-3 py-1.5 text-xs font-semibold text-vinho">
+                  <Icone nome={icone} tamanho={14} /> {rotulo}
+                </li>
+              ))}
+            </ul>
+            <div className="relative mt-8 border-t border-vinho/15 pt-6">
+              <p className="text-sm font-semibold text-tinta">Não achou a sua dúvida?</p>
+              <p className="mt-1 text-sm text-tinta-2">Crie sua conta e explore com calma.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Botao as={Link} to="/cadastro" tamanho="sm" className="rounded-full">
+                  Criar minha conta
+                </Botao>
+                <Botao as={Link} to="/vagas" variante="secundario" tamanho="sm" className="rounded-full">
+                  Ver vagas
+                </Botao>
+              </div>
+            </div>
+          </div>
+          <Perguntas itens={perguntas} />
+        </section>
+
+        <section aria-labelledby="titulo-para-empresas" className="grid gap-10 rounded-2xl bg-vinho p-8 text-white sm:p-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
+          <div>
+            <h2 id="titulo-para-empresas" className="font-display text-3xl leading-tight sm:text-4xl">
               Sua empresa contrata talentos em tecnologia?
             </h2>
-            <p className="mt-3 flex-1 text-white/80">
+            <p className="mt-4 max-w-lg text-white/80">
               Crie a conta da sua organização na Bloom para publicar vagas, receber candidaturas e conhecer profissionais da comunidade.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -296,25 +338,35 @@ function HomePublica() {
                 Entrar como empresa
               </Botao>
             </div>
-          </section>
-          </CartaoBrilho>
+          </div>
+          <dl className="divide-y divide-white/20 border-y border-white/20 self-start">
+            {[
+              ['Publique vagas', 'Com limite de candidatas e modalidade.'],
+              ['Acompanhe o processo', 'Etapas, mensagens e convites em um só lugar.'],
+              ['Conheça talentos', 'Perfis, projetos e publicações da comunidade.'],
+            ].map(([titulo, texto]) => (
+              <div key={titulo} className="py-4">
+                <dt className="font-semibold">{titulo}</dt>
+                <dd className="mt-0.5 text-sm text-white/75">{texto}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
 
-          <section aria-labelledby="titulo-perguntas" className="rounded-2xl border border-linha bg-branco p-6 sm:p-8">
-            <h2 id="titulo-perguntas" className="mb-4 font-display text-3xl text-tinta">
-              Perguntas frequentes
-            </h2>
-            <Perguntas itens={perguntas} />
-          </section>
-        </div>
-
-        <section className="rounded-2xl bg-vinho-escuro px-6 py-14 text-center text-white sm:px-10">
-          <h2 className="font-display text-4xl leading-tight sm:text-5xl">
-            <TextoRevelado texto="Seu talento merece espaço para" /> <em className="text-blush">florescer.</em>
+        <section className="rounded-2xl bg-vinho-escuro px-6 py-16 text-center text-white sm:px-12 sm:py-20">
+          <h2 className="mx-auto max-w-3xl font-display text-4xl leading-[1.1] sm:text-6xl">
+            Seu talento merece espaço para{' '}
+            <em className="relative inline-block text-blush">
+              florescer.
+              <svg viewBox="0 0 220 18" className="absolute -bottom-2 left-0 h-3 w-full" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M3 12 C 50 2, 120 2, 217 9" fill="none" stroke="#c27a90" strokeWidth="4" strokeLinecap="round" pathLength="1" strokeDasharray="1" strokeDashoffset="1" className="desenhar-ao-ver" />
+              </svg>
+            </em>
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-white/75">Descubra oportunidades e construa seu próximo capítulo na área de tecnologia.</p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <p className="mx-auto mt-6 max-w-xl text-lg text-white/75">Descubra oportunidades, conecte-se com outras mulheres da tecnologia e construa sua carreira no seu ritmo.</p>
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
             <Botao as={Link} to="/cadastro" variante="claro" tamanho="lg" className="rounded-full">
-              Criar minha conta
+              Criar minha conta <Icone nome="seta" />
             </Botao>
             <Botao as={Link} to="/login" variante="contornoClaro" tamanho="lg" className="rounded-full">
               Entrar

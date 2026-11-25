@@ -9,29 +9,23 @@ import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
 import Botao from '../../components/ui/Botao'
 import { Aviso } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
-import Progresso from '../../components/ui/Progresso'
 import { useDadosLocais } from '../../hooks/useDadosLocais'
 import { useSessao } from '../../hooks/useSessao'
 import { lerFeed, lerMeuPerfil } from '../../services/comunidade'
 import { completude, EVENTO_PERFIL, lerPerfil } from '../../services/perfil'
 import { lerProjetos } from '../../services/projetos'
 
-function Secao({ titulo, icone, vazio, ancoraEdicao, children }) {
+function Secao({ titulo, vazio, ancoraEdicao, children }) {
   return (
-    <section className="rounded-xl border border-linha bg-branco p-6 sm:p-7">
-      <div className="mb-5 flex items-center gap-3">
-        <span className="grid size-9 place-items-center rounded-full bg-blush text-vinho" aria-hidden="true">
-          <Icone nome={icone} tamanho={18} />
-        </span>
-        <h2 className="font-display text-2xl text-tinta">{titulo}</h2>
-      </div>
+    <section className="rounded-2xl border border-linha bg-branco p-6 sm:p-7">
+      <h2 className="mb-5 font-display text-2xl text-tinta">{titulo}</h2>
       {vazio ? (
-        <p className="text-sm text-suave">
-          {vazio}{' '}
-          <Link to={`/candidata/perfil/editar#${ancoraEdicao}`} className="font-semibold text-vinho hover:underline">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-linha-forte px-4 py-4">
+          <p className="text-sm text-suave">{vazio}</p>
+          <Link to={`/candidata/perfil/editar#${ancoraEdicao}`} className="text-sm font-semibold text-vinho underline-offset-4 hover:underline">
             Adicionar
           </Link>
-        </p>
+        </div>
       ) : (
         children
       )}
@@ -146,13 +140,28 @@ function Perfil() {
       </section>
 
       {percentual < 100 && (
-        <section className="flex flex-col gap-4 rounded-xl border border-linha bg-branco p-6 sm:flex-row sm:items-center">
-          <div className="flex-1">
-            <p className="font-semibold text-tinta">Seu perfil está {percentual}% completo</p>
-            <Progresso valor={percentual} rotulo="Completude do perfil" className="mt-3" />
-            <p className="mt-3 text-sm text-suave">Próximo passo: {pendentes[0]?.rotulo.toLowerCase()}.</p>
+        <section className="relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-linha bg-branco p-6 sm:flex-row sm:items-center sm:p-7" aria-label="Completude do perfil">
+          <svg viewBox="0 0 100 100" className="size-24 shrink-0" role="img" aria-label={`Perfil ${percentual}% completo`}>
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#ffffff" strokeWidth="9" />
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#85243d" strokeWidth="9" strokeLinecap="round" strokeDasharray={`${(percentual / 100) * 263.9} 263.9`} transform="rotate(-90 50 50)" style={{ transition: 'stroke-dasharray .8s cubic-bezier(.22,1,.36,1)' }} />
+            <text x="50" y="50" dy="0.35em" textAnchor="middle" fontSize="22" fontWeight="700" fill="#1f1a1c">
+              {percentual}%
+            </text>
+          </svg>
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-2xl text-tinta">Complete seu perfil</p>
+            <p className="mt-1 text-sm text-tinta-2">Perfis completos aparecem melhor para as empresas. Faltam {pendentes.length} {pendentes.length === 1 ? 'item' : 'itens'}:</p>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {pendentes.map((p) => (
+                <li key={p.id}>
+                  <Link to={`/candidata/perfil/editar#${p.ancora}`} className="inline-flex items-center gap-1.5 rounded-full bg-branco px-3 py-1.5 text-xs font-semibold text-vinho ring-1 ring-vinho/20 transition-colors hover:bg-vinho hover:text-white">
+                    <Icone nome="mais" tamanho={12} /> {p.rotulo}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
-          <Botao as={Link} to="/candidata/perfil/editar">
+          <Botao as={Link} to="/candidata/perfil/editar" className="self-start sm:self-center">
             Completar perfil
           </Botao>
         </section>
@@ -160,7 +169,7 @@ function Perfil() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="lg:col-span-2">
-          <Secao titulo="Resumo profissional" icone="perfil" vazio={!perfil.sobre && 'Conte quem você é e o que busca.'} ancoraEdicao="resumo">
+          <Secao titulo="Resumo profissional" vazio={!perfil.sobre && 'Conte quem você é e o que busca.'} ancoraEdicao="resumo">
             <p className="leading-relaxed whitespace-pre-line text-tinta-2">{perfil.sobre}</p>
             {perfil.objetivo && (
               <p className="mt-4 border-l-2 border-vinho pl-4 font-display text-lg text-tinta italic">{perfil.objetivo}</p>
@@ -177,7 +186,7 @@ function Perfil() {
           </Secao>
         </div>
 
-        <Secao titulo="Experiência" icone="maleta" vazio={!perfil.experiencias.length && 'Nenhuma experiência adicionada.'} ancoraEdicao="experiencias">
+        <Secao titulo="Experiência" vazio={!perfil.experiencias.length && 'Nenhuma experiência adicionada.'} ancoraEdicao="experiencias">
           <ol className="flex flex-col gap-5">
             {perfil.experiencias.map((e, i) => (
               <li key={i}>
@@ -190,7 +199,7 @@ function Perfil() {
           </ol>
         </Secao>
 
-        <Secao titulo="Formação acadêmica" icone="documento" vazio={!perfil.formacoes.length && 'Nenhuma formação adicionada.'} ancoraEdicao="formacao">
+        <Secao titulo="Formação acadêmica" vazio={!perfil.formacoes.length && 'Nenhuma formação adicionada.'} ancoraEdicao="formacao">
           <ol className="flex flex-col gap-5">
             {perfil.formacoes.map((f, i) => (
               <li key={i}>
@@ -205,7 +214,7 @@ function Perfil() {
           </ol>
         </Secao>
 
-        <Secao titulo="Competências" icone="broto" vazio={!competencias.length && 'Nenhuma competência adicionada.'} ancoraEdicao="competencias">
+        <Secao titulo="Competências" vazio={!competencias.length && 'Nenhuma competência adicionada.'} ancoraEdicao="competencias">
           <ul className="flex flex-wrap gap-2">
             {perfil.tecnicas.map((t) => (
               <li key={t} className="rounded-full bg-vinho px-3 py-1 text-sm font-semibold text-white">
@@ -220,7 +229,7 @@ function Perfil() {
           </ul>
         </Secao>
 
-        <Secao titulo="Cursos e certificações" icone="check" vazio={!perfil.cursos.length && 'Nenhum curso adicionado.'} ancoraEdicao="cursos">
+        <Secao titulo="Cursos e certificações" vazio={!perfil.cursos.length && 'Nenhum curso adicionado.'} ancoraEdicao="cursos">
           <ul className="flex flex-col gap-3">
             {perfil.cursos.map((c, i) => {
               const url = enderecoSeguro(c.link)
@@ -242,7 +251,7 @@ function Perfil() {
         </Secao>
 
         <div className="lg:col-span-2">
-          <Secao titulo="Projetos e portfólio" icone="pasta" vazio={!projetos.length && 'Nenhum projeto adicionado.'} ancoraEdicao="projetos">
+          <Secao titulo="Projetos e portfólio" vazio={!projetos.length && 'Nenhum projeto adicionado.'} ancoraEdicao="projetos">
             <ul className="grid gap-4 sm:grid-cols-2">
               {projetos.map((p) => (
                 <li key={p.id} className="overflow-hidden rounded-lg border border-linha">

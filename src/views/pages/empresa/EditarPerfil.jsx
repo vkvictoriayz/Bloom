@@ -80,7 +80,7 @@ function ImagensEmpresa({ dados, aoMudar }) {
               <Icone nome="camera" tamanho={16} /> {dados.imagens?.foto && !iconeAtual ? 'Trocar foto ou logotipo' : 'Enviar foto ou logotipo'}
             </Botao>
             <Botao variante="secundario" tamanho="sm" disabled={ocupado} aria-expanded={escolhendoIcone} onClick={() => setEscolhendoIcone((v) => !v)}>
-              <Icone nome="predio" tamanho={16} /> {iconeAtual ? 'Trocar ícone' : 'Usar um ícone'}
+              <Icone nome="borboleta" tamanho={16} /> {iconeAtual ? 'Trocar símbolo' : 'Usar um símbolo Bloom'}
             </Botao>
             <Botao variante="secundario" tamanho="sm" disabled={ocupado} onClick={() => arquivoCapa.current?.click()}>
               <Icone nome="imagem" tamanho={16} /> {capa ? 'Trocar capa' : 'Adicionar capa'}

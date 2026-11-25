@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Icone from './Icone'
 import { cn } from '../lib/cn'
 
-const moldura = 'w-full max-w-[300px] rounded-2xl border border-linha bg-branco p-4 shadow-[0_14px_34px_-24px_rgba(78,18,38,0.45)]'
+const moldura = 'w-full max-w-[300px] rounded-2xl border border-linha bg-branco p-4 shadow-[0_14px_34px_-24px_rgba(94,26,50,0.45)]'
 
 export function PreviaPublicacao() {
   const [curtiu, setCurtiu] = useState(false)

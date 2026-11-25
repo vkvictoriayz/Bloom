@@ -3,10 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
   "scripts": {
     "predev": "node scripts/porta-livre.mjs",
     "dev": "vite",
     "server": "node --env-file=.env src/server.js",
+    "start": "node src/server.js",
+    "banco:copiar": "node --env-file=.env scripts/copiar-banco.mjs",
     "admin:criar": "node --env-file=.env scripts/criar-admin.mjs",
     "admin:senha": "node --env-file=.env scripts/senha-admin.mjs",
     "build": "vite build",
@@ -18,7 +23,7 @@
   },
   "dependencies": {
     "axios": "^1.20.0",
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",

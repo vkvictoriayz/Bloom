@@ -1,4 +1,5 @@
 import Avatar from '../comunidade/Avatar'
+import Capa from '../candidata/Capa'
 import { Aviso } from '../ui/Campo'
 import Esqueleto from '../ui/Esqueleto'
 import { cn } from '../../lib/cn'
@@ -28,9 +29,12 @@ export function ErroAoCarregar({ erro, aoTentar }) {
 
 export function CartaoTalento({ talento, acao }) {
   return (
-    <article className="cartao flex h-full flex-col p-5">
-      <div className="flex items-center gap-3">
-        <Avatar nome={talento.nome} foto={talento.foto} tamanho="md" />
+    <article className="cartao flex h-full flex-col overflow-hidden px-5 pb-5 transition-colors hover:border-linha-forte">
+      <Capa imagem={talento.capa} className="-mx-5 h-16 w-[calc(100%+2.5rem)] rounded-none sm:h-16" />
+      <div className="-mt-7 flex items-end gap-3">
+        <span className="relative z-10 rounded-full ring-4 ring-branco">
+          <Avatar nome={talento.nome} foto={talento.foto} tamanho="md" />
+        </span>
         <div className="min-w-0">
           <h3 className="flex items-center gap-1.5 font-bold text-tinta">
             <span className="truncate">{talento.nome}</span>

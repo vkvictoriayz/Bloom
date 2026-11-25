@@ -258,13 +258,15 @@ function useAlturaDisponivel() {
     const medir = () => {
       if (!ref.current) return
       const topo = ref.current.getBoundingClientRect().top + window.scrollY
-      const folga = parseFloat(getComputedStyle(ref.current.parentElement).paddingBottom) || 0
+      const principal = ref.current.closest('main') ?? ref.current.parentElement
+      const folga = parseFloat(getComputedStyle(principal).paddingBottom) || 0
       setAltura(Math.max(420, Math.floor(window.innerHeight - topo - folga)))
     }
     medir()
     window.addEventListener('resize', medir)
     const observador = new ResizeObserver(medir)
-    if (ref.current?.parentElement) observador.observe(ref.current.parentElement)
+    const principal = ref.current?.closest('main') ?? ref.current?.parentElement
+    if (principal) observador.observe(principal)
     return () => {
       window.removeEventListener('resize', medir)
       observador.disconnect()

@@ -4,11 +4,10 @@ import { Link, useSearchParams } from 'react-router-dom'
 import Icone from '../../components/Icone'
 import { IconeAvatar } from '../../components/IconePerfil'
 import LinhaVaga from '../../components/LinhaVaga'
-import TituloPagina from '../../components/candidata/TituloPagina'
 import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
 import ListaPessoas from '../../components/comunidade/ListaPessoas'
 import ProjetosIntegrantes from '../../components/comunidade/ProjetosIntegrantes'
-import { Aviso, estiloControle } from '../../components/ui/Campo'
+import { Aviso } from '../../components/ui/Campo'
 import Esqueleto from '../../components/ui/Esqueleto'
 import { correspondeBusca } from '../../data/vagas'
 import { cn } from '../../lib/cn'
@@ -29,7 +28,7 @@ const CATEGORIAS = [
 function Bloco({ titulo, verTudo, children }) {
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex items-end justify-between gap-3 border-b border-linha pb-2">
+      <div className="flex items-center justify-between gap-3">
         <h2 className="font-display text-2xl text-tinta">{titulo}</h2>
         {verTudo}
       </div>
@@ -146,6 +145,10 @@ function Explorar() {
     setParametros(p, { replace: true })
   }
 
+  useEffect(() => {
+    document.title = 'Explorar · BLOOM'
+  }, [])
+
   const vagas = todasVagas.filter((v) => correspondeBusca(v, busca))
   const tudo = categoria === 'tudo'
   const verTudo = (id) =>
@@ -157,40 +160,41 @@ function Explorar() {
 
   return (
     <>
-      <TituloPagina titulo="Explorar" descricao="Descubra profissionais, publicações e vagas da comunidade Bloom." />
-
-      <div className="relative">
-        <Icone nome="busca" tamanho={20} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-suave" />
-        <input
-          type="search"
-          value={busca}
-          onChange={(e) => definir('q', e.target.value)}
-          placeholder="Busque por nome, tecnologia, cargo ou assunto"
-          aria-label="Buscar no Explorar"
-          className={cn(estiloControle, 'h-12 pl-12 text-base')}
-        />
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Categorias">
-        {CATEGORIAS.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            aria-pressed={categoria === c.id}
-            onClick={() => definir('categoria', c.id)}
-            className={cn(
-              'rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors',
-              categoria === c.id ? 'border-tinta bg-tinta text-white' : 'border-linha-forte bg-branco text-tinta-2 hover:border-tinta'
-            )}
-          >
-            {c.rotulo}
-          </button>
-        ))}
-      </div>
+      <header className="border-b border-linha pb-6">
+        <h1 className="font-display text-4xl text-tinta sm:text-5xl">Explorar</h1>
+        <p className="mt-2 max-w-xl text-tinta-2">Profissionais, publicações, vagas, projetos e comunidades da Bloom.</p>
+        <div className="relative mt-6 max-w-2xl">
+          <Icone nome="busca" tamanho={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-suave" />
+          <input
+            type="search"
+            value={busca}
+            onChange={(e) => definir('q', e.target.value)}
+            placeholder="Busque por nome, tecnologia, cargo ou assunto"
+            aria-label="Buscar no Explorar"
+            className="h-12 w-full rounded-xl border border-linha-forte bg-branco pr-4 pl-11 text-base text-tinta placeholder:text-suave focus:border-vinho focus:ring-[3px] focus:ring-blush focus:outline-none"
+          />
+        </div>
+        <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2" role="group" aria-label="Categorias">
+          {CATEGORIAS.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              aria-pressed={categoria === c.id}
+              onClick={() => definir('categoria', c.id)}
+              className={cn(
+                'border-b-2 pb-1 text-sm font-semibold transition-colors',
+                categoria === c.id ? 'border-vinho text-vinho' : 'border-transparent text-tinta-2 hover:text-tinta'
+              )}
+            >
+              {c.rotulo}
+            </button>
+          ))}
+        </div>
+      </header>
 
       <div className="mt-8 flex flex-col gap-10">
         {(tudo || categoria === 'profissionais') && (
-          <ListaPessoas busca={busca} comBusca={false} limite={tudo ? 4 : undefined} titulo="Profissionais" rodape={verTudo('profissionais')} />
+          <ListaPessoas busca={busca} comBusca={false} grade limite={tudo ? 6 : undefined} titulo="Profissionais" rodape={verTudo('profissionais')} />
         )}
 
         {(tudo || categoria === 'vagas') && (
@@ -198,7 +202,7 @@ function Explorar() {
             {vagas.length === 0 ? (
               <AvisoVazio>Nenhuma vaga combina com “{busca}”.</AvisoVazio>
             ) : (
-              <div className="rounded-xl border border-linha bg-branco px-5">
+              <div className="rounded-2xl border border-linha bg-branco px-5">
                 {(tudo ? vagas.slice(0, 3) : vagas).map((vaga) => (
                   <LinhaVaga key={vaga.id} vaga={vaga} compacta candidatura={candidaturaDaVaga(vaga.id, candidaturas)} className="last:border-b-0" />
                 ))}

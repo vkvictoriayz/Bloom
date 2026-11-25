@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 
 import BorboletaViva from './BorboletaViva'
 
-function BorboletaHero() {
+function BorboletaHero({ className }) {
   const area = useRef(null)
   const palco = useRef(null)
   const borboleta = useRef(null)
@@ -75,7 +75,7 @@ function BorboletaHero() {
   return (
     <div
       ref={area}
-      className="flex aspect-[3/2] h-full w-full items-center justify-center rounded-xl bg-papel lg:aspect-auto lg:min-h-[420px]"
+      className={`flex aspect-[3/2] h-full w-full items-center justify-center rounded-xl lg:aspect-auto lg:min-h-[420px] ${className ?? 'bg-papel'}`}
       role="img"
       aria-label="Símbolo da BLOOM: uma borboleta que bate as asas quando você passa o mouse"
     >

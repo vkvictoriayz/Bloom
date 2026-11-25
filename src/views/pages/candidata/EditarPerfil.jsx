@@ -314,7 +314,7 @@ function FormularioPerfil() {
                     <Icone nome="camera" tamanho={16} /> {perfil.foto && !ehIcone(perfil.foto) ? 'Trocar foto' : 'Enviar foto'}
                   </Botao>
                   <Botao variante="secundario" tamanho="sm" disabled={enviandoImagem} aria-expanded={escolhendoIcone} onClick={() => setEscolhendoIcone((v) => !v)}>
-                    <Icone nome="broto" tamanho={16} /> {ehIcone(perfil.foto) ? 'Trocar ícone' : 'Usar um ícone'}
+                    <Icone nome="borboleta" tamanho={16} /> {ehIcone(perfil.foto) ? 'Trocar símbolo' : 'Usar um símbolo Bloom'}
                   </Botao>
                   <Botao variante="secundario" tamanho="sm" disabled={enviandoImagem} onClick={() => arquivoCapa.current?.click()}>
                     <Icone nome="imagem" tamanho={16} /> {perfil.capa ? 'Trocar capa' : 'Adicionar capa'}

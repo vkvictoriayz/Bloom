@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { Aviso, Entrada } from '../ui/Campo'
 import Avatar from './Avatar'
+import Capa from '../candidata/Capa'
 import BotaoSeguir from './BotaoSeguir'
 import { definirSeguindo, lerPerfis } from '../../services/comunidade'
 
@@ -70,9 +71,12 @@ function ListaPessoas({ aoMudarConexao, limite, comBusca = true, rodape, busca: 
       ) : grade ? (
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {(limite ? pessoas?.slice(0, limite) : pessoas)?.map((p) => (
-            <li key={p.id} className="flex flex-col items-center rounded-xl border border-linha p-4 text-center">
-              <Link to={`/candidata/pessoas/${p.id}`} className="flex w-full flex-col items-center rounded-lg hover:text-vinho">
-                <Avatar nome={p.nome} foto={p.foto} tamanho="lg" />
+            <li key={p.id} className="flex flex-col items-center overflow-hidden rounded-2xl border border-linha bg-branco px-4 pb-4 text-center transition-colors hover:border-linha-forte">
+              <Capa imagem={p.capa} className="-mx-4 h-14 w-[calc(100%+2rem)] rounded-none sm:h-14" />
+              <Link to={`/candidata/pessoas/${p.id}`} className="-mt-8 flex w-full flex-col items-center rounded-lg hover:text-vinho">
+                <span className="relative z-10 rounded-full ring-4 ring-branco">
+                  <Avatar nome={p.nome} foto={p.foto} tamanho="lg" />
+                </span>
                 <span className="mt-3 w-full truncate text-sm font-semibold text-tinta">{p.nome}</span>
                 <span className="w-full truncate text-xs text-suave">{p.area || 'Área não informada'}</span>
               </Link>

@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express from "express";
 import adminRoutes from "./routes/adminRoutes.js";
@@ -39,6 +42,12 @@ app.use("/api/premium", premiumRoutes);
 app.use("/api/pagamentos", pagamentoRoutes);
 app.use("/api/denuncias", denunciaRoutes);
 app.use("/api/publico", publicoRoutes);
+
+const site = join(dirname(fileURLToPath(import.meta.url)), "..", "dist");
+if (existsSync(join(site, "index.html"))) {
+  app.use(express.static(site, { index: false, maxAge: "7d", setHeaders: (res, caminho) => caminho.endsWith(".html") && res.setHeader("Cache-Control", "no-cache") }));
+  app.use((req, res, next) => (req.method === "GET" && !req.path.startsWith("/api") ? res.sendFile(join(site, "index.html")) : next()));
+}
 
 app.use((req, res) => res.status(404).json({ erro: "Rota não encontrada." }));
 

@@ -24,6 +24,7 @@ import {
   tempoRelativo,
 } from '../../services/comunidade'
 import { cn } from '../../lib/cn'
+import { comNegrito } from '../../lib/negrito'
 
 const rotuloTipo = (id) => TIPOS.find((t) => t.id === id)?.rotulo ?? id
 const perfilDa = (id) => `/candidata/pessoas/${id}`
@@ -242,7 +243,7 @@ function TextoComAssuntos({ texto }) {
   let ultimo = 0
   for (const m of texto.matchAll(HASHTAG)) {
     const inicio = m.index + m[1].length
-    if (inicio > ultimo) partes.push(texto.slice(ultimo, inicio))
+    if (inicio > ultimo) partes.push(...comNegrito(texto.slice(ultimo, inicio), ultimo))
     partes.push(
       <Link key={inicio} to={linkAssunto(m[2])} className="font-semibold text-vinho hover:underline">
         #{m[2]}
@@ -250,7 +251,7 @@ function TextoComAssuntos({ texto }) {
     )
     ultimo = inicio + m[2].length + 1
   }
-  if (ultimo < texto.length) partes.push(texto.slice(ultimo))
+  if (ultimo < texto.length) partes.push(...comNegrito(texto.slice(ultimo), ultimo))
   return partes
 }
 
@@ -380,7 +381,7 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar, acoesExtras }) {
     'inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-tinta-2 transition-colors hover:bg-blush hover:text-vinho'
 
   return (
-    <article className="animar-entrada rounded-2xl border border-linha bg-branco transition-shadow hover:shadow-[0_6px_24px_-12px_rgba(78,18,38,0.25)]" aria-label={`Publicação de ${dados.autora.nome}`}>
+    <article className="animar-entrada rounded-2xl border border-linha bg-branco transition-shadow hover:shadow-[0_6px_24px_-12px_rgba(94,26,50,0.25)]" aria-label={`Publicação de ${dados.autora.nome}`}>
       {enviando && <EnviarPublicacao referencia={`u${dados.id}`} previa={{ autor: dados.autora.nome, texto: dados.texto }} aoFechar={() => setEnviando(false)} />}
       <div className="p-5 sm:p-6">
         <header className="flex items-start gap-3">

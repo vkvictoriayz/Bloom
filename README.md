@@ -35,10 +35,9 @@ importa arquivos de models, controllers ou services da API.
 2. Na raiz do projeto:
    ```bash
    npm install
-   copy .env.example .env      # Linux/Mac: cp .env.example .env
    ```
-   Preencha no `.env` pelo menos `DB_PASSWORD` e `JWT_SECRET`. As demais
-   variáveis estão explicadas no `.env.example`.
+   Toda a configuração fica em um único arquivo, o `.env` na raiz. Preencha pelo
+   menos `DB_PASSWORD` e `JWT_SECRET`; as demais variáveis são opcionais.
 3. Dois terminais, ambos na raiz:
    ```bash
    npm run server    # API   -> http://localhost:3001  (teste: /api/saude)

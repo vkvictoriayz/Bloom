@@ -12,6 +12,7 @@ import { AreaTexto, Aviso, Selecao } from '../ui/Campo'
 import { editarPublicacaoEmpresa, excluirPublicacaoEmpresa, fotoEmpresa } from '../../services/empresa'
 import { LIMITE_PUBLICACAO, TIPOS, tempoRelativo } from '../../services/comunidade'
 import { cn } from '../../lib/cn'
+import { comNegrito } from '../../lib/negrito'
 
 const rotuloTipo = (id) => TIPOS.find((t) => t.id === id)?.rotulo ?? id
 
@@ -22,7 +23,7 @@ function TextoComTags({ texto }) {
         {parte}
       </strong>
     ) : (
-      parte
+      comNegrito(parte, i)
     )
   )
 }
@@ -94,7 +95,7 @@ function PublicacaoEmpresa({ publicacao, gerenciavel = false, aoMudar, aoExcluir
   )
 
   return (
-    <article className="animar-entrada overflow-hidden rounded-2xl border border-linha bg-branco transition-shadow hover:shadow-[0_6px_24px_-12px_rgba(78,18,38,0.25)]" aria-label={`Publicação de ${autor.nome}`}>
+    <article className="animar-entrada overflow-hidden rounded-2xl border border-linha bg-branco transition-shadow hover:shadow-[0_6px_24px_-12px_rgba(94,26,50,0.25)]" aria-label={`Publicação de ${autor.nome}`}>
       {enviando && <EnviarPublicacao daEmpresa referencia={referencia} previa={{ autor: autor.nome, texto: dados.texto }} aoFechar={() => setEnviando(false)} />}
       {daEmpresa && dados.tipo === 'oportunidade' && <div aria-hidden="true" className="h-1 bg-gradient-to-r from-vinho via-rosa to-blush" />}
       <div className="p-5 sm:p-6">

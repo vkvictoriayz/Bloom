@@ -23,7 +23,7 @@ function PreviaJornada() {
       <Borboleta tamanho={300} className="pointer-events-none absolute -right-16 -bottom-20 rotate-[-12deg] text-blush" />
       <figure className="relative w-full max-w-sm">
         <figcaption className="mb-3 text-xs font-bold tracking-[0.14em] text-suave uppercase">Exemplo de acompanhamento</figcaption>
-        <div className="rounded-2xl border border-linha bg-branco p-5 shadow-[0_18px_40px_-28px_rgba(78,18,38,0.45)]">
+        <div className="rounded-2xl border border-linha bg-branco p-5 shadow-[0_18px_40px_-28px_rgba(94,26,50,0.45)]">
           <div className="flex items-center gap-3">
             <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-blush text-vinho" aria-hidden="true">
               <Icone nome="maleta" tamanho={20} />

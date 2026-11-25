@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
 import { IconeAvatar, SeletorIcone } from '../../components/IconePerfil'
-import TituloPagina from '../../components/candidata/TituloPagina'
 import { CapaComunidade, IconeComunidade, PilhaAvatares } from '../../components/comunidade/ElementosComunidade'
 import Botao from '../../components/ui/Botao'
 import { AreaTexto, Aviso, Campo, Entrada } from '../../components/ui/Campo'
@@ -59,7 +58,7 @@ function NovaComunidade({ aoCancelar }) {
               publico="comunidade"
               forma="quadrado"
               valor={icone}
-              rotuloBotao="Usar este ícone"
+              rotuloBotao="Usar este símbolo"
               aoEscolher={(valor) => {
                 setIcone(valor)
                 setEscolhendoIcone(false)
@@ -177,20 +176,30 @@ function Comunidades() {
   }
 
   const lista = estado.lista ?? []
+  const participando = lista.filter((c) => c.participando).length
+
+  useEffect(() => {
+    document.title = 'Comunidades · BLOOM'
+  }, [])
 
   return (
     <>
-      <TituloPagina
-        titulo="Comunidades"
-        descricao="Grupos por tema para trocar dicas, tirar dúvidas e se apoiar com outras mulheres da tecnologia."
-        acoes={
-          !criando && (
-            <Botao onClick={() => setCriando(true)}>
-              <Icone nome="mais" tamanho={16} /> Criar comunidade
-            </Botao>
-          )
-        }
-      />
+      <header className="mb-6 flex flex-col gap-4 border-b border-linha pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-display text-4xl text-tinta sm:text-5xl">Comunidades</h1>
+          <p className="mt-2 max-w-xl text-tinta-2">Grupos por tema para trocar dicas, tirar dúvidas e se apoiar com outras mulheres da tecnologia.</p>
+          {estado.tipo === 'pronto' && aba === 'descobrir' && !busca && (
+            <p className="mt-3 text-sm text-suave">
+              {lista.length} {lista.length === 1 ? 'comunidade' : 'comunidades'} · você participa de {participando}
+            </p>
+          )}
+        </div>
+        {!criando && (
+          <Botao onClick={() => setCriando(true)} className="self-start rounded-full sm:self-auto">
+            <Icone nome="mais" tamanho={16} /> Criar comunidade
+          </Botao>
+        )}
+      </header>
       {criando && <NovaComunidade aoCancelar={() => setCriando(false)} />}
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -233,6 +242,22 @@ function Comunidades() {
             {lista.map((c) => (
               <CartaoComunidade key={c.id} c={c} aoParticipar={participar} ocupada={ocupada === c.id} />
             ))}
+            {!criando && aba === 'descobrir' && !busca && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setCriando(true)}
+                  className="group flex h-full min-h-72 w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-linha-forte p-6 text-center transition-colors hover:border-vinho/50"
+                >
+                  <Icone nome="mais" tamanho={22} className="text-vinho" />
+                  <span className="font-display text-xl text-tinta">Crie a sua comunidade</span>
+                  <span className="max-w-[16rem] text-sm text-suave">Reúna pessoas em torno de um tema que ainda não tem grupo na Bloom.</span>
+                  <span className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-vinho">
+                    Começar <Icone nome="seta" tamanho={14} />
+                  </span>
+                </button>
+              </li>
+            )}
           </ul>
         ) : (
           !criando && (

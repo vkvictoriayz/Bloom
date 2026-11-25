@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import Icone from "../../components/Icone";
 import Avatar from "../../components/comunidade/Avatar";
-import TituloPagina from "../../components/candidata/TituloPagina";
 import {
   CartaoTalento,
   Carregando,
@@ -103,20 +102,22 @@ function ExplorarTalentos() {
     setParametros(p, { replace: true });
   }
 
+  useEffect(() => {
+    document.title = "Explorar talentos · BLOOM";
+  }, []);
+
   return (
     <>
-      <TituloPagina
-        titulo="Explorar talentos"
-        descricao="Conheça profissionais da comunidade Bloom pelo que elas compartilham publicamente. Veja todas ou organizadas por área."
-      />
-
+      <header className="border-b border-linha pb-6">
+        <h1 className="font-display text-4xl text-tinta sm:text-5xl">Explorar talentos</h1>
+        <p className="mt-2 max-w-xl text-tinta-2">Conheça profissionais da comunidade Bloom pelo que elas compartilham publicamente.</p>
       <form
         role="search"
         onSubmit={(e) => {
           e.preventDefault();
           definir("q", termo.trim());
         }}
-        className="flex flex-col gap-3 sm:flex-row"
+        className="mt-6 flex flex-col gap-3 sm:flex-row"
       >
         <div className="relative flex-1">
           <Icone
@@ -148,6 +149,7 @@ function ExplorarTalentos() {
           Buscar
         </Botao>
       </form>
+      </header>
 
       <div
         role="tablist"

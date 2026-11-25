@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom'
 import Icone from './Icone'
 import Logo, { Borboleta } from './Logo'
 import CenaAcesso from './borboleta/CenaAcesso'
+import { CENA_ESCURA, FUNDO_CENA } from './borboleta/cenas'
 import { IlustracaoCodigo, IlustracaoConexoes, IlustracaoEmpresa } from './ilustracoes/Ilustracoes'
 import { cn } from '../lib/cn'
 
@@ -56,7 +57,7 @@ function SeletorPublico({ troca }) {
 
 function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, visual = {} }) {
   const { ilustracao, imagem, frase, itens, cena } = { ...VISUAL_PADRAO, ...visual }
-  const escura = cena === 'padrao'
+  const escura = CENA_ESCURA.has(cena)
   const Ilustracao = ILUSTRACOES[ilustracao] ?? IlustracaoCodigo
   const { pathname } = useLocation()
   const troca = TROCAS[pathname]
@@ -113,10 +114,8 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
             {cena ? (
               <div className="sticky top-6 flex h-[min(620px,calc(100dvh-3rem))] min-h-[520px] flex-col justify-end overflow-hidden rounded-xl">
                 <CenaAcesso variante={cena} className="absolute inset-0" />
-                <div className={cn('relative m-4 rounded-2xl p-6 backdrop-blur-sm', escura ? 'bg-white/10 text-white ring-1 ring-white/15' : 'bg-white/75 ring-1 ring-linha')}>
-                  <p className={cn('max-w-sm font-display text-3xl leading-tight italic', escura ? 'text-white' : 'text-vinho-escuro')} style={{ animation: 'entrar .8s .4s cubic-bezier(.22,1,.36,1) both' }}>
-                    {frase}
-                  </p>
+                <div className="relative px-8 pt-20 pb-9" style={{ backgroundImage: `linear-gradient(to top, ${FUNDO_CENA[cena] ?? '#fbf7f4'} 45%, transparent)` }}>
+                  <p className={cn('max-w-sm font-display text-3xl leading-tight', escura ? 'text-white' : 'text-vinho-escuro')}>{frase}</p>
                 </div>
               </div>
             ) : (

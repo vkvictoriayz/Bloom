@@ -1,13 +1,9 @@
-const BLOOM = ["borboleta", "contorno", "voo", "flor", "petala", "botao", "monograma"];
-const TECNOLOGIA = ["codigo", "terminal", "dados", "nuvem", "chip", "robo", "celular", "escudo"];
-const CARREIRA = ["foguete", "lampada", "grafico", "trofeu", "livro", "estrela", "paleta", "globo"];
-const REDE = ["rede", "grupo", "broto", "coracao"];
-const EMPRESA = ["predio", "maleta"];
+const BLOOM = ["borboleta", "contorno", "voo", "duas", "padrao", "flor", "petala", "botao", "ramo", "monograma"];
 
 export const ICONES = {
-  usuaria: [...BLOOM, ...TECNOLOGIA, ...CARREIRA, ...REDE],
-  empresa: [...BLOOM, ...EMPRESA, ...TECNOLOGIA, ...CARREIRA, "rede", "broto"],
-  comunidade: [...BLOOM, ...TECNOLOGIA, ...CARREIRA, ...REDE],
+  usuaria: BLOOM,
+  empresa: BLOOM,
+  comunidade: BLOOM,
 };
 export const CORES = ["vinho", "ameixa", "rosa", "blush", "musgo", "mel"];
 
