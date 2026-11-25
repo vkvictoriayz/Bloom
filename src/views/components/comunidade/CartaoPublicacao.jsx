@@ -7,6 +7,7 @@ import { Aviso, AreaTexto, Selecao } from '../ui/Campo'
 import { AnexoImagem, ImagemPublicacao } from './AnexoImagem'
 import Avatar from './Avatar'
 import { FormularioDenuncia } from '../conta/Denunciar'
+import EnviarPublicacao from '../mensagens/EnviarPublicacao'
 import { ICONE_TIPO } from './tipos'
 import {
   comentar,
@@ -266,8 +267,11 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar, acoesExtras }) {
   const [aviso, setAviso] = useState('')
   const [confirmando, setConfirmando] = useState(false)
   const [denunciando, setDenunciando] = useState(null)
+  const [enviando, setEnviando] = useState(false)
+  const [pulso, setPulso] = useState(0)
 
   async function aoCurtir() {
+    setPulso((v) => v + 1)
     setErro('')
     try {
       const r = await curtir(dados.id)
@@ -353,18 +357,8 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar, acoesExtras }) {
     aoAtualizar?.(nova)
   }
 
-  async function compartilhar() {
-    const texto = `${dados.autora.nome} na Bloom:\n\n${dados.texto}`
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Publicação na Bloom', text: texto })
-        return
-      }
-      await navigator.clipboard.writeText(texto)
-      setAviso('Texto copiado para compartilhar.')
-    } catch (e) {
-      if (e?.name !== 'AbortError') setAviso('Não foi possível compartilhar. Copie o texto manualmente.')
-    }
+  function compartilhar() {
+    setEnviando(true)
   }
 
   async function copiar() {
@@ -386,7 +380,8 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar, acoesExtras }) {
     'inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-tinta-2 transition-colors hover:bg-blush hover:text-vinho'
 
   return (
-    <article className="rounded-2xl border border-linha bg-branco" aria-label={`Publicação de ${dados.autora.nome}`}>
+    <article className="animar-entrada rounded-2xl border border-linha bg-branco transition-shadow hover:shadow-[0_6px_24px_-12px_rgba(78,18,38,0.25)]" aria-label={`Publicação de ${dados.autora.nome}`}>
+      {enviando && <EnviarPublicacao referencia={`u${dados.id}`} previa={{ autor: dados.autora.nome, texto: dados.texto }} aoFechar={() => setEnviando(false)} />}
       <div className="p-5 sm:p-6">
         <header className="flex items-start gap-3">
           <Link to={perfilDa(dados.autora.id)} className="shrink-0 rounded-full" aria-label={`Ver o perfil de ${dados.autora.nome}`}>
@@ -448,7 +443,9 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar, acoesExtras }) {
             aria-label={`${dados.curtiu ? 'Descurtir' : 'Curtir'} (${dados.curtidas} curtidas)`}
             className={cn(acao, dados.curtiu && 'text-vinho')}
           >
-            <Icone nome="coracao" tamanho={19} preenchido={dados.curtiu} />
+            <span key={pulso} className={pulso ? 'inline-flex animate-[pulsar_.45s_ease-out]' : 'inline-flex'}>
+              <Icone nome="coracao" tamanho={19} preenchido={dados.curtiu} />
+            </span>
             <span className="tabular-nums">{dados.curtidas}</span>
           </button>
           <button
@@ -461,8 +458,8 @@ function CartaoPublicacao({ publicacao, aoExcluir, aoAtualizar, acoesExtras }) {
             <Icone nome="mensagem" tamanho={19} />
             <span className="tabular-nums">{dados.comentarios}</span>
           </button>
-          <button type="button" onClick={compartilhar} aria-label="Compartilhar publicação" className={acao}>
-            <Icone nome="compartilhar" tamanho={18} />
+          <button type="button" onClick={compartilhar} aria-label="Enviar publicação pela Bloom" title="Enviar pela Bloom" className={acao}>
+            <Icone nome="compartilhar" tamanho={18} /> <span className="max-sm:sr-only">Enviar</span>
           </button>
           {aviso && (
             <span role="status" className="ml-auto text-xs font-semibold text-sucesso">

@@ -1,5 +1,4 @@
 import Avatar from '../comunidade/Avatar'
-import SeloPremium from '../conta/SeloPremium'
 import { Aviso } from '../ui/Campo'
 import Esqueleto from '../ui/Esqueleto'
 import { cn } from '../../lib/cn'
@@ -35,7 +34,6 @@ export function CartaoTalento({ talento, acao }) {
         <div className="min-w-0">
           <h3 className="flex items-center gap-1.5 font-bold text-tinta">
             <span className="truncate">{talento.nome}</span>
-            {talento.premium && <SeloPremium compacto />}
           </h3>
           <p className="truncate text-sm text-suave">{talento.area || 'Área não informada'}</p>
         </div>

@@ -202,7 +202,7 @@ function ExplorarTalentos() {
               {visao === "areas" ? (
                 <PorArea talentos={r.dados.talentos} />
               ) : (
-                <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-4">
+                <ul className="animar-lista grid grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-4">
                   {r.dados.talentos.map((t) => (
                     <li key={t.id}>
                       <CartaoTalento

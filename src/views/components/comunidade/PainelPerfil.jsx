@@ -3,7 +3,6 @@ import { useState } from 'react'
 import Botao from '../ui/Botao'
 import { Aviso, Campo, Entrada, AreaTexto } from '../ui/Campo'
 import Avatar from './Avatar'
-import SeloPremium from '../conta/SeloPremium'
 import { salvarMeuPerfil } from '../../services/comunidade'
 
 function PainelPerfil({ nome, perfil, numeros, aoSalvar }) {
@@ -48,7 +47,6 @@ function PainelPerfil({ nome, perfil, numeros, aoSalvar }) {
         <div className="min-w-0">
           <h2 id="titulo-meu-perfil" className="flex items-center gap-2 font-display text-xl text-tinta">
             <span className="truncate">{nome}</span>
-            {perfil.premium && <SeloPremium compacto />}
           </h2>
           <p className="truncate text-sm text-suave">{perfil.area || 'Adicione sua área profissional'}</p>
         </div>

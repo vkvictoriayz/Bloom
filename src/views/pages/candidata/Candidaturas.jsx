@@ -22,6 +22,28 @@ const FILTROS = [
   { id: 'encerrada', rotulo: 'Encerradas' },
 ]
 
+const PASSOS = ['Recebida', 'Em análise', 'Em entrevista', 'Aprovada']
+const COR = { Recebida: '#b03a57', 'Em análise': '#c88f2e', 'Em entrevista': '#7b55b0', Aprovada: '#3f8a5a', Reprovada: '#928086', Encerrada: '#928086' }
+
+function Trilha({ status }) {
+  if (status === 'Reprovada' || status === 'Encerrada') {
+    return <span className="text-xs text-suave">{status === 'Reprovada' ? 'Processo encerrado pela empresa' : 'A vaga foi encerrada'}</span>
+  }
+  const atual = Math.max(0, PASSOS.indexOf(status ?? 'Recebida'))
+  return (
+    <span className="flex items-center gap-2">
+      <span className="flex items-center gap-1" aria-hidden="true">
+        {PASSOS.map((p, i) => (
+          <span key={p} className="h-1.5 w-7 rounded-full transition-colors" style={{ background: i <= atual ? COR[status ?? 'Recebida'] : 'var(--color-papel-2)' }} />
+        ))}
+      </span>
+      <span className="text-xs text-suave">
+        Etapa {atual + 1} de {PASSOS.length}
+      </span>
+    </span>
+  )
+}
+
 function Candidaturas() {
   const [filtro, setFiltro] = useState('todas')
   const { lista: candidaturas, carregando, erro } = useCandidaturasEstado()
@@ -86,7 +108,7 @@ function Candidaturas() {
               Nenhuma candidatura com este status.
             </p>
           ) : (
-            <ul className="overflow-hidden rounded-xl border border-linha bg-branco">
+            <ul className="animar-lista overflow-hidden rounded-2xl border border-linha bg-branco">
               {filtradas.map((c) => {
                 const info = situacao(c)
                 const empresa = c.dadosEmpresa
@@ -94,12 +116,16 @@ function Candidaturas() {
                   <li key={c.id} className="border-b border-linha last:border-b-0">
                     <Link
                       to={`/candidata/candidaturas/${encodeURIComponent(c.id)}`}
-                      className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 p-5 transition-colors hover:bg-papel sm:grid-cols-[auto_1fr_auto_auto]"
+                      className="relative grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 p-5 transition-colors hover:bg-papel sm:grid-cols-[auto_1fr_auto_auto]"
                     >
+                      <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1" style={{ background: COR[c.status] ?? COR.Recebida }} />
                       <MarcaEmpresa empresa={empresa} tamanho="md" />
                       <span className="min-w-0">
                         <span className="block truncate font-semibold text-tinta">{c.cargo}</span>
                         <span className="block truncate text-sm text-suave">{empresa?.nome ?? c.empresa}</span>
+                        <span className="mt-2 block">
+                          <Trilha status={c.status} />
+                        </span>
                       </span>
                       <span className="col-start-2 text-sm text-tinta-2 sm:col-start-auto">Enviada em {c.data}</span>
                       <span className="col-start-2 flex items-center gap-2 sm:col-start-auto">

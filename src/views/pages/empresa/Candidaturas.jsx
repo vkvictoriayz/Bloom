@@ -174,7 +174,7 @@ function Candidaturas() {
         ) : porEtapa ? (
           <QuadroEtapas candidaturas={lista} />
         ) : (
-          <ul className="cartao divide-y divide-linha overflow-hidden">
+          <ul className="animar-lista cartao divide-y divide-linha overflow-hidden">
             {lista.map((c) => {
               const visual = VISUAL_CANDIDATURA[c.status] ?? { variante: 'neutro', rotulo: c.status }
               return (

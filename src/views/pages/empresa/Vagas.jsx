@@ -125,7 +125,7 @@ function Vagas() {
             </VazioAcoes>
           </Vazio>
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul className="animar-lista flex flex-col gap-3">
             {vagas.map((v) => (
               <li key={v.id} className="cartao flex flex-col gap-4 p-5 md:flex-row md:items-center">
                 <span className={cn('hidden size-12 shrink-0 place-items-center rounded-2xl md:grid', TOM[v.status] ?? 'bg-blush text-vinho')} aria-hidden="true">

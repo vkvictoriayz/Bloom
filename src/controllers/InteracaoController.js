@@ -142,9 +142,10 @@ async function minhaConversa(req) {
   return id ? Conversa.findOne({ where: { id, ...doTipo(req) } }) : null;
 }
 
-function mensagemJson(m, tipo, imagem = null) {
+function mensagemJson(m, tipo, imagem = null, publicacao = null) {
   return {
     id: m.id,
+    publicacao,
     texto: m.apagadaEm ? "" : m.texto,
     apagada: Boolean(m.apagadaEm),
     imagem: m.apagadaEm ? null : imagem,
@@ -166,10 +167,14 @@ export const lerConversa = comTratamento(async (req, res) => {
   const onde = depois ? { conversaId: conversa.id, id: { [Op.gt]: depois } } : { conversaId: conversa.id };
   const mensagens = await Mensagem.findAll({ where: onde, order: [["enviadaEm", "ASC"], ["id", "ASC"]], limit: 500 });
   const ultimaLida = await Mensagem.findOne({ where: { conversaId: conversa.id, autorTipo: tipo, lidaEm: { [Op.ne]: null } }, order: [["id", "DESC"]] });
-  const [detalhes, fotos] = await Promise.all([detalhesConversas([conversa], tipo), Chat.imagensDe("empresa", mensagens.map((m) => m.id))]);
+  const [detalhes, fotos, compartilhadas] = await Promise.all([
+    detalhesConversas([conversa], tipo),
+    Chat.imagensDe("empresa", mensagens.map((m) => m.id)),
+    Chat.publicacoesCompartilhadas(mensagens.map((m) => m.publicacaoRef)),
+  ]);
   return res.json({
     conversa: { id: conversa.id, ...detalhes.get(conversa.id) },
-    mensagens: mensagens.map((m) => mensagemJson(m, tipo, fotos.get(m.id))),
+    mensagens: mensagens.map((m) => mensagemJson(m, tipo, fotos.get(m.id), Chat.cartaoPublicacao(m, compartilhadas))),
     temMais: false,
     lidasAte: ultimaLida?.id ?? null,
   });
@@ -180,10 +185,12 @@ export const enviarMensagem = comTratamento(async (req, res) => {
   if (!conversa) return erro(res, 404, "Conversa não encontrada.");
   const lida = Chat.lerMensagem(req.body, LIMITE_MENSAGEM);
   if (lida.falha) return erro(res, 400, ...lida.falha);
+  const compartilhada = lida.publicacao ? await Chat.publicacoesCompartilhadas([lida.publicacao]) : new Map();
+  if (lida.publicacao && !compartilhada.has(lida.publicacao)) return erro(res, 404, "Publicação não encontrada.");
 
   const tipo = req.auth.tipo;
   const [mensagem, imagem] = await sequelize.transaction(async (transaction) => {
-    const m = await Mensagem.create({ conversaId: conversa.id, autorTipo: tipo, texto: lida.texto }, { transaction });
+    const m = await Mensagem.create({ conversaId: conversa.id, autorTipo: tipo, texto: lida.texto, publicacaoRef: lida.publicacao }, { transaction });
     return [m, await Chat.gravarImagem("empresa", m.id, lida.imagem, transaction)];
   });
   await conversa.update({ atualizadaEm: new Date() });
@@ -199,7 +206,7 @@ export const enviarMensagem = comTratamento(async (req, res) => {
     chave: `conversa-${conversa.id}`,
   });
 
-  return res.status(201).json({ mensagem: mensagemJson(mensagem, tipo, imagem) });
+  return res.status(201).json({ mensagem: mensagemJson(mensagem, tipo, imagem, Chat.cartaoPublicacao(mensagem, compartilhada)) });
 });
 
 export const apagarMensagem = comTratamento(async (req, res) => {

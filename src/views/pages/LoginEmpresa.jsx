@@ -45,7 +45,7 @@ function LoginEmpresa() {
       subtitulo="Entre na sua conta empresarial para continuar."
       aoEnviar={handleSubmit}
       visual={{
-        ilustracao: 'empresa',
+        cena: 'pouso',
         frase: 'Talentos da tecnologia, perto da sua empresa.',
       }}
       rodape={

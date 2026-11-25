@@ -158,6 +158,16 @@ export const feed = comTratamento(async (req, res) => {
   return res.json({ publicacoes, temMais });
 });
 
+export const verPublicacao = comTratamento(async (req, res) => {
+  const meuId = eu(req);
+  const id = idParam(req.params.id);
+  const p = id && (await Publicacao.findByPk(id));
+  if (!p || !(await integranteVisivel(p.usuariaId, meuId))) return erro(res, 404, "Publicação não encontrada.");
+  if (p.usuariaId !== meuId && (await contasSuspensas("usuaria")).has(p.usuariaId)) return erro(res, 404, "Publicação não encontrada.");
+  const [publicacao] = await montarPublicacoes([p], meuId);
+  return res.json({ publicacao });
+});
+
 const HASHTAG = /(?:^|[^\p{L}\p{N}_&/])#([\p{L}\p{N}_]{2,40})/gu;
 const JANELA_EM_ALTA = 14 * 24 * 60 * 60 * 1000;
 

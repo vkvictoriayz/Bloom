@@ -100,7 +100,7 @@ function Painel() {
   const novasNoPeriodo = fotos.reduce((a, h) => a + (h.novasUsuarias ?? 0) + (h.novasEmpresas ?? 0), 0)
   const novasAntes = fotosAntes.reduce((a, h) => a + (h.novasUsuarias ?? 0) + (h.novasEmpresas ?? 0), 0)
   const cobreTudo = d.historico[0] && d.historico[0].data <= inicioPeriodo
-  const premiumTotal = g.contas.usuarias.premium + g.contas.empresas.premium
+  const premiumTotal = g.contas.empresas.premium
 
   const pendencias = [
     d.pendencias.denuncias > 0 && { texto: `${d.pendencias.denuncias} ${d.pendencias.denuncias === 1 ? 'denúncia aberta' : 'denúncias abertas'}`, para: '/admin/denuncias', icone: 'info' },
@@ -174,9 +174,9 @@ function Painel() {
         />
         <Indicador
           icone="coroa"
-          rotulo="Contas Premium"
+          rotulo="Empresas Premium"
           valor={premiumTotal}
-          detalhe={`${g.contas.usuarias.premium} ${g.contas.usuarias.premium === 1 ? 'candidata' : 'candidatas'} · ${g.contas.empresas.premium} ${g.contas.empresas.premium === 1 ? 'empresa' : 'empresas'}`}
+          detalhe={`de ${t.empresas} ${t.empresas === 1 ? 'empresa' : 'empresas'} na Bloom`}
           para="/admin/pagamentos"
         />
         <Indicador
@@ -204,12 +204,11 @@ function Painel() {
             <EstadoPoucosDados>O painel guarda uma foto dos totais uma vez por dia. A linha aparece quando houver pelo menos dois dias registrados neste período.</EstadoPoucosDados>
           )}
         </Cartao>
-        <Cartao titulo="Tipos de conta" descricao="Contas gratuitas e Premium, por perfil.">
+        <Cartao titulo="Tipos de conta" descricao="Candidatas e empresas, com as empresas Premium em destaque.">
           <Rosca
             rotuloCentro="contas"
             partes={[
-              { rotulo: 'Candidatas', total: g.contas.usuarias.gratuitas, cor: CORES[0] },
-              { rotulo: 'Candidatas Premium', total: g.contas.usuarias.premium, cor: CORES[3] },
+              { rotulo: 'Candidatas', total: g.contas.usuarias.gratuitas + g.contas.usuarias.premium, cor: CORES[0] },
               { rotulo: 'Empresas', total: g.contas.empresas.gratuitas, cor: CORES[1] },
               { rotulo: 'Empresas Premium', total: g.contas.empresas.premium, cor: CORES[2] },
             ]}

@@ -14,6 +14,7 @@ router.post("/publicacoes", corpoComImagem, C.publicar);
 router.put("/publicacoes/:id", corpoComImagem, C.editar);
 router.delete("/publicacoes/:id", C.excluir);
 router.post("/publicacoes/:id/curtir", C.curtir);
+router.get("/publicacoes/:id", C.verPublicacao);
 router.get("/publicacoes/:id/comentarios", C.listarComentarios);
 router.post("/publicacoes/:id/comentarios", express.json({ limit: "20kb" }), C.comentar);
 router.delete("/comentarios/:id", C.excluirComentario);

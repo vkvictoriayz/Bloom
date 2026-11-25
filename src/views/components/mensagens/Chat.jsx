@@ -38,7 +38,51 @@ function rotuloDia(d) {
 
 const mesmoDia = (a, b) => new Date(a).toDateString() === new Date(b).toDateString()
 
-function Balao({ m, primeira, ultima, visto, podeApagar, aoApagar }) {
+function linkDaPublicacao(p, base) {
+  const naEmpresa = base.startsWith('/empresa')
+  if (p.origem === 'empresa') return naEmpresa ? null : `/candidata/empresas/${p.autor.id}`
+  return naEmpresa ? `/empresa/talentos/${p.autor.id}` : `/candidata/publicacoes/${p.id}`
+}
+
+function CartaoCompartilhado({ p, minha, base }) {
+  if (p.indisponivel) {
+    return (
+      <span className={cn('mb-1 flex items-center gap-2 rounded-xl border border-dashed px-3 py-2 text-xs italic', minha ? 'border-white/40 text-white/80' : 'border-linha-forte text-suave')}>
+        <Icone nome="info" tamanho={13} /> Esta publicação não está mais disponível.
+      </span>
+    )
+  }
+  const para = linkDaPublicacao(p, base)
+  const corpo = (
+    <>
+      <span className="flex items-center gap-2 px-3 pt-2.5">
+        <Avatar nome={p.autor.nome} foto={p.autor.foto} tamanho="sm" className={cn('size-7 text-[10px]', p.origem === 'empresa' && 'rounded-lg')} />
+        <span className="min-w-0">
+          <span className="block truncate text-xs font-bold text-tinta">{p.autor.nome}</span>
+          <span className="block text-[10px] text-suave">Publicação na Bloom</span>
+        </span>
+      </span>
+      {p.texto && <span className="line-clamp-4 px-3 pt-2 text-[13px] leading-snug whitespace-pre-line text-tinta-2">{p.texto}</span>}
+      {p.imagem && (
+        <img src={urlImagem(p.imagem.url)} alt="" className="mt-2 max-h-40 w-full object-cover" loading="lazy" />
+      )}
+      <span className="mt-2 flex items-center justify-between gap-2 border-t border-linha px-3 py-1.5 text-[11px] font-semibold text-vinho">
+        {para ? (p.origem === 'empresa' ? 'Ver empresa' : base.startsWith('/empresa') ? 'Ver perfil da autora' : 'Abrir publicação') : 'Publicação da empresa'}
+        {para && <Icone nome="seta" tamanho={12} />}
+      </span>
+    </>
+  )
+  const estilo = 'mb-1.5 block w-64 max-w-full overflow-hidden rounded-xl bg-branco text-left ring-1 ring-linha transition-transform hover:-translate-y-0.5'
+  return para ? (
+    <Link to={para} className={estilo}>
+      {corpo}
+    </Link>
+  ) : (
+    <span className={estilo}>{corpo}</span>
+  )
+}
+
+function Balao({ m, primeira, ultima, visto, podeApagar, aoApagar, base = '' }) {
   const [confirmando, setConfirmando] = useState(false)
   return (
     <li className={cn('group flex flex-col', m.minha ? 'items-end' : 'items-start', primeira ? 'mt-3' : 'mt-0.5')}>
@@ -72,6 +116,7 @@ function Balao({ m, primeira, ultima, visto, podeApagar, aoApagar }) {
                   />
                 </a>
               )}
+              {m.publicacao && <CartaoCompartilhado p={m.publicacao} minha={m.minha} base={base} />}
               {m.texto && <p className="break-words whitespace-pre-line">{m.texto}</p>}
             </>
           )}
@@ -455,6 +500,7 @@ export function Chat({ tipo, id, base, aoMudar, className }) {
                     ultima={ultima}
                     visto={m.id === ultimaMinha?.id && m.lida}
                     podeApagar={m.minha}
+                    base={base}
                     aoApagar={apagar}
                   />
                 </FragmentoDia>

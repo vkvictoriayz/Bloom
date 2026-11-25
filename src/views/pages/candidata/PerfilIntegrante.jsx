@@ -4,7 +4,6 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import Icone from '../../components/Icone'
 import Capa from '../../components/candidata/Capa'
 import Avatar from '../../components/comunidade/Avatar'
-import SeloPremium from '../../components/conta/SeloPremium'
 import BotaoSeguir from '../../components/comunidade/BotaoSeguir'
 import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
 import ProjetosIntegrantes from '../../components/comunidade/ProjetosIntegrantes'
@@ -112,7 +111,6 @@ function ConteudoPerfil({ id }) {
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <h1 className="font-display text-4xl leading-tight text-tinta">{perfil.nome}</h1>
-            {perfil.premium && <SeloPremium />}
           </div>
           <p className={perfil.area ? 'mt-1 text-lg text-vinho' : 'mt-1 text-suave italic'}>{perfil.area || 'Área não informada'}</p>
           {dados.segueVoce && <p className="mt-2 inline-flex rounded-full bg-papel-2 px-2.5 py-0.5 text-xs font-semibold text-tinta-2">Segue você</p>}

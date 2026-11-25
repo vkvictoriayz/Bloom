@@ -5,7 +5,6 @@ import { destinoAposLogin } from "../services/destino";
 import { formatarCPF, formatarTelefone, validarCPF } from "../utils/documentos";
 import TelaAcesso, { GrupoCampos, LinkAcesso } from "../components/TelaAcesso";
 import CampoSenha from "../components/CampoSenha";
-import imgAcesso from "../assets/ilustracoes/acesso-candidata.webp";
 import Botao from "../components/ui/Botao";
 import { Aviso, Campo, Entrada } from "../components/ui/Campo";
 
@@ -69,7 +68,7 @@ function Cadastro() {
       titulo="Crie sua conta"
       subtitulo="Seu próximo capítulo começa aqui."
       visual={{
-        imagem: imgAcesso,
+        cena: 'florescer',
         frase: "Seu talento merece espaço para florescer.",
       }}
       aoEnviar={cadastrar}

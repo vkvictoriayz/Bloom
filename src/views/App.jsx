@@ -12,6 +12,7 @@ import ContaAdmin from './pages/admin/MinhaConta'
 import { obterSessao } from './services/auth'
 import LayoutCandidata from './components/candidata/LayoutCandidata'
 
+import NaoEncontrada from './pages/NaoEncontrada'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Cadastro from './pages/Cadastro'
@@ -37,13 +38,13 @@ import FormularioProjeto from './pages/candidata/FormularioProjeto'
 import Comunidades from './pages/candidata/Comunidades'
 import Conexoes from './pages/candidata/Conexoes'
 import PerfilIntegrante from './pages/candidata/PerfilIntegrante'
+import PublicacaoCandidata from './pages/candidata/Publicacao'
 import DetalheComunidade from './pages/candidata/DetalheComunidade'
 import Mensagens from './pages/candidata/Mensagens'
 import Conversa from './pages/candidata/Conversa'
 import Notificacoes from './pages/candidata/Notificacoes'
 import Configuracoes from './pages/candidata/Configuracoes'
 import EmpresaPerfil from './pages/candidata/EmpresaPerfil'
-import PremiumCandidata from './pages/candidata/Premium'
 import PremiumEmpresa from './pages/empresa/Premium'
 import DashboardEmpresa from './pages/empresa/Dashboard'
 
@@ -123,11 +124,12 @@ function App() {
           <Route path="/candidata/mensagens/:id" element={<Conversa />} />
           <Route path="/candidata/mensagens/candidatas/:id" element={<Conversa tipo="candidatas" base="/candidata/mensagens" />} />
           <Route path="/candidata/pessoas/:id" element={<PerfilIntegrante />} />
+          <Route path="/candidata/publicacoes/:id" element={<PublicacaoCandidata />} />
           <Route path="/candidata/pessoas/:id/conexoes" element={<Conexoes />} />
           <Route path="/candidata/notificacoes" element={<Notificacoes />} />
           <Route path="/candidata/configuracoes" element={<Configuracoes />} />
           <Route path="/candidata/empresas/:id" element={<EmpresaPerfil />} />
-          <Route path="/candidata/premium" element={<PremiumCandidata />} />
+          <Route path="/candidata/premium" element={<Navigate to="/candidata/feed" replace />} />
           <Route path="/vagas/:id" element={<DetalhesVaga />} />
           <Route path="/vagas/:id/candidatar" element={<Candidatar />} />
           <Route path="/comunidades/:id" element={<DetalheComunidade />} />
@@ -198,7 +200,7 @@ function App() {
           <Route path="/admin/administradores" element={<Administradores />} />
           <Route path="/admin/conta" element={<ContaAdmin />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NaoEncontrada />} />
       </Routes>
     </BrowserRouter>
   )

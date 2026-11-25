@@ -4,7 +4,6 @@ import { Link, useParams } from 'react-router-dom'
 import Capa from '../../components/candidata/Capa'
 import TituloPagina from '../../components/candidata/TituloPagina'
 import Avatar from '../../components/comunidade/Avatar'
-import SeloPremium from '../../components/conta/SeloPremium'
 import { ICONE_TIPO } from '../../components/comunidade/tipos'
 import Icone from '../../components/Icone'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
@@ -113,7 +112,6 @@ function Talento() {
             <Avatar nome={talento.nome} foto={talento.foto} tamanho="xl" className="relative z-10 -mt-14 ring-4 ring-branco" />
             <h2 className="mt-4 flex flex-wrap items-center gap-2 font-display text-2xl text-tinta">
               {talento.nome}
-              {talento.premium && <SeloPremium />}
             </h2>
             <p className="text-vinho">{talento.area || 'Área não informada'}</p>
             <p className="mt-4 text-sm leading-relaxed text-tinta-2">{talento.bio || 'Sem apresentação publicada.'}</p>

@@ -13,7 +13,7 @@ const FORMAS = {
   circulo: 'rounded-full',
 }
 
-function CabecalhoPagina({ rotulo, titulo, descricao, foto, posicaoFoto, tema = 'claro', forma = 'arco', lado = 'direita', variante, children, rodape }) {
+function CabecalhoPagina({ rotulo, titulo, descricao, foto, visual, posicaoFoto, tema = 'claro', forma = 'arco', lado = 'direita', variante, children, rodape }) {
   if (variante === 'retangular') {
     return (
       <section className="border-b border-linha bg-papel text-tinta">
@@ -27,7 +27,7 @@ function CabecalhoPagina({ rotulo, titulo, descricao, foto, posicaoFoto, tema = 
             </div>
             <div className={cn('lg:col-span-6', lado === 'esquerda' && 'lg:order-1')}>
               <div className="aspect-[16/9] w-full overflow-hidden sm:aspect-[2/1] lg:aspect-[16/9]">
-                <Foto foto={foto} prioridade sizes="(min-width: 1024px) 50vw, 100vw" posicao={posicaoFoto} />
+                {visual ?? <Foto foto={foto} prioridade sizes="(min-width: 1024px) 50vw, 100vw" posicao={posicaoFoto} />}
               </div>
             </div>
           </div>

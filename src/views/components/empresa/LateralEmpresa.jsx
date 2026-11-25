@@ -124,7 +124,6 @@ function Talentos() {
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-tinta">
                   <span className="truncate">{t.nome}</span>
-                  {t.premium && <SeloPremium compacto />}
                 </span>
                 <span className="block truncate text-xs text-suave">{t.area || 'Área não informada'}</span>
               </span>

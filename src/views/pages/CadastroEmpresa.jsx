@@ -126,7 +126,7 @@ function CadastroEmpresa() {
       subtitulo="Informe o CNPJ: buscamos os dados cadastrais para você conferir."
       aoEnviar={handleSubmit}
       visual={{
-        ilustracao: 'empresa',
+        cena: 'padrao',
         frase: 'Talentos da tecnologia, perto da sua empresa.',
       }}
       rodape={

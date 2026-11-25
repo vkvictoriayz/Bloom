@@ -5,6 +5,7 @@ import TituloPagina from '../../components/candidata/TituloPagina'
 import Capa from '../../components/candidata/Capa'
 import Avatar from '../../components/comunidade/Avatar'
 import SeloPremium from '../../components/conta/SeloPremium'
+import ContadorAnimado from '../../components/movimento/ContadorAnimado'
 import { BarraPartes, BarrasRanking } from '../../components/admin/Graficos'
 import { CORES } from '../../components/admin/cores'
 import { Carregando, ErroAoCarregar } from '../../components/empresa/Estados'
@@ -35,7 +36,7 @@ function Indicador({ icone, rotulo, valor, detalhe, para }) {
       <span className="relative grid size-10 place-items-center rounded-xl bg-blush text-vinho">
         <Icone nome={icone} tamanho={20} />
       </span>
-      <p className="relative mt-4 font-display text-3xl text-tinta tabular-nums">{valor}</p>
+      <p className="relative mt-4 font-display text-3xl text-tinta tabular-nums">{typeof valor === 'number' ? <ContadorAnimado valor={valor} /> : valor}</p>
       <p className="relative text-sm font-semibold text-tinta-2">{rotulo}</p>
       {detalhe && <p className="relative mt-0.5 text-xs text-suave">{detalhe}</p>}
     </Link>

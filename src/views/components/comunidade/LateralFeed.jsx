@@ -242,10 +242,6 @@ function LateralFeed({ nome, perfil, aoMudarConexao }) {
           Configurações
         </Link>
         {' · '}
-        <Link to="/candidata/premium" className="hover:text-vinho hover:underline">
-          Premium
-        </Link>
-        {' · '}
         <Link to="/candidata/comunidades" className="hover:text-vinho hover:underline">
           Comunidades
         </Link>

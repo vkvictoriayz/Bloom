@@ -12,13 +12,7 @@ import Esqueleto from '../components/ui/Esqueleto'
 import { Vazio, VazioAcoes, VazioDescricao, VazioTitulo } from '../components/ui/Vazio'
 import { listarEmpresasPublicas, textoVagas } from '../services/publico'
 import { cn } from '../lib/cn'
-import imgEmpresas from '../assets/ilustracoes/para-empresas.webp'
-
-const ilustracao = {
-  pequena: imgEmpresas,
-  grande: imgEmpresas,
-  alt: 'Borboleta da BLOOM cercada por comunidade, código, vagas e currículos aprovados',
-}
+import MosaicoEmpresas from '../components/MosaicoEmpresas'
 
 const detalhe = (e) => [e.areaAtuacao, e.localizacao].filter(Boolean).join(' · ') || 'Empresa na Bloom'
 
@@ -104,7 +98,7 @@ function Empresas() {
     <Pagina titulo="Empresas">
       <CabecalhoPagina
         variante="retangular"
-        foto={ilustracao}
+        visual={<MosaicoEmpresas empresas={lista} />}
         rotulo="Empresas"
         titulo={
           <>

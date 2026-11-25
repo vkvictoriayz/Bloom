@@ -5,7 +5,6 @@ import Icone from '../../components/Icone'
 import Capa from '../../components/candidata/Capa'
 import { enderecoSeguro, LINKS, periodo } from '../../components/candidata/utilPerfil'
 import Avatar from '../../components/comunidade/Avatar'
-import SeloPremium from '../../components/conta/SeloPremium'
 import CartaoPublicacao from '../../components/comunidade/CartaoPublicacao'
 import Botao from '../../components/ui/Botao'
 import { Aviso } from '../../components/ui/Campo'
@@ -84,7 +83,6 @@ function Perfil() {
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <h1 className="font-display text-4xl leading-tight text-tinta">{perfil.nome || usuario?.nome}</h1>
-            {comunidade?.perfil?.premium && <SeloPremium />}
           </div>
           <p className={perfil.cargo ? 'mt-1 text-lg text-vinho' : 'mt-1 text-suave italic'}>
             {perfil.cargo || 'Título profissional ainda não informado'}

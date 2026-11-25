@@ -46,6 +46,7 @@ export const Mensagem = sequelize.define(
     conversaId: { type: DataTypes.INTEGER, allowNull: false, field: "id_conversa", references: { model: "CONVERSA", key: "id_conversa" } },
     autorTipo: { type: TIPO_CONTA, allowNull: false, field: "autor_tipo" },
     texto: { type: DataTypes.STRING(1000), allowNull: false },
+    publicacaoRef: { type: DataTypes.STRING(20), field: "publicacao_ref" },
     enviadaEm: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW, field: "enviada_em" },
     lidaEm: { type: DataTypes.DATE, field: "lida_em" },
     apagadaEm: { type: DataTypes.DATE, field: "apagada_em" },

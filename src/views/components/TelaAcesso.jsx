@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import Icone from './Icone'
-import Logo from './Logo'
+import Logo, { Borboleta } from './Logo'
+import CenaAcesso from './borboleta/CenaAcesso'
 import { IlustracaoCodigo, IlustracaoConexoes, IlustracaoEmpresa } from './ilustracoes/Ilustracoes'
 import { cn } from '../lib/cn'
 
@@ -54,7 +55,8 @@ function SeletorPublico({ troca }) {
 }
 
 function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, visual = {} }) {
-  const { ilustracao, imagem, frase, itens } = { ...VISUAL_PADRAO, ...visual }
+  const { ilustracao, imagem, frase, itens, cena } = { ...VISUAL_PADRAO, ...visual }
+  const escura = cena === 'padrao'
   const Ilustracao = ILUSTRACOES[ilustracao] ?? IlustracaoCodigo
   const { pathname } = useLocation()
   const troca = TROCAS[pathname]
@@ -81,11 +83,15 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
         </div>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 lg:py-12">
+      <main className="relative isolate flex flex-1 items-center justify-center overflow-hidden px-4 py-8 sm:px-6 lg:py-12">
+        <Borboleta tamanho={520} className="pointer-events-none absolute -right-28 -bottom-32 -z-10 rotate-[-12deg] text-blush/70 max-sm:hidden" />
+        <Borboleta tamanho={260} className="pointer-events-none absolute -top-10 -left-16 -z-10 rotate-[14deg] text-blush/50 max-lg:hidden" />
         <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-linha bg-branco lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
-          <section className="px-6 py-8 sm:px-10 sm:py-10 lg:px-12">
+          <section className="animar-entrada px-6 py-8 sm:px-10 sm:py-10 lg:px-12">
             {troca && <SeletorPublico troca={troca} />}
-            {imagem ? (
+            {cena ? (
+              <CenaAcesso variante={cena} compacta className="mb-6 h-44 rounded-xl lg:hidden" />
+            ) : imagem ? (
               <img src={imagem} alt="" className="mb-6 h-40 w-full rounded-xl bg-papel object-cover lg:hidden" width="1024" height="1536" />
             ) : (
               <div className="mb-6 rounded-xl bg-papel px-6 py-4 lg:hidden">
@@ -104,6 +110,16 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
           </section>
 
           <aside className="hidden p-3 lg:block">
+            {cena ? (
+              <div className="sticky top-6 flex h-[min(620px,calc(100dvh-3rem))] min-h-[520px] flex-col justify-end overflow-hidden rounded-xl">
+                <CenaAcesso variante={cena} className="absolute inset-0" />
+                <div className={cn('relative m-4 rounded-2xl p-6 backdrop-blur-sm', escura ? 'bg-white/10 text-white ring-1 ring-white/15' : 'bg-white/75 ring-1 ring-linha')}>
+                  <p className={cn('max-w-sm font-display text-3xl leading-tight italic', escura ? 'text-white' : 'text-vinho-escuro')} style={{ animation: 'entrar .8s .4s cubic-bezier(.22,1,.36,1) both' }}>
+                    {frase}
+                  </p>
+                </div>
+              </div>
+            ) : (
             <div className="flex h-full min-h-[560px] flex-col justify-between rounded-xl bg-papel p-8">
               {imagem ? (
                 <div className="relative -mx-8 -mt-8 mb-6 min-h-[320px] flex-1 overflow-hidden rounded-t-xl">
@@ -135,6 +151,7 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
                 )}
               </div>
             </div>
+            )}
           </aside>
         </div>
       </main>

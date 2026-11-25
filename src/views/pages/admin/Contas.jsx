@@ -116,7 +116,6 @@ export function Candidatas() {
                       <span className="min-w-0">
                         <span className="flex items-center gap-1.5 font-semibold text-tinta">
                           <span className="truncate">{c.nome}</span>
-                          {c.premium && <SeloPremium compacto />}
                         </span>
                         <span className="block truncate text-xs text-suave">
                           {c.email} · {c.cpf}

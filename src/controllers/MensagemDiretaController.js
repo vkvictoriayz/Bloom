@@ -38,8 +38,9 @@ async function participantes(ids) {
   return new Map(ids.map((id) => [id, { id, nome: nome.get(id) ?? "Conta removida", foto: fotos.get(id)?.foto ?? null, area: area.get(id) || null }]));
 }
 
-const mensagemJson = (m, meuId, imagem = null) => ({
+const mensagemJson = (m, meuId, imagem = null, publicacao = null) => ({
   id: m.id,
+  publicacao,
   texto: m.apagadaEm ? "" : m.texto,
   apagada: Boolean(m.apagadaEm),
   imagem: m.apagadaEm ? null : imagem,
@@ -130,15 +131,16 @@ export const ler = comTratamento(async (req, res) => {
     temMais = linhas.length > POR_PAGINA;
     mensagens = linhas.slice(0, POR_PAGINA).reverse();
   }
-  const [pessoas, ultimaLida, fotos, bloqueio] = await Promise.all([
+  const [pessoas, ultimaLida, fotos, bloqueio, compartilhadas] = await Promise.all([
     participantes([outra(conversa, meuId)]),
     MensagemDireta.findOne({ where: { conversaId: conversa.id, autoraId: meuId, lidaEm: { [Op.ne]: null } }, order: [["id", "DESC"]] }),
     Chat.imagensDe("direta", mensagens.map((m) => m.id)),
     Chat.bloqueioEntre(meuId, outra(conversa, meuId)),
+    Chat.publicacoesCompartilhadas(mensagens.map((m) => m.publicacaoRef)),
   ]);
   return res.json({
     conversa: { id: conversa.id, participante: pessoas.get(outra(conversa, meuId)), bloqueio: bloqueio.euBloqueei ? "eu" : bloqueio.meBloqueou ? "ela" : null },
-    mensagens: mensagens.map((m) => mensagemJson(m, meuId, fotos.get(m.id))),
+    mensagens: mensagens.map((m) => mensagemJson(m, meuId, fotos.get(m.id), Chat.cartaoPublicacao(m, compartilhadas))),
     temMais,
     lidasAte: ultimaLida?.id ?? null,
   });
@@ -153,9 +155,11 @@ export const enviar = comTratamento(async (req, res) => {
   const bloqueio = await Chat.bloqueioEntre(meuId, outra(conversa, meuId));
   if (bloqueio.euBloqueei) return erro(res, 403, "Você bloqueou esta integrante. Desbloqueie para enviar mensagens.");
   if (bloqueio.meBloqueou) return erro(res, 403, "Não é possível enviar mensagens para esta integrante.");
+  const compartilhada = lida.publicacao ? await Chat.publicacoesCompartilhadas([lida.publicacao]) : new Map();
+  if (lida.publicacao && !compartilhada.has(lida.publicacao)) return erro(res, 404, "Publicação não encontrada.", "publicacao");
 
   const [mensagem, imagem] = await sequelize.transaction(async (transaction) => {
-    const m = await MensagemDireta.create({ conversaId: conversa.id, autoraId: meuId, texto: lida.texto }, { transaction });
+    const m = await MensagemDireta.create({ conversaId: conversa.id, autoraId: meuId, texto: lida.texto, publicacaoRef: lida.publicacao }, { transaction });
     return [m, await Chat.gravarImagem("direta", m.id, lida.imagem, transaction)];
   });
   await conversa.update({ atualizadaEm: new Date() });
@@ -164,11 +168,11 @@ export const enviar = comTratamento(async (req, res) => {
     tipoConta: "usuaria",
     contaId: outra(conversa, meuId),
     tipo: "mensagem",
-    texto: `Nova mensagem de ${remetente?.nome ?? "uma integrante"}`,
+    texto: lida.publicacao && !lida.texto ? `${remetente?.nome ?? "Uma integrante"} compartilhou uma publicação com você` : `Nova mensagem de ${remetente?.nome ?? "uma integrante"}`,
     link: `/candidata/mensagens/candidatas/${conversa.id}`,
     chave: `direta-${conversa.id}`,
   });
-  return res.status(201).json({ mensagem: mensagemJson(mensagem, meuId, imagem) });
+  return res.status(201).json({ mensagem: mensagemJson(mensagem, meuId, imagem, Chat.cartaoPublicacao(mensagem, compartilhada)) });
 });
 
 export const apagar = comTratamento(async (req, res) => {

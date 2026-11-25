@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import Icone from '../Icone'
+import ContadorAnimado from '../movimento/ContadorAnimado'
 import { cn } from '../../lib/cn'
 
 import { CORES } from './cores'
@@ -432,7 +433,7 @@ export function Indicador({ icone, rotulo, valor, detalhe, tendencia, faisca, pa
         {para && <Icone nome="seta" tamanho={16} className="text-suave transition-transform group-hover:translate-x-0.5" />}
       </div>
       <p className="mt-4 text-sm font-semibold text-tinta-2">{rotulo}</p>
-      <p className="mt-0.5 font-display text-3xl leading-tight text-tinta tabular-nums">{valor}</p>
+      <p className="mt-0.5 font-display text-3xl leading-tight text-tinta tabular-nums">{typeof valor === 'number' ? <ContadorAnimado valor={valor} /> : valor}</p>
       <div className="mt-1 min-h-5">{tendencia}</div>
       {detalhe && <p className="text-xs text-suave">{detalhe}</p>}
       {faisca && <div className="mt-3">{faisca}</div>}

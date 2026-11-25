@@ -6,6 +6,7 @@ import Avatar from '../comunidade/Avatar'
 import { ICONE_TIPO } from '../comunidade/tipos'
 import { ImagemPublicacao } from '../comunidade/AnexoImagem'
 import SeloPremium from '../conta/SeloPremium'
+import EnviarPublicacao from '../mensagens/EnviarPublicacao'
 import Botao from '../ui/Botao'
 import { AreaTexto, Aviso, Selecao } from '../ui/Campo'
 import { editarPublicacaoEmpresa, excluirPublicacaoEmpresa, fotoEmpresa } from '../../services/empresa'
@@ -36,6 +37,7 @@ function PublicacaoEmpresa({ publicacao, gerenciavel = false, aoMudar, aoExcluir
   const [ocupado, setOcupado] = useState(false)
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
+  const [enviando, setEnviando] = useState(false)
 
   const contexto = useOutletContext()
   const autor = dados.autor ?? { id: contexto?.perfil?.empresa.id, nome: dados.empresa?.nome, foto: fotoEmpresa(contexto?.perfil), detalhe: 'Empresa' }
@@ -78,19 +80,10 @@ function PublicacaoEmpresa({ publicacao, gerenciavel = false, aoMudar, aoExcluir
     }
   }
 
-  async function compartilhar() {
-    const texto = `${autor.nome} na Bloom: ${dados.texto ?? ''}`.trim()
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Publicação na Bloom', text: texto })
-        return
-      }
-      await navigator.clipboard.writeText(texto)
-      setAviso('Texto copiado para compartilhar.')
-    } catch (e) {
-      if (e?.name !== 'AbortError') setAviso('Não foi possível compartilhar.')
-    }
+  function compartilhar() {
+    setEnviando(true)
   }
+  const referencia = daEmpresa ? `e${String(dados.id).replace(/^e/, '')}` : `u${String(dados.id).replace(/^u/, '')}`
 
   const nomeAutor = linkAutor ? (
     <Link to={linkAutor} className="truncate font-bold text-tinta hover:text-vinho hover:underline">
@@ -101,7 +94,8 @@ function PublicacaoEmpresa({ publicacao, gerenciavel = false, aoMudar, aoExcluir
   )
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-linha bg-branco" aria-label={`Publicação de ${autor.nome}`}>
+    <article className="animar-entrada overflow-hidden rounded-2xl border border-linha bg-branco transition-shadow hover:shadow-[0_6px_24px_-12px_rgba(78,18,38,0.25)]" aria-label={`Publicação de ${autor.nome}`}>
+      {enviando && <EnviarPublicacao daEmpresa referencia={referencia} previa={{ autor: autor.nome, texto: dados.texto }} aoFechar={() => setEnviando(false)} />}
       {daEmpresa && dados.tipo === 'oportunidade' && <div aria-hidden="true" className="h-1 bg-gradient-to-r from-vinho via-rosa to-blush" />}
       <div className="p-5 sm:p-6">
         <header className="flex items-start gap-3">
@@ -115,7 +109,7 @@ function PublicacaoEmpresa({ publicacao, gerenciavel = false, aoMudar, aoExcluir
           <div className="min-w-0 flex-1">
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
               {nomeAutor}
-              {autor.premium && <SeloPremium compacto />}
+              {daEmpresa && autor.premium && <SeloPremium compacto />}
               <span className="inline-flex items-center gap-1 rounded-full bg-blush px-2 py-0.5 text-[11px] font-semibold text-vinho">
                 <Icone nome={ICONE_TIPO[dados.tipo] ?? 'info'} tamanho={12} /> {rotuloTipo(dados.tipo)}
               </span>
@@ -193,8 +187,8 @@ function PublicacaoEmpresa({ publicacao, gerenciavel = false, aoMudar, aoExcluir
                 </span>
               </>
             )}
-            <button type="button" onClick={compartilhar} className={acao} aria-label="Compartilhar publicação">
-              <Icone nome="compartilhar" tamanho={17} /> <span className="max-sm:sr-only">Compartilhar</span>
+            <button type="button" onClick={compartilhar} className={acao} aria-label="Enviar publicação pela Bloom" title="Enviar pela Bloom">
+              <Icone nome="compartilhar" tamanho={17} /> <span className="max-sm:sr-only">Enviar</span>
             </button>
             {!daEmpresa && autor.id && (
               <Link to={`/empresa/talentos/${autor.id}`} className={cn(acao, 'ml-auto text-vinho')}>

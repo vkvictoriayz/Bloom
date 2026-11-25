@@ -27,6 +27,7 @@ const consulta = (params) => {
 export const lerFeed = ({ filtro, tipo, autora, busca, pagina = 1 } = {}) =>
   chamar(`/feed${consulta({ filtro, tipo, autora, busca, pagina: pagina > 1 ? pagina : "" })}`);
 export const lerEmAlta = () => chamar("/em-alta");
+export const verPublicacao = (id) => chamar(`/publicacoes/${encodeURIComponent(id)}`);
 export const linkAssunto = (tag) => `/candidata/explorar?categoria=publicacoes&q=${encodeURIComponent(`#${tag}`)}`;
 export const publicar = (corpo) => chamar("/publicacoes", { method: "POST", corpo });
 export const editarPublicacao = (id, corpo) => chamar(`/publicacoes/${id}`, { method: "PUT", corpo });

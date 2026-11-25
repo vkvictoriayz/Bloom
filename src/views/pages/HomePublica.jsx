@@ -2,41 +2,47 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import CarrosselAreas from '../components/CarrosselAreas'
+import BorboletaHero from '../components/borboleta/BorboletaHero'
+import PreviaJornada from '../components/PreviaJornada'
+import BotaoBrilho from '../components/movimento/BotaoBrilho'
+import CartaoBrilho from '../components/movimento/CartaoBrilho'
+import ContadorAnimado from '../components/movimento/ContadorAnimado'
+import PalavrasAlternadas from '../components/movimento/PalavrasAlternadas'
+import TextoRevelado from '../components/movimento/TextoRevelado'
 import Icone from '../components/Icone'
-import { IlustracaoCodigo, IlustracaoConexoes } from '../components/ilustracoes/Ilustracoes'
+import { PreviaEtapas, PreviaFiltros, PreviaPerfil, PreviaPublicacao } from '../components/PreviasRecursos'
 import MarcaEmpresa from '../components/MarcaEmpresa'
 import Pagina from '../components/layout/Pagina'
 import Botao from '../components/ui/Botao'
 import FaixaMarcas from '../components/ui/FaixaMarcas'
 import Perguntas from '../components/ui/Perguntas'
-import TextoEscalonado from '../components/ui/TextoEscalonado'
 import { areasTI } from '../data/areas'
-import { listarEmpresasPublicas } from '../services/publico'
+import { lerResumoPublico, listarEmpresasPublicas } from '../services/publico'
 import { cn } from '../lib/cn'
 
-import imgAbertura from '../assets/ilustracoes/home-abertura.webp'
-import imgComoFunciona from '../assets/ilustracoes/como-funciona.webp'
 
 const recursos = [
   {
     icone: 'mensagem',
-    ilustracao: IlustracaoConexoes,
+    previa: PreviaPublicacao,
     titulo: 'Rede profissional',
     texto: 'Publique projetos, conquistas e dúvidas, comente, curta e siga outras mulheres da tecnologia.',
   },
   {
     icone: 'maleta',
+    previa: PreviaFiltros,
     titulo: 'Vagas com filtros',
     texto: 'Busque por cargo, tecnologia ou empresa e refine por área, nível, modalidade e localização.',
   },
   {
     icone: 'candidaturas',
+    previa: PreviaEtapas,
     titulo: 'Candidaturas acompanhadas',
     texto: 'Cada candidatura mostra a etapa atual. Nada avança sem uma atualização registrada pela empresa.',
   },
   {
     icone: 'pasta',
-    ilustracao: IlustracaoCodigo,
+    previa: PreviaPerfil,
     titulo: 'Perfil e portfólio',
     texto: 'Reúna formação, experiências, competências e projetos com links de repositório e demonstração.',
   },
@@ -72,12 +78,50 @@ function TituloSecao({ id, titulo, descricao, acao }) {
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="max-w-2xl">
         <h2 id={id} className="font-display text-3xl leading-tight text-tinta sm:text-4xl">
-          {titulo}
+          <TextoRevelado texto={titulo} />
         </h2>
         {descricao && <p className="mt-2 text-tinta-2">{descricao}</p>}
       </div>
       {acao}
     </div>
+  )
+}
+
+function useResumo() {
+  const [resumo, setResumo] = useState(null)
+  useEffect(() => {
+    let ativo = true
+    lerResumoPublico()
+      .then((r) => ativo && setResumo(r))
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+  }, [])
+  return resumo
+}
+
+function FaixaNumeros({ resumo }) {
+  if (!resumo) return null
+  const itens = [
+    { valor: resumo.integrantes, rotulo: resumo.integrantes === 1 ? 'mulher na comunidade' : 'mulheres na comunidade', icone: 'grupo' },
+    { valor: resumo.vagasAbertas, rotulo: resumo.vagasAbertas === 1 ? 'vaga aberta agora' : 'vagas abertas agora', icone: 'maleta' },
+    { valor: resumo.empresas, rotulo: resumo.empresas === 1 ? 'empresa contratando' : 'empresas contratando', icone: 'predio' },
+  ]
+  return (
+    <section aria-label="A Bloom em números" className="grid grid-cols-1 divide-y divide-linha rounded-2xl border border-linha bg-branco sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      {itens.map((item) => (
+        <div key={item.rotulo} className="flex items-center gap-4 px-6 py-6 sm:px-8">
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-blush text-vinho" aria-hidden="true">
+            <Icone nome={item.icone} tamanho={22} />
+          </span>
+          <span>
+            <ContadorAnimado valor={item.valor} className="block font-display text-4xl leading-none text-tinta" />
+            <span className="mt-1 block text-sm text-tinta-2">{item.rotulo}</span>
+          </span>
+        </div>
+      ))}
+    </section>
   )
 }
 
@@ -97,27 +141,28 @@ function useEmpresas() {
 
 function HomePublica() {
   const empresas = useEmpresas()
+  const resumo = useResumo()
   return (
     <Pagina titulo="Carreiras em tecnologia" className="bg-papel">
       <div className="mx-auto flex max-w-7xl flex-col gap-16 px-4 py-8 sm:px-6 lg:gap-24 lg:px-8 lg:py-12">
         <section className="grid overflow-hidden rounded-2xl border border-linha bg-branco lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           <div className="flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-16">
             <h1 className="font-display text-[2.1rem] leading-[1.1] text-balance text-tinta sm:text-[2.6rem] xl:text-[2.9rem]">
-              <TextoEscalonado texto="Conectando mulheres da tecnologia a" />{' '}
-              <em className="text-vinho">
-                <TextoEscalonado texto="oportunidades reais." atraso={330} />
+              <TextoRevelado texto="Conectando mulheres da tecnologia a" aoCarregar />{' '}
+              <em className="block min-h-[1.15em] text-vinho">
+                <PalavrasAlternadas palavras={['oportunidades reais.', 'empresas que acreditam.', 'uma rede que inspira.']} />
               </em>
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-tinta-2">
               A BLOOM conecta talentos a oportunidades profissionais e a empresas que valorizam o potencial das mulheres na tecnologia.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Botao as={Link} to="/cadastro" tamanho="lg" className="rounded-full">
+              <BotaoBrilho to="/cadastro">
                 Criar minha conta <Icone nome="seta" />
-              </Botao>
-              <Botao as={Link} to="/login" variante="secundario" tamanho="lg" className="rounded-full">
+              </BotaoBrilho>
+              <BotaoBrilho to="/login" variante="contorno">
                 Entrar
-              </Botao>
+              </BotaoBrilho>
             </div>
             <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-tinta-2">
               {['Rede profissional', 'Vagas em tecnologia', 'Candidaturas acompanhadas'].map((item) => (
@@ -128,15 +173,11 @@ function HomePublica() {
             </ul>
           </div>
           <div className="p-3 pt-0 lg:pt-3 lg:pl-0">
-            <img
-              src={imgAbertura}
-              alt="Borboleta da BLOOM ligada a trilhas de circuito, representando a conexão entre mulheres e a tecnologia"
-              className="aspect-[3/2] h-full w-full rounded-xl bg-papel object-contain lg:aspect-auto"
-              width="1536"
-              height="1024"
-            />
+            <BorboletaHero />
           </div>
         </section>
+
+        <FaixaNumeros resumo={resumo} />
 
         <section id="areas" aria-labelledby="titulo-areas" className="scroll-mt-24">
           <TituloSecao id="titulo-areas" titulo="Vagas em todas as áreas de T.I." descricao="Do primeiro emprego à liderança técnica: escolha uma área para começar." />
@@ -150,7 +191,7 @@ function HomePublica() {
           <ul className="grid gap-4 md:grid-cols-6">
             {recursos.map((r, i) => {
               const grande = i === 0 || i === 3
-              const Ilustracao = r.ilustracao
+              const Previa = r.previa
               return (
                 <li
                   key={r.titulo}
@@ -165,10 +206,11 @@ function HomePublica() {
                     </span>
                     <h3 className={cn('mt-5 font-bold text-tinta', grande ? 'font-display text-2xl font-normal' : 'text-lg')}>{r.titulo}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-tinta-2">{r.texto}</p>
+                    {!grande && Previa && <Previa />}
                   </div>
-                  {grande && Ilustracao && (
-                    <div className="bg-papel px-6 pt-4 pb-2 md:flex-1 md:self-stretch md:py-6">
-                      <Ilustracao className="mx-auto max-w-[300px]" />
+                  {grande && Previa && (
+                    <div className="flex items-center justify-center bg-papel px-6 py-6 md:flex-1 md:self-stretch">
+                      <Previa />
                     </div>
                   )}
                 </li>
@@ -178,15 +220,8 @@ function HomePublica() {
         </section>
 
         <section aria-labelledby="titulo-passos" className="grid gap-4 lg:grid-cols-2">
-          <div className="flex items-center overflow-hidden rounded-2xl border border-linha bg-papel">
-            <img
-              src={imgComoFunciona}
-              alt="Etapas na BLOOM: crie seu perfil, busque vagas, candidate-se com facilidade e conquiste sua vaga"
-              className="aspect-[3/2] w-full object-contain"
-              loading="lazy"
-              width="1536"
-              height="1024"
-            />
+          <div className="flex overflow-hidden rounded-2xl border border-linha">
+            <PreviaJornada />
           </div>
           <div className="rounded-2xl border border-linha bg-branco p-6 sm:p-10">
             <h2 id="titulo-passos" className="font-display text-3xl leading-tight text-tinta sm:text-4xl">
@@ -242,7 +277,8 @@ function HomePublica() {
         )}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <section aria-labelledby="titulo-para-empresas" className="flex flex-col rounded-2xl bg-vinho p-8 text-white sm:p-10">
+          <CartaoBrilho duracao={8} conteudoClassName="bg-vinho">
+          <section aria-labelledby="titulo-para-empresas" className="flex h-full flex-col rounded-[calc(1rem-1.5px)] bg-vinho p-8 text-white sm:p-10">
             <span className="grid size-11 place-items-center rounded-full bg-white/15" aria-hidden="true">
               <Icone nome="predio" tamanho={20} />
             </span>
@@ -261,6 +297,7 @@ function HomePublica() {
               </Botao>
             </div>
           </section>
+          </CartaoBrilho>
 
           <section aria-labelledby="titulo-perguntas" className="rounded-2xl border border-linha bg-branco p-6 sm:p-8">
             <h2 id="titulo-perguntas" className="mb-4 font-display text-3xl text-tinta">
@@ -272,7 +309,7 @@ function HomePublica() {
 
         <section className="rounded-2xl bg-vinho-escuro px-6 py-14 text-center text-white sm:px-10">
           <h2 className="font-display text-4xl leading-tight sm:text-5xl">
-            Seu talento merece espaço para <em className="text-rosa">florescer.</em>
+            <TextoRevelado texto="Seu talento merece espaço para" /> <em className="text-blush">florescer.</em>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-white/75">Descubra oportunidades e construa seu próximo capítulo na área de tecnologia.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">

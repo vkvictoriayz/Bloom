@@ -3,7 +3,7 @@ import { cva } from 'class-variance-authority'
 import { cn } from '../../lib/cn'
 
 const botaoVariantes = cva(
-  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-colors duration-150 [&_.icone-seta]:transition-transform [&_.icone-seta]:duration-200 [&_.icone-seta]:ease-(--ease-bloom) hover:[&_.icone-seta]:translate-x-1 disabled:cursor-not-allowed disabled:opacity-55 [&_svg]:shrink-0',
+  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.97] [&_.icone-seta]:transition-transform [&_.icone-seta]:duration-200 [&_.icone-seta]:ease-(--ease-bloom) hover:[&_.icone-seta]:translate-x-1 disabled:cursor-not-allowed disabled:opacity-55 [&_svg]:shrink-0',
   {
     variants: {
       variante: {

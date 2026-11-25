@@ -149,7 +149,7 @@ function Dashboard() {
         </div>
       </section>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-6">
+      <div className="animar-lista grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-6">
         <Indicador icone="maleta" rotulo="Vagas ativas" valor={t.vagasAtivas} detalhe={`${t.vagasPublicadas} publicadas · ${t.rascunhos} ${t.rascunhos === 1 ? 'rascunho' : 'rascunhos'}`} para="/empresa/vagas?status=Aberta" />
         <Indicador icone="candidaturas" rotulo="Candidaturas" valor={t.candidaturas} detalhe={`${noMes} nos últimos 30 dias`} faisca={<Faisca valores={serie?.candidaturas} cor={CORES[0]} />} para="/empresa/candidaturas" />
         <Indicador icone="relogio" rotulo="Em análise" valor={t.emAnalise} detalhe={`${t.recebidas} aguardando início`} para="/empresa/candidaturas?status=Em%20an%C3%A1lise" />
@@ -218,7 +218,7 @@ function Dashboard() {
           </Link>
         </div>
         {r.dados.vagas.length ? (
-          <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+          <ul className="animar-lista grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
             {r.dados.vagas.map((v) => (
               <CartaoVaga key={v.id} v={v} />
             ))}

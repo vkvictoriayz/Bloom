@@ -293,6 +293,7 @@ function useNaoLidas(ativo = true, contar = contarNaoLidas, evento = EVENTO_NOTI
 }
 
 function LayoutPrivado({ config, usuario, foto, contexto, faixa, premium = false }) {
+  const { pathname: paginaAtual } = useLocation()
   const naoLidas = useNaoLidas(Boolean(config.notificacoes))
   const mensagensNaoLidas = useNaoLidas(Boolean(config.mensagens), contarMensagensNaoLidas, EVENTO_MENSAGENS)
   const navigate = useNavigate()
@@ -434,7 +435,9 @@ function LayoutPrivado({ config, usuario, foto, contexto, faixa, premium = false
 
         <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-6xl px-4 py-8 focus:outline-none sm:px-6 lg:px-10 lg:py-10">
           {faixa}
-          <Outlet context={contexto} />
+          <div key={paginaAtual.split('/').slice(0, 3).join('/')} className="animar-pagina">
+            <Outlet context={contexto} />
+          </div>
         </main>
       </div>
 

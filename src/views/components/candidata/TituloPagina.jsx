@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
 import Icone from '../Icone'
+import TextoRevelado from '../movimento/TextoRevelado'
 import { Vazio, VazioAcoes, VazioDescricao, VazioIcone, VazioTitulo } from '../ui/Vazio'
 
 function TituloPagina({ titulo, descricao, acoes, voltar }) {
@@ -18,7 +19,7 @@ function TituloPagina({ titulo, descricao, acoes, voltar }) {
       )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="font-display text-3xl leading-tight text-tinta sm:text-4xl">{titulo}</h1>
+          <h1 className="font-display text-3xl leading-tight text-tinta sm:text-4xl">{typeof titulo === 'string' ? <TextoRevelado key={titulo} texto={titulo} aoCarregar /> : titulo}</h1>
           {descricao && <p className="mt-2 max-w-2xl text-tinta-2">{descricao}</p>}
         </div>
         {acoes && <div className="flex shrink-0 flex-wrap gap-2">{acoes}</div>}

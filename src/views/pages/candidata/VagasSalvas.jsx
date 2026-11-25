@@ -36,7 +36,7 @@ function VagasSalvas() {
           </VazioAcoes>
         </Vazio>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-4">
+        <div className="animar-lista grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-4">
           {vagas.map((vaga) => (
             <CartaoVaga key={vaga.id} vaga={vaga} candidatura={candidaturaDaVaga(vaga.id, candidaturas)} />
           ))}
