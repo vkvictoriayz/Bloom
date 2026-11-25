@@ -1,4 +1,58 @@
 const CAMINHOS = {
+  borboleta: (
+    <g fill="currentColor" stroke="none" transform="translate(1 3.2) scale(0.22)">
+      <path d="M49.2 45.6C43 30 28 8 5.5 5C3.5 23 20 41 49.2 45.6Z" />
+      <path d="M48.6 48.4C40 46.2 31 44.8 23.5 44.6C21 56 26.5 70 35 75.5C40.5 76.5 46 62 48.6 48.4Z" />
+      <path d="M50.8 45.6C57 30 72 8 94.5 5C96.5 23 80 41 50.8 45.6Z" />
+      <path d="M51.4 48.4C60 46.2 69 44.8 76.5 44.6C79 56 73.5 70 65 75.5C59.5 76.5 54 62 51.4 48.4Z" />
+    </g>
+  ),
+  contorno: (
+    <g transform="translate(1.6 3.7) scale(0.208)" strokeWidth="7.4">
+      <path d="M49.2 45.6C43 30 28 8 5.5 5C3.5 23 20 41 49.2 45.6Z" />
+      <path d="M48.6 48.4C40 46.2 31 44.8 23.5 44.6C21 56 26.5 70 35 75.5C40.5 76.5 46 62 48.6 48.4Z" />
+      <path d="M50.8 45.6C57 30 72 8 94.5 5C96.5 23 80 41 50.8 45.6Z" />
+      <path d="M51.4 48.4C60 46.2 69 44.8 76.5 44.6C79 56 73.5 70 65 75.5C59.5 76.5 54 62 51.4 48.4Z" />
+    </g>
+  ),
+  voo: (
+    <>
+      <path d="M3.5 20.5c3-0.5 4.5-2.5 6-5s3.5-4 6-4.5" strokeDasharray="0.1 2.6" />
+      <g fill="currentColor" stroke="none" transform="translate(12.2 2.6) rotate(18 5.5 4.4) scale(0.11)">
+        <path d="M49.2 45.6C43 30 28 8 5.5 5C3.5 23 20 41 49.2 45.6Z" />
+      <path d="M48.6 48.4C40 46.2 31 44.8 23.5 44.6C21 56 26.5 70 35 75.5C40.5 76.5 46 62 48.6 48.4Z" />
+      <path d="M50.8 45.6C57 30 72 8 94.5 5C96.5 23 80 41 50.8 45.6Z" />
+      <path d="M51.4 48.4C60 46.2 69 44.8 76.5 44.6C79 56 73.5 70 65 75.5C59.5 76.5 54 62 51.4 48.4Z" />
+      </g>
+    </>
+  ),
+  flor: (
+    <>
+      <g fill="currentColor" stroke="none" transform="translate(12 11.2)">
+        {[0, 72, 144, 216, 288].map((a) => (
+          <path key={a} transform={`rotate(${a}) scale(0.2)`} d="M0 -6 C-14 -14 -14 -36 0 -44 C14 -36 14 -14 0 -6Z" />
+        ))}
+      </g>
+      <path d="M12 15.5v5.5" />
+    </>
+  ),
+  petala: (
+    <g fill="currentColor" stroke="none" transform="translate(2 2.4) scale(0.38)">
+      <path d="M49.2 45.6C43 30 28 8 5.5 5C3.5 23 20 41 49.2 45.6Z" />
+    </g>
+  ),
+  botao: (
+    <>
+      <path d="M12 21v-7.5" />
+      <path d="M12 13.5c-3.2 0-5-2.6-5-6.2 1.5 0.6 2.6 1.6 3.2 2.8 0.3-2.4 0.9-4.3 1.8-6.1 0.9 1.8 1.5 3.7 1.8 6.1 0.6-1.2 1.7-2.2 3.2-2.8 0 3.6-1.8 6.2-5 6.2Z" fill="currentColor" stroke="none" />
+      <path d="M12 18c-2.2 0-3.8-1.1-4.5-2.9 2.1-0.3 3.6 0.7 4.5 2.9ZM12 17c1.8 0 3.2-0.9 3.8-2.4-1.8-0.3-3 0.5-3.8 2.4Z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  monograma: (
+    <text x="12" y="17.6" textAnchor="middle" fontSize="16" fontWeight="600" fontFamily="Fraunces, Georgia, serif" fill="currentColor" stroke="none">
+      B
+    </text>
+  ),
   inicio: (
     <>
       <path d="M4 10.5 12 4l8 6.5" />

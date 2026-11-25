@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import Icone from '../../components/Icone'
+import { IlustracaoCrescimento } from '../../components/ilustracoes/Ilustracoes'
 import TituloPagina, { RecursoIndisponivel } from '../../components/candidata/TituloPagina'
 import { useRecurso } from '../../components/candidata/useRecurso'
 import Botao from '../../components/ui/Botao'
@@ -12,7 +13,41 @@ import { tempoRelativo } from '../../services/comunidade'
 import { DISPONIVEL, EVENTO_NOTIFICACOES, listarNotificacoes, marcarComoLida, marcarTodasComoLidas } from '../../services/recursos'
 import { cn } from '../../lib/cn'
 
-const ICONES = { mensagem: 'mensagem', curtida: 'coracao', comentario: 'mensagem', publicacao: 'inicio', candidatura: 'candidaturas', vaga: 'maleta', conexao: 'perfil', convite: 'email', plataforma: 'coroa' }
+const ICONES = { mensagem: 'mensagem', curtida: 'coracao', comentario: 'mensagem', publicacao: 'inicio', candidatura: 'candidaturas', vaga: 'maleta', conexao: 'perfil', convite: 'email', comunidade: 'grupo', plataforma: 'borboleta' }
+const TONS = {
+  mensagem: 'bg-[#efe8f6] text-[#7b55b0]',
+  comentario: 'bg-[#efe8f6] text-[#7b55b0]',
+  curtida: 'bg-blush text-vinho',
+  conexao: 'bg-blush text-vinho',
+  comunidade: 'bg-sucesso-claro text-sucesso',
+  candidatura: 'bg-alerta-claro text-alerta',
+  vaga: 'bg-alerta-claro text-alerta',
+  convite: 'bg-sucesso-claro text-sucesso',
+  plataforma: 'bg-vinho text-white',
+}
+
+function grupoDe(data) {
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  const d = new Date(data)
+  d.setHours(0, 0, 0, 0)
+  const dias = Math.round((hoje - d) / 864e5)
+  if (dias <= 0) return 'Hoje'
+  if (dias === 1) return 'Ontem'
+  if (dias < 7) return 'Nesta semana'
+  return 'Anteriores'
+}
+
+function agrupar(lista) {
+  const grupos = []
+  for (const n of lista) {
+    const g = grupoDe(n.criadaEm)
+    const atual = grupos.at(-1)
+    if (atual && atual.titulo === g) atual.itens.push(n)
+    else grupos.push({ titulo: g, itens: [n] })
+  }
+  return grupos
+}
 
 function Notificacoes({ descricao = 'Mensagens, curtidas, comentários, novas seguidoras e mudanças nas suas candidaturas.' }) {
   const r = useRecurso(DISPONIVEL.notificacoes, listarNotificacoes)
@@ -84,35 +119,44 @@ function Notificacoes({ descricao = 'Mensagens, curtidas, comentários, novas se
       {(r.estado === 'erro' || erro) && <Aviso tipo="erro">{r.erro ?? erro}</Aviso>}
       {r.estado === 'pronto' &&
         (r.dados.notificacoes?.length ? (
-          <ul className="overflow-hidden rounded-xl border border-linha bg-branco">
-            {r.dados.notificacoes.map((n) => {
-              const lida = n.lida || todasLidas || lidas.includes(n.id)
-              return (
-                <li key={n.id} className={cn('flex items-start gap-3 border-b border-linha p-4 last:border-b-0', !lida && 'bg-blush/40')}>
-                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-blush text-vinho" aria-hidden="true">
-                    <Icone nome={ICONES[n.tipo] ?? 'sino'} tamanho={18} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    {n.link ? (
-                      <button type="button" onClick={() => abrir(n)} className={cn('text-left text-sm hover:text-vinho hover:underline', lida ? 'text-tinta-2' : 'font-semibold text-tinta')}>
-                        {n.texto}
-                      </button>
-                    ) : (
-                      <p className={cn('text-sm', lida ? 'text-tinta-2' : 'font-semibold text-tinta')}>{n.texto}</p>
-                    )}
-                    <p className="text-xs text-suave">{tempoRelativo(n.criadaEm)}</p>
-                  </div>
-                  {!lida && (
-                    <Botao variante="fantasma" tamanho="sm" onClick={() => marcar(n.id)}>
-                      Marcar como lida
-                    </Botao>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
+          <div className="flex flex-col gap-6">
+            {agrupar(r.dados.notificacoes).map((g) => (
+              <section key={g.titulo} aria-label={g.titulo}>
+                <h2 className="mb-2 text-xs font-bold tracking-[0.14em] text-suave uppercase">{g.titulo}</h2>
+                <ul className="animar-lista overflow-hidden rounded-2xl border border-linha bg-branco">
+                  {g.itens.map((n) => {
+                    const lida = n.lida || todasLidas || lidas.includes(n.id)
+                    return (
+                      <li key={n.id} className={cn('relative flex items-start gap-3 border-b border-linha p-4 transition-colors last:border-b-0', !lida && 'bg-blush/30')}>
+                        {!lida && <span aria-hidden="true" className="absolute top-1/2 left-1.5 size-1.5 -translate-y-1/2 rounded-full bg-vinho" />}
+                        <span className={cn('grid size-10 shrink-0 place-items-center rounded-full', TONS[n.tipo] ?? 'bg-blush text-vinho')} aria-hidden="true">
+                          <Icone nome={ICONES[n.tipo] ?? 'sino'} tamanho={18} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          {n.link ? (
+                            <button type="button" onClick={() => abrir(n)} className={cn('text-left text-sm hover:text-vinho hover:underline', lida ? 'text-tinta-2' : 'font-semibold text-tinta')}>
+                              {n.texto}
+                            </button>
+                          ) : (
+                            <p className={cn('text-sm', lida ? 'text-tinta-2' : 'font-semibold text-tinta')}>{n.texto}</p>
+                          )}
+                          <p className="mt-0.5 text-xs text-suave">{tempoRelativo(n.criadaEm)}</p>
+                        </div>
+                        {!lida && (
+                          <Botao variante="fantasma" tamanho="sm" onClick={() => marcar(n.id)} className="shrink-0">
+                            <Icone nome="check" tamanho={14} /> <span className="max-sm:sr-only">Marcar como lida</span>
+                          </Botao>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            ))}
+          </div>
         ) : (
           <Vazio className="bg-branco">
+            <IlustracaoCrescimento className="max-w-[200px]" />
             <VazioTitulo>Nenhuma notificação</VazioTitulo>
             <VazioDescricao>Quando algo acontecer, você verá aqui.</VazioDescricao>
           </Vazio>

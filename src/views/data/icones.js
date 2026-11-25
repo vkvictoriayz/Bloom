@@ -1,3 +1,12 @@
+const BLOOM = [
+  ['borboleta', 'Borboleta Bloom'],
+  ['contorno', 'Contorno da borboleta'],
+  ['voo', 'Voo'],
+  ['flor', 'Flor'],
+  ['petala', 'Pétala'],
+  ['botao', 'Botão de flor'],
+  ['monograma', 'Monograma B'],
+]
 const TECNOLOGIA = [
   ['codigo', 'Código'],
   ['terminal', 'Terminal'],
@@ -21,7 +30,7 @@ const CARREIRA = [
 const REDE = [
   ['rede', 'Networking'],
   ['grupo', 'Comunidade'],
-  ['broto', 'Bloom'],
+  ['broto', 'Broto'],
   ['coracao', 'Apoio'],
 ]
 const EMPRESA = [
@@ -31,16 +40,19 @@ const EMPRESA = [
 
 export const GRUPOS_ICONES = {
   usuaria: [
+    ['Bloom', BLOOM],
     ['Tecnologia', TECNOLOGIA],
     ['Carreira', CARREIRA],
     ['Rede', REDE],
   ],
   empresa: [
-    ['Empresa', [...EMPRESA, ['rede', 'Networking'], ['broto', 'Bloom']]],
+    ['Bloom', BLOOM],
+    ['Empresa', [...EMPRESA, ['rede', 'Networking'], ['broto', 'Broto']]],
     ['Tecnologia', TECNOLOGIA],
     ['Carreira', CARREIRA],
   ],
   comunidade: [
+    ['Bloom', BLOOM],
     ['Tecnologia', TECNOLOGIA],
     ['Carreira', CARREIRA],
     ['Rede', REDE],
