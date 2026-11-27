@@ -141,7 +141,7 @@ function FormularioProjeto() {
         <EditorEtiquetas
           rotulo="Tecnologias utilizadas"
           itens={dados.tecnologias}
-          sugestao="Ex.: React, Python — Enter para incluir"
+          sugestao="Ex.: React, Python. Pressione Enter para incluir"
           vazio="Nenhuma tecnologia adicionada."
           aoMudar={(tecnologias) => setDados((d) => ({ ...d, tecnologias }))}
         />

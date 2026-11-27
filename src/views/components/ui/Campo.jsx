@@ -20,14 +20,20 @@ export const Selecao = forwardRef(function Selecao({ className, children, ...pro
   )
 })
 
-export function Campo({ rotulo, opcional, ajuda, erro, acessorio, className, children }) {
+export function Campo({ rotulo, opcional, obrigatorio, ajuda, erro, acessorio, rotuloOculto, className, children }) {
   const id = useId()
   const idAjuda = `${id}-ajuda`
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <div className="flex items-baseline justify-between gap-3">
+      <div className={cn('flex items-baseline justify-between gap-3', rotuloOculto && 'sr-only')}>
         <label htmlFor={id} className="text-sm font-semibold text-tinta-2">
           {rotulo}
+          {obrigatorio && (
+            <>
+              <span className="ml-0.5 text-rosa" aria-hidden="true">*</span>
+              <span className="sr-only"> (obrigatório)</span>
+            </>
+          )}
           {opcional && <span className="ml-1 font-normal text-suave">(opcional)</span>}
         </label>
         {acessorio}

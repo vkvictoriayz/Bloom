@@ -6,6 +6,7 @@ import { deLinha } from "../services/privacidade.js";
 import { Vaga } from "../models/Empresarial.js";
 import { CurriculoCandidata, enviarArquivo, resumoArquivo } from "../models/Curriculo.js";
 import { lerCurriculo } from "../utils/curriculo.js";
+import { sincronizarNomeExibido } from "./IdentificacaoController.js";
 
 const eu = (req) => req.auth.sub;
 const texto = (v) => (typeof v === "string" ? v.trim() : "");
@@ -188,6 +189,7 @@ export const atualizarPerfil = comTratamento(async (req, res) => {
   await sequelize.transaction(async (transaction) => {
     const usuariaId = eu(req);
     if (Object.keys(conta).length) await Usuaria.update(conta, { where: { id: usuariaId }, transaction });
+    if (conta.nome !== undefined) await sincronizarNomeExibido(usuariaId, conta.nome, transaction);
     const perfilBase = await meuPerfilUsuaria(usuariaId, transaction);
     if (Object.keys(base).length) await perfilBase.update(base, { transaction });
 

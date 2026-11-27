@@ -45,6 +45,25 @@ importa arquivos de models, controllers ou services da API.
    ```
    A API reinicia ao rodar `npm run server` de novo; o front se atualiza sozinho.
 
+### Login com Google e GitHub (opcional)
+
+Sem as credenciais abaixo, os botões aparecem e avisam que o login social não foi configurado. Para ativar, adicione ao `.env`:
+
+```
+APP_URL=http://localhost:3006          # endereço do site (em produção, o domínio público)
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+```
+
+- **Google:** crie um "ID do cliente OAuth" (tipo Aplicativo da Web) no Google Cloud Console e cadastre o URI de redirecionamento
+  `http://localhost:3006/api/auth/oauth/google/retorno`.
+- **GitHub:** crie um OAuth App em Settings > Developer settings e use como callback
+  `http://localhost:3006/api/auth/oauth/github/retorno`.
+
+Depois reinicie o `npm run server`.
+
 **"O servidor da Bloom não está respondendo" no login** = a API parou. Olhe o
 terminal do `npm run server`: a mensagem logo acima diz o motivo (o mais comum é
 o MySQL desligado ou o `.env` sem `DB_PASSWORD`/`JWT_SECRET`).

@@ -37,7 +37,10 @@ export async function api(caminho, { method = "GET", corpo, token } = {}) {
   }
 
   if (!resposta.ok) {
-    throw new Error(dados?.erro ?? "Algo deu errado. Tente novamente.");
+    const falha = new Error(dados?.erro ?? "Algo deu errado. Tente novamente.");
+    // Campo que causou o erro (quando a API informa), para mostrar a mensagem junto dele.
+    if (dados?.campo) falha.campo = dados.campo;
+    throw falha;
   }
 
   return dados;

@@ -6,21 +6,57 @@ try {
 } catch {
 }
 
-export function salvarSessao({ token, usuario }) {
-  localStorage.setItem(CHAVE, JSON.stringify({ token, usuario }));
+// "Lembrar de mim": marcado, a sessão fica no localStorage (sobrevive ao fechar o navegador);
+// desmarcado, fica no sessionStorage (termina ao fechar a aba). Sem a opção, mantém onde já estava.
+function armazenamentoDaSessao() {
+  try {
+    if (sessionStorage.getItem(CHAVE)) return sessionStorage;
+  } catch {
+  }
+  return localStorage;
+}
+
+export function salvarSessao({ token, usuario }, { lembrar } = {}) {
+  const destino = lembrar === undefined ? armazenamentoDaSessao() : lembrar ? localStorage : sessionStorage;
+  const outro = destino === localStorage ? sessionStorage : localStorage;
+  try {
+    outro.removeItem(CHAVE);
+  } catch {
+  }
+  destino.setItem(CHAVE, JSON.stringify({ token, usuario }));
   window.dispatchEvent(new Event("bloom-sessao-atualizada"));
+}
+
+function lerGuardada() {
+  for (const armazenamento of [localStorage, sessionStorage]) {
+    try {
+      const valor = armazenamento.getItem(CHAVE);
+      if (valor) return JSON.parse(valor);
+    } catch {
+    }
+  }
+  return null;
+}
+
+function apagarSessao() {
+  for (const armazenamento of [localStorage, sessionStorage]) {
+    try {
+      armazenamento.removeItem(CHAVE);
+    } catch {
+    }
+  }
 }
 
 export function obterSessao() {
   try {
-    const sessao = JSON.parse(localStorage.getItem(CHAVE));
+    const sessao = lerGuardada();
     if (!sessao?.token) return null;
 
     const payload = JSON.parse(
       atob(sessao.token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))
     );
     if (payload.exp * 1000 < Date.now()) {
-      localStorage.removeItem(CHAVE);
+      apagarSessao();
       return null;
     }
     return sessao;
@@ -30,7 +66,7 @@ export function obterSessao() {
 }
 
 export function sair() {
-  localStorage.removeItem(CHAVE);
+  apagarSessao();
   window.dispatchEvent(new Event("bloom-sessao-atualizada"));
 }
 

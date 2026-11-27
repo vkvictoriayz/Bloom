@@ -4,6 +4,8 @@ import CampoSenha from '../CampoSenha'
 import Botao from '../ui/Botao'
 import { Aviso } from '../ui/Campo'
 import { alterarSenha } from '../../services/recursos'
+import { problemaSenha } from '../../utils/senha'
+import RequisitosSenha from './RequisitosSenha'
 
 function FormularioSenha() {
   const [senhaAtual, setSenhaAtual] = useState('')
@@ -14,7 +16,8 @@ function FormularioSenha() {
   async function enviar(e) {
     e.preventDefault()
     if (!senhaAtual || !novaSenha) return setEstado({ tipo: 'erro', texto: 'Preencha a senha atual e a nova.' })
-    if (novaSenha.length < 8) return setEstado({ tipo: 'erro', texto: 'A nova senha deve ter pelo menos 8 caracteres.' })
+    const problema = problemaSenha(novaSenha)
+    if (problema) return setEstado({ tipo: 'erro', texto: problema })
     if (novaSenha !== confirmarSenha) return setEstado({ tipo: 'erro', texto: 'As senhas novas não são iguais.' })
     setEstado({ tipo: 'enviando' })
     try {
@@ -31,7 +34,8 @@ function FormularioSenha() {
   return (
     <form onSubmit={enviar} noValidate className="flex max-w-md flex-col gap-4">
       <CampoSenha rotulo="Senha atual" valor={senhaAtual} aoMudar={setSenhaAtual} autoComplete="current-password" />
-      <CampoSenha rotulo="Nova senha" valor={novaSenha} aoMudar={setNovaSenha} placeholder="Mínimo de 8 caracteres" autoComplete="new-password" />
+      <CampoSenha rotulo="Nova senha" valor={novaSenha} aoMudar={setNovaSenha} autoComplete="new-password" />
+      {novaSenha && <RequisitosSenha senha={novaSenha} />}
       <CampoSenha rotulo="Confirme a nova senha" valor={confirmarSenha} aoMudar={setConfirmarSenha} autoComplete="new-password" />
       {(estado.tipo === 'erro' || estado.tipo === 'sucesso') && <Aviso tipo={estado.tipo}>{estado.texto}</Aviso>}
       <Botao type="submit" variante="secundario" className="self-start" disabled={estado.tipo === 'enviando'}>

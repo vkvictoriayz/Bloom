@@ -59,6 +59,10 @@ export const desbloquearConversa = (id) => chamar(`/mensagens/candidatas/${encod
 export const lerPrivacidade = () => chamar('/candidata/privacidade').then((r) => r.privacidade)
 export const salvarPrivacidade = (corpo) => chamar('/candidata/privacidade', { method: 'PUT', corpo }).then((r) => r.privacidade)
 
+// Dados de identificação (só a própria candidata).
+export const lerIdentificacao = () => chamar('/candidata/identificacao').then((r) => r.identificacao)
+export const salvarIdentificacao = (corpo) => chamar('/candidata/identificacao', { method: 'PUT', corpo })
+
 export const excluirConta = (corpo) => chamar('/auth/conta', { method: 'DELETE', corpo })
 
 export const alterarSenha = (corpo) => chamar('/auth/senha', { method: 'PUT', corpo })

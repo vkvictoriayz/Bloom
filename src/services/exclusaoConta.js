@@ -64,6 +64,9 @@ export async function excluirUsuaria(id) {
     await apagar("DELETE FROM REDEFINICAO_SENHA WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
     await apagar("DELETE FROM VERIFICACAO_EMAIL WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
     await apagar("DELETE FROM USUARIA_VERIFICACAO WHERE id_usuario = :id", r, t);
+    await apagar("DELETE FROM USUARIA_IDENTIFICACAO WHERE id_usuario = :id", r, t);
+    await apagar("DELETE FROM CONSENTIMENTO WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
+    await apagar("DELETE FROM CONTA_OAUTH WHERE tipo_conta = 'usuaria' AND id_conta = :id", r, t);
     await apagar("DELETE FROM CADASTRO_USUARIA WHERE id_usuario = :id", r, t);
   });
 }
@@ -106,6 +109,8 @@ export async function excluirEmpresa(id) {
     await apagar("DELETE FROM IMAGEM_PERFIL WHERE dono_tipo = 'empresa' AND dono_id = :id", r, t);
     await apagar("DELETE FROM REDEFINICAO_SENHA WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
     await apagar("DELETE FROM VERIFICACAO_EMAIL WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
+    await apagar("DELETE FROM CONSENTIMENTO WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
+    await apagar("DELETE FROM CONTA_OAUTH WHERE tipo_conta = 'empresa' AND id_conta = :id", r, t);
     await apagar("DELETE FROM CADASTRO_EMPRESA WHERE id_empresa = :id", r, t);
   });
 

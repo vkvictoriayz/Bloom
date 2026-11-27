@@ -9,6 +9,7 @@ import { Empresa, Usuaria } from "../models/index.js";
 import { Assinatura, Pagamento, Plano } from "../models/Premium.js";
 import { PublicacaoImagem } from "../models/RedeSocial.js";
 import { EmpresaCadastro, UsuariaVerificacao } from "../models/Verificacao.js";
+import { UsuariaIdentificacao } from "../models/Identificacao.js";
 import { excluirEmpresa, excluirUsuaria } from "../services/exclusaoConta.js";
 import { notificar } from "../services/notificacoes.js";
 import { limparCacheSuspensao } from "../services/suspensao.js";
@@ -387,10 +388,16 @@ export const verCandidata = comTratamento(async (req, res) => {
     Assinatura.findOne({ where: { tipoConta: "usuaria", contaId: id }, order: [["id", "DESC"]] }),
   ]);
   const vagas = new Map((await Vaga.findAll({ where: { id: { [Op.in]: cands.map((c) => c.vagaId).concat(0) } } })).map((v) => [v.id, v.titulo]));
+  // Nome civil é dado de identificação: mostrado ao painel só quando difere do nome exibido,
+  // e cada consulta fica registrada. A identidade de gênero nunca é enviada ao painel.
+  const ident = await UsuariaIdentificacao.findByPk(id, { attributes: ["nomeCivil"] });
+  const nomeCivil = ident && ident.nomeCivil !== u.nome ? ident.nomeCivil : null;
+  if (nomeCivil) await registrarAcao(req.admin.id, "ver_nome_civil", "CADASTRO_USUARIA", id);
   return res.json({
     candidata: {
       id: u.id,
       nome: u.nome,
+      nomeCivil,
       email: u.email,
       telefone: u.telefone ?? "",
       cpf: mascararCpf(u.cpf),

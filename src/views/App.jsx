@@ -19,6 +19,10 @@ import Cadastro from './pages/Cadastro'
 import RecuperarSenha from './pages/RecuperarSenha'
 import RedefinirSenha from './pages/RedefinirSenha'
 import ConfirmarEmail from './pages/ConfirmarEmail'
+import CadastroConcluido from './pages/CadastroConcluido'
+import EntrarSocial from './pages/EntrarSocial'
+import TermosUso from './pages/TermosUso'
+import PoliticaPrivacidade from './pages/PoliticaPrivacidade'
 import Empresas from './pages/Empresas'
 import EmpresaDetalhe from './pages/EmpresaDetalhe'
 
@@ -95,6 +99,10 @@ function App() {
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
         <Route path="/redefinir-senha" element={<RedefinirSenha />} />
         <Route path="/confirmar-email" element={<ConfirmarEmail />} />
+        <Route path="/cadastro/concluido" element={<CadastroConcluido />} />
+        <Route path="/entrar/social" element={<EntrarSocial />} />
+        <Route path="/termos" element={<TermosUso />} />
+        <Route path="/privacidade" element={<PoliticaPrivacidade />} />
 
         <Route path="/empresas" element={<Empresas />} />
         <Route path="/empresas/:slug" element={<EmpresaDetalhe />} />

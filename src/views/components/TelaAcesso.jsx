@@ -1,24 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import Icone from './Icone'
 import Logo, { Borboleta } from './Logo'
-import CenaAcesso from './borboleta/CenaAcesso'
-import { CENA_ESCURA, FUNDO_CENA } from './borboleta/cenas'
-import { IlustracaoCodigo, IlustracaoConexoes, IlustracaoEmpresa } from './ilustracoes/Ilustracoes'
+import CarrosselVagas from './conta/CarrosselVagas'
+import TextoDesfocado from './movimento/TextoDesfocado'
 import { cn } from '../lib/cn'
-
-const ILUSTRACOES = {
-  codigo: IlustracaoCodigo,
-  conexoes: IlustracaoConexoes,
-  empresa: IlustracaoEmpresa,
-}
-
-const VISUAL_PADRAO = {
-  ilustracao: 'codigo',
-  frase: 'Florescer é voltar para você.',
-  itens: [],
-}
 
 const TROCAS = {
   '/login': { publico: 'candidata', candidata: '/login', empresa: '/empresa/login' },
@@ -28,13 +15,30 @@ const TROCAS = {
   '/empresa/cadastro': { publico: 'empresa', candidata: '/cadastro', empresa: '/empresa/cadastro' },
 }
 
+const CAMPO = 'input:not([type=checkbox]):not([type=radio])'
+
+// Estilo dos campos dentro das telas de acesso (escopo local: não muda os outros formulários do site).
+const ESTILO_FORMULARIO = cn(
+  '[&_input:not([type=checkbox]):not([type=radio])]:h-12 [&_input:not([type=checkbox]):not([type=radio])]:rounded-xl [&_input:not([type=checkbox]):not([type=radio])]:border-vinho-escuro/12 [&_input:not([type=checkbox]):not([type=radio])]:bg-white/60',
+  '[&_select]:h-12 [&_select]:rounded-xl [&_select]:border-vinho-escuro/12 [&_select]:bg-white/60',
+  '[&_input:not([type=checkbox]):not([type=radio]):hover]:border-rosa/40 [&_select:hover]:border-rosa/40',
+  '[&_input:not([type=checkbox]):not([type=radio]):focus]:border-rosa [&_input:not([type=checkbox]):not([type=radio]):focus]:bg-white [&_input:not([type=checkbox]):not([type=radio]):focus]:ring-rosa/15',
+  '[&_select:focus]:border-rosa [&_select:focus]:ring-rosa/15',
+  '[&_input]:transition-[border-color,box-shadow,background-color] [&_input]:duration-300',
+  '[&_input[aria-invalid=true]]:border-erro/60',
+  '[&_button[type=submit]]:h-12 [&_button[type=submit]]:rounded-full [&_button[type=submit]]:bg-rosa [&_button[type=submit]]:shadow-[0_12px_26px_-14px_rgba(94,26,50,0.75)]',
+  '[&_button[type=submit]:hover]:bg-vinho [&_button[type=submit]:disabled]:shadow-none',
+  // Luz rosa que segue o cursor dentro do campo (inspirada no Input do Aceternity UI).
+  '[&_input:not([type=checkbox]):not([type=radio])]:[background-image:radial-gradient(170px_circle_at_var(--luz-x,-400px)_var(--luz-y,-400px),rgba(227,161,181,0.32),transparent_72%)]'
+)
+
 function SeletorPublico({ troca }) {
   const opcoes = [
     { id: 'candidata', rotulo: 'Sou candidata', icone: 'perfil' },
     { id: 'empresa', rotulo: 'Sou empresa', icone: 'predio' },
   ]
   return (
-    <nav aria-label="Tipo de conta" className="mb-8 flex w-fit rounded-full border border-linha bg-papel p-1">
+    <nav aria-label="Tipo de conta" className="mx-auto mt-8 grid w-full grid-cols-2 rounded-full border border-vinho-escuro/10 bg-white/50 p-1">
       {opcoes.map((op) => {
         const ativo = troca.publico === op.id
         return (
@@ -43,11 +47,11 @@ function SeletorPublico({ troca }) {
             to={troca[op.id]}
             aria-current={ativo ? 'page' : undefined}
             className={cn(
-              'inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-colors',
-              ativo ? 'bg-vinho text-white' : 'text-tinta-2 hover:text-tinta'
+              'inline-flex h-9 items-center justify-center gap-1.5 rounded-full px-4 text-[13px] font-semibold transition-[background-color,color] duration-300',
+              ativo ? 'bg-white text-vinho-escuro shadow-[0_6px_16px_-10px_rgba(94,26,50,0.5)]' : 'text-tinta-2 hover:text-vinho-escuro'
             )}
           >
-            <Icone nome={op.icone} tamanho={16} /> {op.rotulo}
+            <Icone nome={op.icone} tamanho={15} /> {op.rotulo}
           </Link>
         )
       })}
@@ -55,10 +59,12 @@ function SeletorPublico({ troca }) {
   )
 }
 
-function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, visual = {} }) {
-  const { ilustracao, imagem, frase, itens, cena } = { ...VISUAL_PADRAO, ...visual }
-  const escura = CENA_ESCURA.has(cena)
-  const Ilustracao = ILUSTRACOES[ilustracao] ?? IlustracaoCodigo
+/**
+ * Moldura das telas de acesso (login, cadastro, recuperação de senha…).
+ * Esquerda: marca BLOOM (como na página inicial) + formulário. Direita: vagas em destaque sobre a borboleta.
+ * ocultarTitulo: o h1 fica só para leitores de tela (no login, a marca já faz o papel de título visual).
+ */
+function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, semFormulario = false, ocultarTitulo = false }) {
   const { pathname } = useLocation()
   const troca = TROCAS[pathname]
 
@@ -66,105 +72,107 @@ function TelaAcesso({ titulo, subtitulo, etiqueta, aoEnviar, children, rodape, v
     document.title = `${titulo} · BLOOM`
   }, [titulo])
 
-  function enviar(evento) {
-    evento.preventDefault()
-    aoEnviar()
+  // Posição do cursor dentro do campo apontado, para a luz rosa acompanhar o mouse.
+  const campoIluminado = useRef(null)
+  function apagarLuz() {
+    campoIluminado.current?.style.removeProperty('--luz-x')
+    campoIluminado.current?.style.removeProperty('--luz-y')
+    campoIluminado.current = null
+  }
+  function iluminarCampo(evento) {
+    const campo = evento.target.closest?.(CAMPO)
+    if (campo !== campoIluminado.current) apagarLuz()
+    if (!campo) return
+    const r = campo.getBoundingClientRect()
+    campo.style.setProperty('--luz-x', `${evento.clientX - r.left}px`)
+    campo.style.setProperty('--luz-y', `${evento.clientY - r.top}px`)
+    campoIluminado.current = campo
   }
 
+  function enviar(evento) {
+    evento.preventDefault()
+    aoEnviar?.()
+  }
+
+  const conteudo = semFormulario ? (
+    <div className="mt-7 flex flex-col gap-5">{children}</div>
+  ) : (
+    <form className={cn('mt-7 flex flex-col gap-4', ESTILO_FORMULARIO)} onSubmit={enviar} onPointerMove={iluminarCampo} onPointerLeave={apagarLuz} noValidate>
+      {children}
+    </form>
+  )
+
   return (
-    <div className="flex min-h-screen flex-col bg-papel">
-      <header className="border-b border-linha bg-branco">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="rounded-sm" title="Voltar para a página inicial">
-            <Logo />
-          </Link>
-          <Link to="/" className="inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-tinta-2 hover:bg-papel-2 hover:text-tinta">
-            <Icone nome="voltar" tamanho={16} /> Início
-          </Link>
-        </div>
+    <div className="relative isolate min-h-screen overflow-x-clip bg-[linear-gradient(120deg,#fbf5f7_0%,#f8ecef_45%,#f1dce3_100%)]">
+      {/* Borboleta da Bloom grande e translúcida, como no topo da página inicial */}
+      <Borboleta
+        tamanho={100}
+        className="pointer-events-none absolute top-[4%] -right-[30vw] -z-10 h-auto w-[95vw] rotate-[-8deg] text-[#d98ba3] opacity-[0.16] lg:top-[3%] lg:-right-[3vw] lg:w-[min(56vw,118vh)] lg:max-w-none lg:opacity-[0.22]"
+      />
+
+      <header className="flex h-20 items-center justify-between px-6 sm:px-12 lg:h-24">
+        <Link to="/" className="rounded-sm" title="Voltar para a página inicial">
+          <Logo />
+        </Link>
+        <Link to="/" className="inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium text-tinta-2 transition-colors hover:text-vinho-escuro lg:hidden">
+          <Icone nome="voltar" tamanho={16} /> Início
+        </Link>
       </header>
 
-      <main className="relative isolate flex flex-1 items-center justify-center overflow-hidden px-4 py-8 sm:px-6 lg:py-12">
-        <Borboleta tamanho={520} className="pointer-events-none absolute -right-28 -bottom-32 -z-10 rotate-[-12deg] text-blush/70 max-sm:hidden" />
-        <Borboleta tamanho={260} className="pointer-events-none absolute -top-10 -left-16 -z-10 rotate-[14deg] text-blush/50 max-lg:hidden" />
-        <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-linha bg-branco lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
-          <section className="animar-entrada px-6 py-8 sm:px-10 sm:py-10 lg:px-12">
-            {troca && <SeletorPublico troca={troca} />}
-            {cena ? (
-              <CenaAcesso variante={cena} compacta className="mb-6 h-44 rounded-xl lg:hidden" />
-            ) : imagem ? (
-              <img src={imagem} alt="" className="mb-6 h-40 w-full rounded-xl bg-papel object-cover lg:hidden" width="1024" height="1536" />
-            ) : (
-              <div className="mb-6 rounded-xl bg-papel px-6 py-4 lg:hidden">
-                <Ilustracao className="mx-auto max-w-[260px]" />
-              </div>
-            )}
-            {etiqueta && <p className="mb-2 text-xs font-bold tracking-[0.16em] text-vinho uppercase">{etiqueta}</p>}
-            <h1 className="font-display text-3xl leading-tight text-tinta sm:text-[2.4rem]">{titulo}</h1>
-            {subtitulo && <p className="mt-2 text-[15px] text-suave">{subtitulo}</p>}
+      <div className="mx-auto grid max-w-[92rem] gap-10 px-6 pb-16 sm:px-12 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)] lg:gap-20 xl:gap-32">
+        <main className="mx-auto w-full max-w-[25rem] lg:mx-0 lg:pt-2">
+          <div className="text-center">
+            <p className="text-[11px] font-semibold tracking-[0.3em] text-vinho-escuro/80 uppercase">A rede das mulheres da tecnologia</p>
+            <p aria-hidden="true" className="mt-3 font-display text-[3.6rem] leading-none font-medium tracking-[0.06em] text-vinho-escuro sm:text-[4.4rem]">
+              BLOOM
+            </p>
+            <p className="mx-auto mt-4 max-w-[18rem] text-[17px] leading-snug text-tinta-2">Vagas, comunidade e candidaturas acompanhadas, num só lugar.</p>
+          </div>
 
-            <form className="mt-8 flex flex-col gap-5" onSubmit={enviar} noValidate>
-              {children}
-            </form>
+          {troca && <SeletorPublico troca={troca} />}
 
-            {rodape && <div className="mt-8 flex flex-col gap-2 border-t border-linha pt-6 text-sm text-tinta-2">{rodape}</div>}
-          </section>
+          <div className={cn('mt-8', ocultarTitulo && 'sr-only')}>
+            {etiqueta && <p className="mb-2 text-xs font-semibold tracking-[0.24em] text-rosa uppercase">{etiqueta}</p>}
+            <h1 className="font-display text-[1.75rem] leading-tight text-tinta">
+              <TextoDesfocado key={titulo} texto={titulo} />
+            </h1>
+            {subtitulo && <p className="mt-1.5 text-[15px] leading-relaxed text-tinta-2">{subtitulo}</p>}
+          </div>
 
-          <aside className="hidden p-3 lg:block">
-            {cena ? (
-              <div className="sticky top-6 flex h-[min(620px,calc(100dvh-3rem))] min-h-[520px] flex-col justify-end overflow-hidden rounded-xl">
-                <CenaAcesso variante={cena} className="absolute inset-0" />
-                <div className="relative px-8 pt-20 pb-9" style={{ backgroundImage: `linear-gradient(to top, ${FUNDO_CENA[cena] ?? '#fbf7f4'} 45%, transparent)` }}>
-                  <p className={cn('max-w-sm font-display text-3xl leading-tight', escura ? 'text-white' : 'text-vinho-escuro')}>{frase}</p>
-                </div>
-              </div>
-            ) : (
-            <div className="flex h-full min-h-[560px] flex-col justify-between rounded-xl bg-papel p-8">
-              {imagem ? (
-                <div className="relative -mx-8 -mt-8 mb-6 min-h-[320px] flex-1 overflow-hidden rounded-t-xl">
-                  <img
-                    src={imagem}
-                    alt=""
-                    className="absolute inset-0 size-full object-cover"
-                    style={{ objectPosition: 'center 45%' }}
-                    width="1024"
-                    height="1536"
-                  />
-                </div>
-              ) : (
-                <Ilustracao className="mx-auto max-w-[400px]" />
-              )}
-              <div>
-                <p className="max-w-sm font-display text-3xl leading-tight text-vinho-escuro italic">{frase}</p>
-                {itens.length > 0 && (
-                  <ul className="mt-5 flex flex-col gap-2 text-sm text-tinta-2">
-                    {itens.map((item) => (
-                      <li key={item} className="flex items-center gap-2.5">
-                        <span className="grid size-5 shrink-0 place-items-center rounded-full bg-vinho text-white">
-                          <Icone nome="check" tamanho={12} />
-                        </span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-            )}
-          </aside>
-        </div>
-      </main>
+          {conteudo}
+
+          {rodape && <div className="mt-7 flex flex-col items-center gap-2 text-center text-sm text-tinta-2">{rodape}</div>}
+
+          <p className="mt-8 text-center text-xs text-suave">
+            <Link to="/termos" className="hover:text-vinho hover:underline">
+              Termos de Uso
+            </Link>
+            <span className="mx-2" aria-hidden="true">
+              ·
+            </span>
+            <Link to="/privacidade" className="hover:text-vinho hover:underline">
+              Política de Privacidade
+            </Link>
+          </p>
+        </main>
+
+        {/* Computador: vagas em destaque passando sobre a borboleta */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 flex min-h-[calc(100vh-8rem)] items-center">
+            <CarrosselVagas />
+          </div>
+        </aside>
+      </div>
     </div>
   )
 }
 
 export function GrupoCampos({ indice, titulo, children }) {
   return (
-    <fieldset className="flex flex-col gap-5">
-      <legend className="mb-4 flex w-full items-center gap-3 text-xs font-bold tracking-[0.14em] text-suave uppercase">
-        <span className="grid size-6 place-items-center rounded-full bg-blush text-[11px] text-vinho">{indice}</span>
+    <fieldset className="mt-2 flex flex-col gap-4">
+      <legend className="mb-3 flex items-center gap-2.5 text-sm font-semibold text-tinta">
+        <span className="grid size-7 place-items-center rounded-full bg-white/70 text-xs text-vinho-escuro">{indice}</span>
         {titulo}
-        <span aria-hidden="true" className="h-px flex-1 bg-linha" />
       </legend>
       {children}
     </fieldset>
@@ -173,7 +181,7 @@ export function GrupoCampos({ indice, titulo, children }) {
 
 export function LinkAcesso({ to, children }) {
   return (
-    <Link to={to} className="font-semibold text-vinho underline-offset-4 hover:underline">
+    <Link to={to} className="font-semibold text-vinho-escuro underline-offset-4 hover:underline">
       {children}
     </Link>
   )

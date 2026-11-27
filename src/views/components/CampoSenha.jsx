@@ -3,13 +3,14 @@ import { useState } from 'react'
 import Icone from './Icone'
 import { Campo, Entrada } from './ui/Campo'
 
-function CampoSenha({ rotulo, valor, aoMudar, placeholder, autoComplete = 'current-password', acessorio }) {
+function CampoSenha({ rotulo, valor, aoMudar, placeholder, autoComplete = 'current-password', acessorio, erro, obrigatorio, ajuda, rotuloOculto, icone }) {
   const [mostrar, setMostrar] = useState(false)
 
   return (
-    <Campo rotulo={rotulo} acessorio={acessorio}>
+    <Campo rotulo={rotulo} acessorio={acessorio} erro={erro} obrigatorio={obrigatorio} ajuda={ajuda} rotuloOculto={rotuloOculto}>
       {(props) => (
         <div className="relative">
+          {icone && <Icone nome={icone} tamanho={17} className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-suave" />}
           <Entrada
             {...props}
             type={mostrar ? 'text' : 'password'}
@@ -17,7 +18,7 @@ function CampoSenha({ rotulo, valor, aoMudar, placeholder, autoComplete = 'curre
             value={valor}
             onChange={(e) => aoMudar(e.target.value)}
             autoComplete={autoComplete}
-            className="pr-12"
+            className={icone ? 'pr-12 pl-11' : 'pr-12'}
           />
           <button
             type="button"

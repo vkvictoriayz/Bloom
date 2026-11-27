@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 
 import { SituacaoEmail } from '../../components/conta/ConfirmacaoEmail'
+import DadosIdentificacao from '../../components/conta/DadosIdentificacao'
 import ExcluirConta from '../../components/conta/ExcluirConta'
 import FormularioEmail from '../../components/conta/FormularioEmail'
 import FormularioSenha from '../../components/conta/FormularioSenha'
@@ -47,7 +48,7 @@ function Configuracoes() {
         <Secao icone="perfil" titulo="Dados da conta" descricao="Informados no cadastro.">
           <dl className="grid gap-4 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-suave">Nome</dt>
+              <dt className="text-suave">Nome exibido</dt>
               <dd className="font-semibold text-tinta">{usuario?.nome}</dd>
             </div>
             <div>
@@ -58,7 +59,7 @@ function Configuracoes() {
             </div>
           </dl>
           <p className="mt-4 text-sm text-suave">
-            O nome é alterado em{' '}
+            O nome exibido é o seu nome social, quando preenchido. Ele pode ser alterado em Dados de identificação, logo abaixo, ou em{' '}
             <Link to="/candidata/perfil/editar" className="font-semibold text-vinho hover:underline">
               Editar perfil
             </Link>
@@ -67,6 +68,10 @@ function Configuracoes() {
           <div className="mt-4">
             <FormularioEmail emailAtual={usuario?.email} />
           </div>
+        </Secao>
+
+        <Secao icone="escudo" titulo="Dados de identificação" descricao="Nome civil, nome social e identidade de gênero. Informações privadas.">
+          <DadosIdentificacao />
         </Secao>
 
         <Secao icone="cadeado" titulo="Segurança" descricao="Senha de acesso.">

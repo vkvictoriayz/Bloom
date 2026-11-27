@@ -1,6 +1,6 @@
 # Licenças de terceiros
 
-Alguns componentes de animação em `src/views/components/movimento/` foram adaptados da biblioteca VengeanceUI (https://github.com/Ashutoshx7/VengeanceUI), distribuída sob a licença MIT reproduzida abaixo.
+Alguns componentes de animação em `src/views/components/movimento/` (incluindo `RevelacaoPixel.jsx`, adaptado de "tap-reveal") foram adaptados da biblioteca VengeanceUI (https://github.com/Ashutoshx7/VengeanceUI), distribuída sob a licença MIT reproduzida abaixo.
 
 ```
 MIT License
@@ -25,3 +25,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Referências de design (sem cópia de código)
+
+Os efeitos abaixo foram escritos para a Bloom tomando como referência visual componentes dessas bibliotecas. Nenhum código delas foi copiado:
+
+- `src/views/components/movimento/TextoDesfocado.jsx`: inspirado em "Blur Text", do React Bits (https://reactbits.dev).
+- `src/views/components/movimento/FeixeBorda.jsx`: inspirado em "Border Beam", do Magic UI (https://magicui.design).
+- Luz que segue o cursor nos campos de login e cadastro (`TelaAcesso.jsx`): inspirada no "Input" do formulário de cadastro do Aceternity UI (https://ui.aceternity.com).

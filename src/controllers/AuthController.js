@@ -10,6 +10,9 @@ import { consultaCpfAtiva, ErroConsultaCpf, verificarCpf } from "../services/cpf
 import { enviarEmail } from "../services/email.js";
 import { excluirEmpresa, excluirUsuaria } from "../services/exclusaoConta.js";
 import { Assinatura } from "../models/Premium.js";
+import { IDENTIDADES_GENERO, UsuariaIdentificacao } from "../models/Identificacao.js";
+import { faltaConsentimento, lerConsentimentos, registrarConsentimentos } from "../services/consentimento.js";
+import { ContaOauth, lerPreCadastro } from "../services/oauth.js";
 import { validarCNPJ, validarCPF } from "../utils/documentos.js";
 import { criarLimitador } from "../utils/limitador.js";
 import { criarToken } from "../utils/jwt.js";
@@ -29,7 +32,7 @@ const falhasLogin = criarLimitador({ janela: 15 * 60 * 1000, maximo: 5 });
 const pedidosRedefinicao = criarLimitador({ janela: 60 * 60 * 1000, maximo: 3 });
 const pedidosConfirmacao = criarLimitador({ janela: 60 * 60 * 1000, maximo: 3 });
 
-function gerarSessao(conta, tipo) {
+export function gerarSessao(conta, tipo) {
   const horas = Number(process.env.JWT_EXPIRES_HOURS ?? 8);
   const token = criarToken({ sub: conta.id, tipo, nome: conta.nome }, process.env.JWT_SECRET, horas * 3600);
   return { token, usuario: { id: conta.id, nome: conta.nome, email: conta.email, tipo, emailVerificado: Boolean(conta.emailVerificadoEm) } };
@@ -39,9 +42,19 @@ function erro(res, status, mensagem, campo) {
   return res.status(status).json({ erro: mensagem, campo });
 }
 
+// Requisitos de senha nova (os mesmos mostrados no front, em utils/senha.js).
+const REQUISITOS_SENHA = [
+  [(s) => /[a-z]/.test(s), "uma letra minúscula"],
+  [(s) => /[A-Z]/.test(s), "uma letra maiúscula"],
+  [(s) => /\d/.test(s), "um número"],
+  [(s) => /[^A-Za-z0-9]/.test(s), "um caractere especial (ex.: ! @ # ?)"],
+];
+
 function validarSenha(senha, confirmarSenha) {
   if (typeof senha !== "string" || senha.length < SENHA_MINIMA) return [`A senha deve ter pelo menos ${SENHA_MINIMA} caracteres.`, "senha"];
   if (Buffer.byteLength(senha) > 72) return ["A senha pode ter até 72 caracteres.", "senha"];
+  const faltando = REQUISITOS_SENHA.filter(([ok]) => !ok(senha)).map(([, nome]) => nome);
+  if (faltando.length) return [`A senha precisa ter ${faltando.join(", ")}.`, "senha"];
   if (senha !== confirmarSenha) return ["As senhas não são iguais.", "confirmarSenha"];
   return null;
 }
@@ -52,7 +65,8 @@ function validarEmail(email) {
   return null;
 }
 
-function validarTelefone(telefone) {
+function validarTelefone(telefone, obrigatorio = false) {
+  if (obrigatorio && !telefone) return ["Informe o telefone.", "telefone"];
   if (telefone && (telefone.length < 10 || telefone.length > 11)) return ["Use DDD + número, com 10 ou 11 dígitos.", "telefone"];
   return null;
 }
@@ -67,17 +81,33 @@ function validarNascimento(valor) {
 
 export async function cadastrarUsuaria(req, res) {
   try {
-    const nome = texto(req.body.nome);
-    const email = texto(req.body.email).toLowerCase();
+    // nomeCivil: nome do documento. "nome" segue aceito para clientes antigos.
+    const nomeCivil = texto(req.body.nomeCivil ?? req.body.nome);
+    const nomeSocial = texto(req.body.nomeSocial);
+    const identidadeGenero = texto(req.body.identidadeGenero);
+    // Cadastro vindo do Google/GitHub: o e-mail é o confirmado pelo provedor e não há senha para criar.
+    const pre = req.body.oauth ? lerPreCadastro(req.body.oauth, "usuaria") : null;
+    if (req.body.oauth && !pre) return erro(res, 400, "O acesso pelo Google/GitHub expirou. Comece de novo pelo botão de login social.", "oauth");
+    const email = pre ? pre.email : texto(req.body.email).toLowerCase();
     const cpf = soDigitos(req.body.cpf);
     const nascimento = texto(req.body.nascimento);
     const telefone = soDigitos(req.body.telefone);
     const { senha, confirmarSenha } = req.body;
+    const consentimentos = lerConsentimentos(req.body);
 
-    if (nome.length < 2 || nome.length > 100) return erro(res, 400, "Informe seu nome completo.", "nome");
+    if (nomeCivil.length < 2 || nomeCivil.length > 100) return erro(res, 400, "Informe seu nome civil completo, como no documento.", "nomeCivil");
+    if (nomeSocial && (nomeSocial.length < 2 || nomeSocial.length > 100)) return erro(res, 400, "O nome social deve ter entre 2 e 100 caracteres.", "nomeSocial");
+    if (!IDENTIDADES_GENERO.includes(identidadeGenero)) return erro(res, 400, "Escolha uma opção de identidade de gênero.", "identidadeGenero");
     if (!validarCPF(cpf)) return erro(res, 400, "CPF inválido. Confira os números.", "cpf");
-    const falha = validarNascimento(nascimento) ?? validarEmail(email) ?? validarTelefone(telefone) ?? validarSenha(senha, confirmarSenha);
+    const falha =
+      validarNascimento(nascimento) ??
+      validarEmail(email) ??
+      validarTelefone(telefone, true) ??
+      (pre ? null : validarSenha(senha, confirmarSenha)) ??
+      faltaConsentimento(consentimentos);
     if (falha) return erro(res, 400, ...falha);
+    // Nome exibido na plataforma: o social tem prioridade.
+    const nome = nomeSocial || nomeCivil;
 
     const existente = await Usuaria.findOne({ where: { [Op.or]: [{ email }, { cpf }] } });
     if (existente) {
@@ -89,7 +119,7 @@ export async function cadastrarUsuaria(req, res) {
     let verificacao = { cpfStatus: "nao_verificado", cpfFonte: null, cpfVerificadoEm: null };
     if (consultaCpfAtiva()) {
       try {
-        const r = await verificarCpf({ cpf, nome, nascimento });
+        const r = await verificarCpf({ cpf, nome: nomeCivil, nascimento });
         verificacao = { cpfStatus: r.status, cpfFonte: r.fonte, cpfVerificadoEm: new Date() };
       } catch (e) {
         if (!(e instanceof ErroConsultaCpf)) throw e;
@@ -98,14 +128,18 @@ export async function cadastrarUsuaria(req, res) {
       }
     }
 
-    const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
+    // Sem senha escolhida (login social): guarda um hash aleatório; a pessoa pode criar uma em "Esqueci minha senha".
+    const senhaHash = await bcrypt.hash(pre ? randomBytes(32).toString("hex") : senha, SALT_ROUNDS);
     const usuaria = await sequelize.transaction(async (transaction) => {
-      const conta = await Usuaria.create({ nome, cpf, email, telefone: telefone || null, senhaHash }, { transaction });
+      const conta = await Usuaria.create({ nome, cpf, email, telefone, senhaHash, emailVerificadoEm: pre ? new Date() : null }, { transaction });
+      if (pre) await ContaOauth.create({ tipoConta: "usuaria", contaId: conta.id, provedor: pre.provedor, idProvedor: pre.idProvedor }, { transaction });
       await UsuariaVerificacao.create({ usuariaId: conta.id, ...verificacao }, { transaction });
+      await UsuariaIdentificacao.create({ usuariaId: conta.id, nomeCivil, nomeSocial: nomeSocial || null, identidadeGenero }, { transaction });
+      await registrarConsentimentos("usuaria", conta.id, consentimentos, transaction);
       return conta;
     });
 
-    const emailEnviado = await enviarConfirmacaoEmail("usuaria", usuaria);
+    const emailEnviado = pre ? false : await enviarConfirmacaoEmail("usuaria", usuaria);
     return res.status(201).json({ ...gerarSessao(usuaria, "usuaria"), verificacao: { cpf: verificacao.cpfStatus, emailEnviado } });
   } catch (e) {
     return tratarErro(res, e);
@@ -135,18 +169,25 @@ export async function consultarEmpresaPorCnpj(req, res) {
 export async function cadastrarEmpresa(req, res) {
   try {
     const cnpj = soDigitos(req.body.cnpj);
-    const email = texto(req.body.email).toLowerCase();
+    const pre = req.body.oauth ? lerPreCadastro(req.body.oauth, "empresa") : null;
+    if (req.body.oauth && !pre) return erro(res, 400, "O acesso pelo Google/GitHub expirou. Comece de novo pelo botão de login social.", "oauth");
+    const email = pre ? pre.email : texto(req.body.email).toLowerCase();
     const telefone = soDigitos(req.body.telefone);
     const responsavelNome = texto(req.body.responsavelNome);
     const responsavelCargo = texto(req.body.responsavelCargo);
     const nomeExibicao = texto(req.body.nomeExibicao ?? req.body.nome);
     const { senha, confirmarSenha } = req.body;
+    const consentimentos = lerConsentimentos(req.body);
 
     if (!validarCNPJ(cnpj)) return erro(res, 400, "CNPJ inválido. Confira os números.", "cnpj");
     if (responsavelNome.length < 2 || responsavelNome.length > 100) return erro(res, 400, "Informe o nome completo da pessoa responsável.", "responsavelNome");
-    if (responsavelCargo.length > 80) return erro(res, 400, "O cargo pode ter até 80 caracteres.", "responsavelCargo");
-    if (nomeExibicao.length > 150) return erro(res, 400, "O nome de exibição pode ter até 150 caracteres.", "nomeExibicao");
-    const falha = validarEmail(email) ?? validarTelefone(telefone) ?? validarSenha(senha, confirmarSenha);
+    if (responsavelCargo.length < 2 || responsavelCargo.length > 80) return erro(res, 400, "Informe o cargo da pessoa responsável (até 80 caracteres).", "responsavelCargo");
+    if (nomeExibicao.length > 150) return erro(res, 400, "O nome da empresa pode ter até 150 caracteres.", "nomeExibicao");
+    const falha =
+      validarEmail(email) ??
+      validarTelefone(telefone, true) ??
+      (pre ? null : validarSenha(senha, confirmarSenha)) ??
+      faltaConsentimento(consentimentos);
     if (falha) return erro(res, 400, ...falha);
     if (req.body.declaraRepresentacao !== true) {
       return erro(res, 400, "Confirme que você pode representar esta empresa.", "declaraRepresentacao");
@@ -176,9 +217,11 @@ export async function cadastrarEmpresa(req, res) {
     }
 
     const nome = nomeExibicao || dados.nomeFantasia || dados.razaoSocial;
-    const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
+    const senhaHash = await bcrypt.hash(pre ? randomBytes(32).toString("hex") : senha, SALT_ROUNDS);
     const empresa = await sequelize.transaction(async (transaction) => {
-      const conta = await Empresa.create({ nome: nome.slice(0, 150), cnpj, email, telefone: telefone || null, senhaHash }, { transaction });
+      const conta = await Empresa.create({ nome: nome.slice(0, 150), cnpj, email, telefone, senhaHash, emailVerificadoEm: pre ? new Date() : null }, { transaction });
+      if (pre) await ContaOauth.create({ tipoConta: "empresa", contaId: conta.id, provedor: pre.provedor, idProvedor: pre.idProvedor }, { transaction });
+      await registrarConsentimentos("empresa", conta.id, consentimentos, transaction);
       await EmpresaCadastro.create(
         {
           empresaId: conta.id,
@@ -192,7 +235,7 @@ export async function cadastrarEmpresa(req, res) {
           fonte: dados.fonte,
           consultadoEm: new Date(dados.consultadoEm),
           responsavelNome,
-          responsavelCargo: responsavelCargo || null,
+          responsavelCargo,
           declarouRepresentacaoEm: new Date(),
         },
         { transaction }
@@ -200,7 +243,7 @@ export async function cadastrarEmpresa(req, res) {
       return conta;
     });
 
-    const emailEnviado = await enviarConfirmacaoEmail("empresa", empresa);
+    const emailEnviado = pre ? false : await enviarConfirmacaoEmail("empresa", empresa);
     return res.status(201).json({ ...gerarSessao(empresa, "empresa"), verificacao: { representante: "pendente", emailEnviado } });
   } catch (e) {
     return tratarErro(res, e);

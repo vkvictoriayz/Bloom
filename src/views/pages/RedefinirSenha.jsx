@@ -4,7 +4,9 @@ import TelaAcesso, { LinkAcesso } from '../components/TelaAcesso'
 import CampoSenha from '../components/CampoSenha'
 import Botao from '../components/ui/Botao'
 import { Aviso } from '../components/ui/Campo'
+import RequisitosSenha from '../components/conta/RequisitosSenha'
 import { redefinirSenha } from '../services/auth'
+import { problemaSenha } from '../utils/senha'
 
 function RedefinirSenha() {
   const [parametros] = useSearchParams()
@@ -14,7 +16,8 @@ function RedefinirSenha() {
   const [estado, setEstado] = useState({ tipo: 'ocioso' })
 
   async function handleSubmit() {
-    if (senha.length < 8) return setEstado({ tipo: 'erro', texto: 'A senha deve ter pelo menos 8 caracteres.' })
+    const problema = problemaSenha(senha)
+    if (problema) return setEstado({ tipo: 'erro', texto: problema })
     if (senha !== confirmarSenha) return setEstado({ tipo: 'erro', texto: 'As senhas não são iguais.' })
     setEstado({ tipo: 'enviando' })
     try {
@@ -49,7 +52,8 @@ function RedefinirSenha() {
         </>
       ) : (
         <>
-          <CampoSenha rotulo="Nova senha" valor={senha} aoMudar={setSenha} placeholder="Mínimo de 8 caracteres" autoComplete="new-password" />
+          <CampoSenha rotulo="Nova senha" valor={senha} aoMudar={setSenha} autoComplete="new-password" />
+          <RequisitosSenha senha={senha} className="-mt-2" />
           <CampoSenha
             rotulo="Confirme a nova senha"
             valor={confirmarSenha}

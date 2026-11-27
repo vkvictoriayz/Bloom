@@ -55,11 +55,14 @@ function ItemNav({ item, mobile }) {
       end={ancora ? undefined : item.fim}
       className={
         mobile
-          ? 'block rounded-md px-3 py-3 text-base font-medium text-tinta-2 hover:bg-papel-2 hover:text-tinta aria-[current=page]:bg-blush aria-[current=page]:text-vinho'
-          : 'relative z-10 rounded-full px-3.5 py-2 text-[14px] font-medium text-tinta-2 transition-colors hover:text-vinho focus-visible:outline-offset-0 aria-[current=page]:font-semibold aria-[current=page]:text-vinho'
+          ? 'group flex items-center justify-between rounded-xl px-4 py-3.5 text-[15px] font-medium tracking-[0.01em] text-tinta-2 transition-colors duration-200 hover:bg-blush/60 hover:text-vinho-escuro aria-[current=page]:bg-blush aria-[current=page]:text-vinho'
+          : 'relative z-10 rounded-full px-4 py-2 text-[14px] font-medium tracking-[0.01em] text-tinta-2 transition-colors duration-300 hover:text-vinho-escuro focus-visible:outline-offset-0 aria-[current=page]:font-semibold aria-[current=page]:text-vinho'
       }
     >
       {item.rotulo}
+      {mobile && (
+        <span aria-hidden="true" className="text-rosa/60 transition-transform duration-200 group-hover:translate-x-1">→</span>
+      )}
     </Componente>
   )
 }
@@ -161,8 +164,10 @@ function Cabecalho() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 border-b bg-branco/95 backdrop-blur-sm transition-[border-color,box-shadow] duration-200',
-        rolou ? 'border-linha shadow-[0_1px_0_rgba(31,26,28,0.03)]' : 'border-transparent'
+        'sticky top-0 z-50 border-b backdrop-blur-md backdrop-saturate-150 transition-[border-color,box-shadow,background-color] duration-300',
+        rolou || menuAberto
+          ? 'border-rosa/10 bg-papel/90 shadow-[0_10px_30px_-22px_rgba(94,26,50,0.35)]'
+          : 'border-transparent bg-papel/70'
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6 lg:h-[72px] lg:px-8">
@@ -170,13 +175,13 @@ function Cabecalho() {
           <Logo />
         </Link>
 
-        <NavSpotlight rotulo="Navegação principal" className={cn('hidden gap-1 lg:flex', autenticada ? 'ml-4' : 'mx-auto')}>
+        <NavSpotlight rotulo="Navegação principal" className={cn('hidden gap-0.5 rounded-full border border-rosa/10 bg-white/60 p-1 lg:flex', autenticada ? 'ml-4' : 'mx-auto')}>
           {itens.map((item) => (
             <ItemNav key={item.rotulo} item={item} />
           ))}
         </NavSpotlight>
 
-        <div className={cn('hidden items-center gap-3 lg:flex', autenticada && 'ml-auto')}>
+        <div className={cn('hidden items-center gap-2 lg:flex', autenticada && 'ml-auto')}>
           {autenticada ? (
             <>
               {!empresa && <BuscaVagas className="w-56 xl:w-72" />}
@@ -184,11 +189,20 @@ function Cabecalho() {
             </>
           ) : (
             <>
-              <Botao as={Link} to="/login" variante="fantasma">
+              <Botao
+                as={Link}
+                to="/login"
+                variante="fantasma"
+                className="px-4 text-[14px] text-tinta-2 transition-colors duration-300 hover:bg-transparent hover:text-vinho-escuro"
+              >
                 Entrar
               </Botao>
-              <Botao as={Link} to="/cadastro">
-                Criar conta
+              <Botao
+                as={Link}
+                to="/cadastro"
+                className="bg-rosa px-5 text-[14px] shadow-[0_8px_20px_-10px_rgba(156,74,99,0.8)] transition-[background-color,box-shadow,transform] duration-300 hover:-translate-y-px hover:bg-vinho hover:shadow-[0_12px_24px_-10px_rgba(133,36,61,0.75)]"
+              >
+                Criar conta <Icone nome="seta" tamanho={15} />
               </Botao>
             </>
           )}
@@ -196,7 +210,7 @@ function Cabecalho() {
 
         <button
           type="button"
-          className="ml-auto grid size-10 place-items-center rounded-md text-tinta hover:bg-papel-2 lg:hidden"
+          className="ml-auto grid size-10 place-items-center rounded-full border border-rosa/15 bg-white/70 text-vinho-escuro transition-colors duration-200 hover:bg-blush lg:hidden"
           aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'}
           aria-expanded={menuAberto}
           aria-controls="menu-mobile"
@@ -207,7 +221,7 @@ function Cabecalho() {
       </div>
 
       {menuAberto && (
-        <div id="menu-mobile" className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-linha bg-papel px-4 pt-4 pb-6 sm:px-6 lg:hidden">
+        <div id="menu-mobile" className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-rosa/10 px-4 pt-3 pb-6 motion-safe:animate-[entrar_0.25s_ease_both] sm:px-6 lg:hidden">
           {autenticada && (
             <>
               <div className="mb-4 flex items-center gap-3 border-b border-linha pb-4">
@@ -223,24 +237,24 @@ function Cabecalho() {
             </>
           )}
 
-          <nav aria-label="Menu" className="flex flex-col">
+          <nav aria-label="Menu" className="flex flex-col gap-0.5">
             {itens.map((item) => (
               <ItemNav key={item.rotulo} item={item} mobile />
             ))}
             {autenticada && atalhos.map((a) => <ItemNav key={a.para} item={a} mobile />)}
           </nav>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 border-t border-linha pt-5">
+          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-rosa/10 pt-5">
             {autenticada ? (
               <Botao variante="secundario" className="col-span-2" onClick={handleSair}>
                 <Icone nome="sair" /> Sair
               </Botao>
             ) : (
               <>
-                <Botao as={Link} to="/login" variante="secundario">
+                <Botao as={Link} to="/login" variante="secundario" tamanho="lg" className="border-rosa/25 text-vinho-escuro hover:border-rosa/50 hover:bg-blush/50">
                   Entrar
                 </Botao>
-                <Botao as={Link} to="/cadastro">
+                <Botao as={Link} to="/cadastro" tamanho="lg" className="bg-rosa shadow-[0_8px_20px_-10px_rgba(156,74,99,0.8)] hover:bg-vinho">
                   Criar conta
                 </Botao>
               </>

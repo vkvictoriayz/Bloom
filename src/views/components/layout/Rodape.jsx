@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 
 import Icone from '../Icone'
-import Logo, { Borboleta } from '../Logo'
+import Logo from '../Logo'
+import BorboletaDecorativa from '../borboleta/BorboletaDecorativa'
 import { useSessao } from '../../hooks/useSessao'
 
 const estiloLink = 'group inline-flex w-fit items-center gap-1.5 text-sm text-tinta-2 sm:text-[15px] transition-colors hover:text-vinho'
@@ -24,7 +25,7 @@ function ItemLink({ para, children }) {
 function Coluna({ titulo, children }) {
   return (
     <nav aria-label={`Rodapé: ${titulo}`}>
-      <h2 className="text-xs font-bold tracking-[0.16em] text-suave uppercase">{titulo}</h2>
+      <h2 className="text-xs font-semibold tracking-[0.28em] text-rosa uppercase">{titulo}</h2>
       <ul className="mt-5 flex flex-col gap-3">{children}</ul>
     </nav>
   )
@@ -36,11 +37,11 @@ function Rodape() {
   const autenticada = Boolean(sessao?.usuario) && !empresa
 
   return (
-    <footer className="mx-auto w-full max-w-7xl px-4 pb-6 sm:px-6 lg:px-8 lg:pb-8">
-      <div className="relative isolate overflow-hidden rounded-2xl border border-linha bg-branco text-tinta">
-        <Borboleta tamanho={480} className="pointer-events-none absolute -right-24 -bottom-28 -z-10 rotate-[-12deg] text-blush/70 max-sm:hidden" />
+    <footer className="relative isolate w-full overflow-hidden border-t border-rosa/10 bg-white text-tinta">
+      <BorboletaDecorativa className="-right-20 -bottom-24 -z-10 hidden w-[26rem] sm:block" opacidade={0.22} rotacao={-12} ritmo="7s" duracaoFlutuar="12s" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
-        <div className="grid gap-10 px-6 pt-10 pb-10 sm:gap-12 sm:px-10 sm:pt-14 sm:pb-12 lg:grid-cols-[1.4fr_2fr] lg:gap-16 lg:px-14 lg:pt-16">
+        <div className="grid gap-10 pt-10 pb-12 sm:gap-12 sm:pt-12 sm:pb-14 lg:grid-cols-[1.4fr_2fr] lg:gap-20 lg:pt-14">
           <div className="max-w-md">
             <Logo />
             <p className="mt-6 font-display text-[1.7rem] leading-snug text-tinta sm:text-3xl">
@@ -48,9 +49,9 @@ function Rodape() {
             </p>
             <a
               href="mailto:contato@bloom.com.br"
-              className="mt-8 inline-flex items-center gap-2.5 rounded-full border border-linha bg-papel py-2 pr-4 pl-2 text-sm text-tinta-2 transition-colors hover:border-linha-forte hover:text-vinho"
+              className="mt-8 inline-flex items-center gap-2.5 rounded-full border border-rosa/15 bg-white/70 py-2 pr-4 pl-2 text-sm text-tinta-2 transition-colors duration-300 hover:border-rosa/40 hover:text-vinho-escuro"
             >
-              <span className="grid size-7 place-items-center rounded-full bg-vinho text-white" aria-hidden="true">
+              <span className="grid size-7 place-items-center rounded-full bg-rosa text-white" aria-hidden="true">
                 <Icone nome="email" tamanho={14} />
               </span>
               contato@bloom.com.br
@@ -97,7 +98,7 @@ function Rodape() {
           </div>
         </div>
 
-        <div className="mx-6 flex flex-col-reverse items-start justify-between gap-4 border-t border-linha py-6 text-xs text-suave sm:mx-10 sm:flex-row sm:items-center lg:mx-14">
+        <div className="flex flex-col-reverse items-start justify-between gap-4 border-t border-rosa/10 py-6 text-xs text-suave sm:flex-row sm:items-center">
           <p>© 2026 BLOOM · Florescendo oportunidades na tecnologia.</p>
           <button
             type="button"
@@ -105,7 +106,7 @@ function Rodape() {
             className="group inline-flex items-center gap-2 text-tinta-2 transition-colors hover:text-vinho"
           >
             Voltar ao topo
-            <span className="grid size-8 place-items-center rounded-full border border-linha-forte transition-colors group-hover:border-vinho group-hover:bg-vinho group-hover:text-white">
+            <span className="grid size-8 place-items-center rounded-full border border-rosa/30 transition-colors duration-300 group-hover:border-rosa group-hover:bg-rosa group-hover:text-white">
               <Icone nome="seta" tamanho={14} className="-rotate-90" />
             </span>
           </button>

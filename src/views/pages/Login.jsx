@@ -4,40 +4,39 @@ import { entrarUsuaria, salvarSessao } from "../services/auth";
 import { destinoAposLogin } from "../services/destino";
 import TelaAcesso, { LinkAcesso } from "../components/TelaAcesso";
 import CampoSenha from "../components/CampoSenha";
+import AcessoSocial from "../components/conta/AcessoSocial";
+import LembrarESenha from "../components/conta/LembrarESenha";
+import Icone from "../components/Icone";
 import Botao from "../components/ui/Botao";
 import { Aviso, Campo, Entrada } from "../components/ui/Campo";
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [lembrar, setLembrar] = useState(false);
+  const [erros, setErros] = useState({});
   const [mensagem, setMensagem] = useState("");
-  const [tipoMensagem, setTipoMensagem] = useState("");
   const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
 
   async function entrar() {
-    if (!email || !senha) {
-      setMensagem("Preencha todos os campos!");
-      setTipoMensagem("erro");
-      return;
-    }
-
-    if (!email.includes("@") || !email.includes(".")) {
-      setMensagem("Digite um e-mail válido!");
-      setTipoMensagem("erro");
-      return;
-    }
+    const novos = {};
+    if (!email.trim()) novos.email = "Informe seu e-mail.";
+    else if (!EMAIL.test(email.trim())) novos.email = "Digite um e-mail válido.";
+    if (!senha) novos.senha = "Informe sua senha.";
+    setErros(novos);
+    setMensagem("");
+    if (Object.keys(novos).length) return;
 
     setCarregando(true);
-    setMensagem("");
-
     try {
-      const sessao = await entrarUsuaria({ email, senha });
-      salvarSessao(sessao);
+      const sessao = await entrarUsuaria({ email: email.trim(), senha });
+      salvarSessao(sessao, { lembrar });
       navigate(destinoAposLogin(sessao));
     } catch (erro) {
       setMensagem(erro.message);
-      setTipoMensagem("erro");
     } finally {
       setCarregando(false);
     }
@@ -45,15 +44,13 @@ function Login() {
 
   return (
     <TelaAcesso
-      etiqueta="Bem-vinda de volta"
       titulo="Entre na sua conta"
-      subtitulo="Florescer é voltar para você."
-      visual={{ cena: 'voo', frase: 'Florescer é voltar para você.' }}
+      ocultarTitulo
       aoEnviar={entrar}
       rodape={
         <>
           <p>
-            Ainda não tem conta? <LinkAcesso to="/cadastro">Cadastre-se</LinkAcesso>
+            Não tem uma conta? <LinkAcesso to="/cadastro">Criar conta</LinkAcesso>
           </p>
           <p>
             <Link to="/empresa/login" className="text-suave underline-offset-4 hover:text-tinta hover:underline">
@@ -63,34 +60,32 @@ function Login() {
         </>
       }
     >
-      <Campo rotulo="E-mail">
+      <AcessoSocial tipo="usuaria" />
+
+      <Campo rotulo="E-mail" rotuloOculto erro={erros.email}>
         {(props) => (
-          <Entrada
-            {...props}
-            type="email"
-            placeholder="voce@email.com"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <div className="relative">
+            <Icone nome="email" tamanho={17} className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-suave" />
+            <Entrada
+              {...props}
+              type="email"
+              placeholder="E-mail"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-11"
+            />
+          </div>
         )}
       </Campo>
 
-      <CampoSenha
-        rotulo="Senha"
-        valor={senha}
-        aoMudar={setSenha}
-        placeholder="Sua senha"
-        acessorio={
-          <Link className="text-xs font-semibold text-vinho underline-offset-4 hover:underline" to="/recuperar-senha">
-            Esqueci minha senha
-          </Link>
-        }
-      />
+      <CampoSenha rotulo="Senha" rotuloOculto icone="cadeado" valor={senha} aoMudar={setSenha} placeholder="Senha" erro={erros.senha} />
 
-      {mensagem && <Aviso tipo={tipoMensagem}>{mensagem}</Aviso>}
+      <LembrarESenha lembrar={lembrar} aoMudar={setLembrar} />
 
-      <Botao type="submit" tamanho="lg" className="mt-2 w-full" disabled={carregando}>
+      {mensagem && <Aviso tipo="erro">{mensagem}</Aviso>}
+
+      <Botao type="submit" tamanho="lg" className="mt-1 w-full" disabled={carregando}>
         {carregando ? "Entrando..." : "Entrar"}
       </Botao>
     </TelaAcesso>

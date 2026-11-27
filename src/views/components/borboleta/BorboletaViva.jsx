@@ -6,6 +6,7 @@ const TONS = {
   vinho: { cima: '#85243d', baixo: '#9c4a63', corpo: '#5e1a32' },
   clara: { cima: '#ffffff', baixo: '#f4e4e9', corpo: '#f4e4e9' },
   rosa: { cima: '#9c4a63', baixo: '#c27a90', corpo: '#5e1a32' },
+  suave: { cima: '#e3a1b5', baixo: '#f2c9d5', corpo: '#c27a90' },
 }
 
 const BorboletaViva = forwardRef(function BorboletaViva({ tom = 'vinho', modo = 'parada', ritmo, className, style }, ref) {

@@ -403,14 +403,14 @@ function FormularioPerfil() {
                 rotulo="Técnicas"
                 variante="cheia"
                 itens={perfil.tecnicas}
-                sugestao="Ex.: React, SQL — Enter para incluir"
+                sugestao="Ex.: React, SQL. Pressione Enter para incluir"
                 vazio="Nenhuma competência técnica."
                 aoMudar={(tecnicas) => gravar('competencias', { tecnicas }, 'Competências salvas.')}
               />
               <EditorEtiquetas
                 rotulo="Comportamentais"
                 itens={perfil.comportamentais}
-                sugestao="Ex.: Comunicação — Enter para incluir"
+                sugestao="Ex.: Comunicação. Pressione Enter para incluir"
                 vazio="Nenhuma competência comportamental."
                 aoMudar={(comportamentais) => gravar('competencias', { comportamentais }, 'Competências salvas.')}
               />

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as AuthController from "../controllers/AuthController.js";
+import * as OAuthController from "../controllers/OAuthController.js";
 import { exigirLogin } from "../middlewares/autenticacao.js";
 import { criarLimitador, limitarPorIp } from "../utils/limitador.js";
 
@@ -31,5 +32,8 @@ router.post("/email/reenviar", exigirLogin(), AuthController.reenviarConfirmacao
 router.delete("/conta", exigirLogin(), limiteSenha, AuthController.excluirConta);
 
 router.get("/me", exigirLogin(), AuthController.me);
+
+router.get("/oauth/:provedor/iniciar", OAuthController.limitarLoginSocial, OAuthController.iniciar);
+router.get("/oauth/:provedor/retorno", OAuthController.limitarLoginSocial, OAuthController.retorno);
 
 export default router;

@@ -88,10 +88,10 @@ function EmpresaDetalhe() {
   const paraVagas = candidata ? `/candidata/vagas?empresa=${empresa.id}` : '/login'
 
   const ficha = [
-    ['Área de atuação', empresa.areaAtuacao || '—'],
-    ['Localização', empresa.localizacao || '—'],
-    ['Modalidades', modalidades.join(', ') || (vagas.length ? '—' : 'Sem vagas abertas')],
-    ['Áreas com vagas', areas.join(', ') || '—'],
+    ['Área de atuação', empresa.areaAtuacao || 'Não informado'],
+    ['Localização', empresa.localizacao || 'Não informado'],
+    ['Modalidades', modalidades.join(', ') || (vagas.length ? 'Não informado' : 'Sem vagas abertas')],
+    ['Áreas com vagas', areas.join(', ') || 'Não informado'],
   ]
 
   return (

@@ -261,6 +261,12 @@ export function DetalheCandidata() {
           <section className="rounded-xl border border-linha bg-branco p-6">
             <h2 className="font-display text-xl text-tinta">Dados da conta</h2>
             <dl className="mt-3 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+              {c.nomeCivil && (
+                <div className="sm:col-span-2">
+                  <dt className="text-suave">Nome civil (uso restrito à identificação; esta consulta fica registrada)</dt>
+                  <dd className="font-semibold text-tinta">{c.nomeCivil}</dd>
+                </div>
+              )}
               <div>
                 <dt className="text-suave">CPF</dt>
                 <dd className="font-semibold text-tinta">

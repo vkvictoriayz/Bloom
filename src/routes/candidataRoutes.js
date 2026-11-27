@@ -1,5 +1,6 @@
 import express, { Router } from "express";
 import * as C from "../controllers/CandidataController.js";
+import * as Identificacao from "../controllers/IdentificacaoController.js";
 import { exigirLogin } from "../middlewares/autenticacao.js";
 
 const router = Router();
@@ -19,5 +20,7 @@ router.get("/curriculo/arquivo", C.baixarCurriculo);
 router.delete("/curriculo", C.removerCurriculo);
 router.get("/privacidade", C.privacidade);
 router.put("/privacidade", express.json({ limit: "2kb" }), C.atualizarPrivacidade);
+router.get("/identificacao", Identificacao.ler);
+router.put("/identificacao", express.json({ limit: "2kb" }), Identificacao.atualizar);
 
 export default router;

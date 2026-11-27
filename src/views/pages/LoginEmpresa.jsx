@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import TelaAcesso, { LinkAcesso } from '../components/TelaAcesso'
 import CampoSenha from '../components/CampoSenha'
+import AcessoSocial from '../components/conta/AcessoSocial'
+import LembrarESenha from '../components/conta/LembrarESenha'
+import Icone from '../components/Icone'
 import Botao from '../components/ui/Botao'
 import { Aviso, Campo, Entrada } from '../components/ui/Campo'
 import { entrarEmpresa, salvarSessao } from '../services/auth'
@@ -17,19 +20,22 @@ function LoginEmpresa() {
     location.state?.mensagem || ''
   )
   const [carregando, setCarregando] = useState(false)
+  const [lembrar, setLembrar] = useState(false)
+  const [erros, setErros] = useState({})
 
   async function handleSubmit() {
     setMensagem('')
-
-    if (!email.trim() || !senha) {
-      setMensagem('Preencha o e-mail e a senha.')
-      return
-    }
+    const novos = {}
+    if (!email.trim()) novos.email = 'Informe o e-mail corporativo.'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) novos.email = 'Digite um e-mail válido.'
+    if (!senha) novos.senha = 'Informe a senha.'
+    setErros(novos)
+    if (Object.keys(novos).length) return
 
     setCarregando(true)
     try {
       const sessao = await entrarEmpresa({ email: email.trim(), senha })
-      salvarSessao(sessao)
+      salvarSessao(sessao, { lembrar })
       navigate(destinoAposLogin(sessao))
     } catch (erro) {
       setMensagem(erro.message)
@@ -41,13 +47,9 @@ function LoginEmpresa() {
   return (
     <TelaAcesso
       etiqueta="Área empresarial"
-      titulo="Bem-vinda ao BLOOM"
-      subtitulo="Entre na sua conta empresarial para continuar."
+      titulo="Entre como empresa"
+      subtitulo="Publique vagas e acompanhe candidaturas."
       aoEnviar={handleSubmit}
-      visual={{
-        cena: 'pouso',
-        frase: 'Talentos da tecnologia, perto da sua empresa.',
-      }}
       rodape={
         <>
           <p>
@@ -59,31 +61,28 @@ function LoginEmpresa() {
         </>
       }
     >
-      <Campo rotulo="E-mail corporativo">
+      <AcessoSocial tipo="empresa" />
+
+      <Campo rotulo="E-mail corporativo" rotuloOculto erro={erros.email}>
         {(props) => (
-          <Entrada
-            {...props}
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="contato@empresa.com.br"
-            autoComplete="username"
-            required
-          />
+          <div className="relative">
+            <Icone nome="email" tamanho={17} className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-suave" />
+            <Entrada
+              {...props}
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="E-mail corporativo"
+              autoComplete="username"
+              className="pl-11"
+            />
+          </div>
         )}
       </Campo>
 
-      <CampoSenha
-        rotulo="Senha"
-        valor={senha}
-        aoMudar={setSenha}
-        placeholder="Digite sua senha"
-        acessorio={
-          <Link className="text-xs font-semibold text-vinho underline-offset-4 hover:underline" to="/recuperar-senha?tipo=empresa">
-            Esqueci minha senha
-          </Link>
-        }
-      />
+      <CampoSenha rotulo="Senha" rotuloOculto icone="cadeado" valor={senha} aoMudar={setSenha} placeholder="Senha" erro={erros.senha} />
+
+      <LembrarESenha lembrar={lembrar} aoMudar={setLembrar} linkSenha="/recuperar-senha?tipo=empresa" />
 
       {mensagem && <Aviso tipo={location.state?.mensagem === mensagem ? 'sucesso' : 'erro'}>{mensagem}</Aviso>}
 
